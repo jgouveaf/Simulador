@@ -46,10 +46,11 @@ class BrasileiraoSimulator {
         document.getElementById('serie-selector').addEventListener('change', (e) => {
             this.currentSerie = e.target.value;
             const lg = this.leagues[this.currentSerie];
-            lg.viewedRound = lg.currentRound; // Sync view
+            lg.viewedRound = lg.currentRound;
             this.updateTable();
             this.displayRound();
             this.updateStats();
+            this.displayCalendar();
         });
 
         window.onclick = (event) => {
@@ -58,6 +59,8 @@ class BrasileiraoSimulator {
                 this.closeModal();
             }
         };
+
+        this.displayCalendar();
     }
 
     generateRounds(teams) {
@@ -83,16 +86,19 @@ class BrasileiraoSimulator {
             schedule.push(matches);
         }
 
-        const secondLeg = schedule.map(round => {
-            return round.map(match => ({
-                home: match.away,
-                away: match.home,
-                homeScore: null,
-                awayScore: null
-            }));
+        return [...schedule, ...secondLeg].map((round, index) => {
+            return {
+                matches: round,
+                date: this.generateRoundDate(index)
+            };
         });
+    }
 
-        return [...schedule, ...secondLeg];
+    generateRoundDate(roundIndex) {
+        const start = new Date(2026, 3, 18); // April 18, 2026
+        const date = new Date(start);
+        date.setDate(start.getDate() + (roundIndex * 7));
+        return date;
     }
 
     getTeamStats(team) {
@@ -205,13 +211,14 @@ class BrasileiraoSimulator {
         const lg = this.leagues[this.currentSerie];
         if (lg.currentRound >= lg.rounds.length) return;
 
-        lg.rounds[lg.currentRound].forEach(m => this.simulateMatch(m, lg.teams));
+        lg.rounds[lg.currentRound].matches.forEach(m => this.simulateMatch(m, lg.teams));
         lg.currentRound++;
         lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
         
         this.updateTable();
         this.displayRound();
         this.updateStats();
+        this.displayCalendar();
     }
 
     simulateSeason() {
@@ -228,6 +235,7 @@ class BrasileiraoSimulator {
         this.updateTable();
         this.displayRound();
         this.updateStats();
+        this.displayCalendar();
     }
 
     updateTable() {
@@ -244,6 +252,9 @@ class BrasileiraoSimulator {
 
         sortedTeams.forEach((team, index) => {
             const tr = document.createElement('tr');
+            if (index < 4) tr.style.borderLeft = '4px solid var(--gold)';
+            else if (index >= 16) tr.style.borderLeft = '4px solid var(--red)';
+            
             tr.innerHTML = `
                 <td class="pos">${index + 1}</td>
                 <td>
@@ -264,6 +275,23 @@ class BrasileiraoSimulator {
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    toggleView() {
+        const tableView = document.getElementById('table-view');
+        const calendarView = document.getElementById('calendar-view');
+        const btn = document.getElementById('view-toggle');
+
+        if (tableView.style.display === 'none') {
+            tableView.style.display = 'block';
+            calendarView.style.display = 'none';
+            btn.textContent = 'Ver Calendário';
+        } else {
+            tableView.style.display = 'none';
+            calendarView.style.display = 'block';
+            btn.textContent = 'Ver Tabela';
+            this.displayCalendar();
+        }
     }
 
     changeViewedRound(delta) {
@@ -290,6 +318,17 @@ class BrasileiraoSimulator {
         roundNumEl.textContent = lg.viewedRound + 1;
         container.innerHTML = '';
 
+        if (lg.rounds[lg.viewedRound].date) {
+            const dateStr = lg.rounds[lg.viewedRound].date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const dateEl = document.createElement('div');
+            dateEl.style.fontSize = '0.75rem';
+            dateEl.style.color = 'var(--text-secondary)';
+            dateEl.style.textAlign = 'center';
+            dateEl.style.marginBottom = '10px';
+            dateEl.textContent = dateStr;
+            container.appendChild(dateEl);
+        }
+
         // Show/Hide simulation buttons if we are viewing the current simulation round
         if (lg.viewedRound === lg.currentRound && lg.currentRound < 38) {
             controls.style.display = 'block';
@@ -302,7 +341,7 @@ class BrasileiraoSimulator {
             return;
         }
 
-        const matches = lg.rounds[lg.viewedRound];
+        const matches = lg.rounds[lg.viewedRound].matches;
         const table = document.createElement('table');
         table.className = 'results-table';
         const tbody = document.createElement('tbody');
@@ -323,6 +362,75 @@ class BrasileiraoSimulator {
         });
         table.appendChild(tbody);
         container.appendChild(table);
+    }
+
+    displayCalendar() {
+        const lg = this.leagues[this.currentSerie];
+        const container = document.getElementById('calendar-container');
+        container.innerHTML = '';
+
+        let currentMonth = -1;
+        let monthSection = null;
+
+        lg.rounds.forEach((round, index) => {
+            const roundDate = round.date;
+            const month = roundDate.getMonth();
+
+            if (month !== currentMonth) {
+                currentMonth = month;
+                const monthName = roundDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+                
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'month-header';
+                monthHeader.style.padding = '1.5rem 0 1rem 0';
+                monthHeader.style.borderBottom = '2px solid var(--accent)';
+                monthHeader.style.color = 'var(--accent)';
+                monthHeader.style.fontWeight = '800';
+                monthHeader.style.fontSize = '1.2rem';
+                monthHeader.style.marginTop = '2rem';
+                monthHeader.textContent = monthName;
+                container.appendChild(monthHeader);
+            }
+
+            const roundWrapper = document.createElement('div');
+            roundWrapper.style.marginTop = '1.5rem';
+            
+            const roundTitle = document.createElement('div');
+            roundTitle.style.display = 'flex';
+            roundTitle.style.justifyContent = 'space-between';
+            roundTitle.style.alignItems = 'center';
+            roundTitle.style.padding = '5px 10px';
+            roundTitle.style.background = 'rgba(255,255,255,0.05)';
+            roundTitle.style.borderRadius = '5px';
+            roundTitle.style.marginBottom = '10px';
+            roundTitle.innerHTML = `
+                <span style="font-weight: 700;">Rodada ${index + 1}</span>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">${roundDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })}</span>
+            `;
+            roundWrapper.appendChild(roundTitle);
+
+            const table = document.createElement('table');
+            table.className = 'results-table';
+            table.style.fontSize = '0.8rem';
+            const tbody = document.createElement('tbody');
+
+            round.matches.forEach(match => {
+                const home = lg.teams.find(t => t.id === match.home);
+                const away = lg.teams.find(t => t.id === match.away);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</td>
+                    <td class="col-score">${match.homeScore ?? '-'}</td>
+                    <td class="col-sep">X</td>
+                    <td class="col-score">${match.awayScore ?? '-'}</td>
+                    <td class="col-away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            roundWrapper.appendChild(table);
+            container.appendChild(roundWrapper);
+        });
     }
 
     updateStats() {

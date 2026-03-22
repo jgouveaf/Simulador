@@ -55,6 +55,7 @@ h1 {
     font-size: 2.5rem;
     font-weight: 800;
     background: linear-gradient(90deg, #fff, #8b949e);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -127,27 +128,27 @@ tr:nth-child(n+17) td:first-child { border-left: 4px solid var(--red); } /* Z4 *
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 1rem;
+    table-layout: fixed;
 }
 
 .results-table td {
-    padding: 0.6rem 0.4rem;
+    padding: 0.6rem 0.2rem;
     border-bottom: 1px solid rgba(255,255,255,0.03);
     font-size: 0.85rem;
     vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .results-table tr:last-child td {
     border-bottom: none;
 }
 
-.results-table tr:hover {
-    background: rgba(255,255,255,0.03);
-}
-
 .col-home { text-align: right; width: 40%; font-weight: 500; }
 .col-away { text-align: left; width: 40%; font-weight: 500; }
-.col-score { text-align: center; width: 60px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-.col-sep { text-align: center; width: 10px; color: var(--text-secondary); font-size: 0.7rem; }
+.col-score { text-align: center; width: 8%; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 1rem; }
+.col-sep { text-align: center; width: 4%; color: var(--text-secondary); font-size: 0.7rem; }
 
 .score-input {
     width: 30px;

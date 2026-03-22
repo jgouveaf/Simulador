@@ -438,7 +438,7 @@ class BrasileiraoSimulator {
         let totalGoals = 0;
         let totalMatches = 0;
         
-        lg.rounds.forEach(r => r.forEach(m => {
+        lg.rounds.forEach(r => r.matches.forEach(m => {
             if (m.homeScore !== null) {
                 totalGoals += m.homeScore + m.awayScore;
                 totalMatches++;

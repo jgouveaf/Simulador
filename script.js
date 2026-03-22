@@ -279,21 +279,26 @@ class BrasileiraoSimulator {
         }
 
         const currentMatches = lg.rounds[lg.currentRound];
+        const table = document.createElement('table');
+        table.className = 'results-table';
+        const tbody = document.createElement('tbody');
+
         currentMatches.forEach(match => {
             const home = lg.teams.find(t => t.id === match.home);
             const away = lg.teams.find(t => t.id === match.away);
-
-            const div = document.createElement('div');
-            div.className = 'fixture';
-            div.innerHTML = `
-                <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span>
-                <span class="fixture-score-val">${match.homeScore ?? '-'}</span>
-                <span class="fixture-sep">X</span>
-                <span class="fixture-score-val">${match.awayScore ?? '-'}</span>
-                <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="col-home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</td>
+                <td class="col-score">${match.homeScore ?? '-'}</td>
+                <td class="col-sep">X</td>
+                <td class="col-score">${match.awayScore ?? '-'}</td>
+                <td class="col-away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</td>
             `;
-            container.appendChild(div);
+            tbody.appendChild(tr);
         });
+        table.appendChild(tbody);
+        container.appendChild(table);
     }
 
     updateStats() {
@@ -346,22 +351,26 @@ class BrasileiraoSimulator {
             roundTitle.textContent = `Rodada ${lg.currentRound - i}`;
             container.appendChild(roundTitle);
 
-            round.forEach(match => {
+            const table = document.createElement('table');
+            table.className = 'results-table';
+            const tbody = document.createElement('tbody');
+
+            round.forEach(match => { // Changed from historyMatches to round
                 const home = lg.teams.find(t => t.id === match.home);
                 const away = lg.teams.find(t => t.id === match.away);
-                const matchDiv = document.createElement('div');
-                matchDiv.className = 'fixture';
-                matchDiv.style.background = 'none';
-                matchDiv.style.padding = '5px 0';
-                matchDiv.innerHTML = `
-                    <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span> 
-                    <span class="fixture-score-val">${match.homeScore}</span>
-                    <span class="fixture-sep">-</span>
-                    <span class="fixture-score-val">${match.awayScore}</span>
-                    <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</td>
+                    <td class="col-score">${match.homeScore}</td>
+                    <td class="col-sep">-</td>
+                    <td class="col-score">${match.awayScore}</td>
+                    <td class="col-away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</td>
                 `;
-                container.appendChild(matchDiv);
+                tbody.appendChild(tr);
             });
+            table.appendChild(tbody);
+            container.appendChild(table);
         });
     }
 

@@ -8,91 +8,162 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="logo.png" alt="Logo" style="width: 50px; height: 50px;">
-                <h1>Simulador <span style="color: #238636;">Brasileirão</span> 2026</h1>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <select id="serie-selector" style="background: var(--card-bg); color: #fff; border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; cursor: pointer;">
-                    <option value="A">Série A</option>
-                    <option value="B">Série B</option>
-                </select>
-                <div id="status-badge" class="badge secondary">Temporada Iniciada</div>
-            </div>
-        </header>
-
-        <section id="table-view" class="table-container card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>Tabela do Campeonato</h2>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th class="pos">Pos</th>
-                        <th>Clube</th>
-                        <th class="stats">P</th>
-                        <th class="stats">J</th>
-                        <th class="stats">V</th>
-                        <th class="stats">E</th>
-                        <th class="stats">D</th>
-                        <th class="stats">GP</th>
-                        <th class="stats">GC</th>
-                        <th class="stats">SG</th>
-                        <th class="stats">%</th>
-                    </tr>
-                </thead>
-                <tbody id="standings-body">
-                    <!-- Teams will be injected here -->
-                </tbody>
-            </table>
-            <div style="display: flex; gap: 20px; font-size: 0.75rem; color: var(--text-secondary); margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-                <span style="display: flex; align-items: center; gap: 5px;"><div style="width: 10px; height: 10px; border-left: 2px solid var(--gold);"></div> Libertadores</span>
-                <span style="display: flex; align-items: center; gap: 5px;"><div style="width: 10px; height: 10px; border-left: 2px solid var(--red);"></div> Rebaixamento</span>
-            </div>
-        </section>
-
-        <section id="calendar-view" class="card" style="display: none; overflow-y: auto; max-height: 80vh;">
-            <div style="position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); z-index: 10; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
-                <h2>Calendário Completo</h2>
-                <button class="secondary" style="width: auto; margin: 0;" onclick="simulator.toggleView()">Voltar para Tabela</button>
-            </div>
-            <div id="calendar-container">
-                <!-- Months and Rounds will be injected here -->
-            </div>
-        </section>
-
-        <section class="panel">
-            <div class="card">
-                <div class="fixtures-header">
-                    <div class="round-nav">
-                        <button class="nav-arrow" onclick="simulator.changeViewedRound(-1)">&#10094;</button>
-                        <span class="round-info">Rodada <span id="current-round-number">1</span>/38</span>
-                        <button class="nav-arrow" onclick="simulator.changeViewedRound(1)">&#10095;</button>
+<body>    <div id="app" class="container">
+        <!-- TELA 1: MENU PRINCIPAL (FIFA STYLE) -->
+        <section id="main-menu-screen" class="screen active">
+            <header class="fifa-header">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="logo.png" alt="Logo" style="width: 40px;">
+                    <h1 style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">Simulador <span style="color: var(--fifa-cyan);">FIFA 26</span></h1>
+                </div>
+            </header>
+            
+            <div class="fifa-tiles">
+                <div class="tile" onclick="simulator.startTeamSelection()">
+                    <img src="career_mode_bg_1774208825670.png" class="tile-img">
+                    <div class="tile-content">
+                        <p style="color: var(--fifa-cyan); font-weight: 800;">NOVO</p>
+                        <h2>Modo Carreira</h2>
+                        <p>Escolha um time, gerencie as finanças, contrate craques e conquiste o Brasileirão.</p>
                     </div>
-                    <button class="secondary" style="margin-top: 0; width: auto;" onclick="simulator.resetSeason()">Resetar</button>
                 </div>
                 
-                <div id="fixtures-container">
-                    <!-- Fixtures for the current round will be injected here -->
+                <div class="tile" onclick="simulator.openScreen('friendly-setup')">
+                    <img src="friendly_match_bg_1774208844130.png" class="tile-img">
+                    <div class="tile-content">
+                        <h2>Amistoso</h2>
+                        <p>Escolha dois times para um confronto direto e veja o resultado agora.</p>
+                    </div>
                 </div>
-                
-                <div id="simulation-controls">
-                    <button onclick="simulator.simulateRound()">Simular Rodada</button>
-                    <button class="secondary" onclick="simulator.simulateSeason()">Simular Temporada Inteira</button>
-                    <button id="view-toggle" class="secondary" style="margin-top: 1rem; width: 100%; border: 1px solid var(--accent); color: var(--accent);" onclick="simulator.toggleView()">Ver Calendário Completo</button>
+            </div>
+        </section>
+
+        <!-- TELA 2: SELEÇÃO DE TIME PARA CARREIRA -->
+        <section id="team-selection-screen" class="screen">
+            <header class="fifa-header">
+                <h2>Escolha seu Clube</h2>
+                <button class="secondary" style="width: auto; margin: 0;" onclick="simulator.openScreen('main-menu')">Voltar</button>
+            </header>
+            <div class="market-grid" id="selection-grid">
+                <!-- Times injetados aqui -->
+            </div>
+        </section>
+
+        <!-- TELA 3: HUB DA CARREIRA -->
+        <section id="career-hub-screen" class="screen">
+            <header class="fifa-header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div id="user-team-logo" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+                    <div>
+                        <h2 id="user-team-name" style="margin: 0;">Nome do Time</h2>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary);">Treinador: João Gouvêa</p>
+                    </div>
+                </div>
+                <div class="user-info">
+                    <div class="money-badge" id="money-display">R$ 50.000.000</div>
+                    <button class="secondary" style="width: auto; margin: 0; padding: 5px 15px;" onclick="simulator.openScreen('main-menu')">Sair da Carreira</button>
+                </div>
+            </header>
+
+            <nav class="fifa-tabs">
+                <div class="tab active" onclick="simulator.switchTab('central')">Central</div>
+                <div class="tab" onclick="simulator.switchTab('squad')">Escalação</div>
+                <div class="tab" onclick="simulator.switchTab('transfers')">Mercado</div>
+                <div class="tab" onclick="simulator.switchTab('standings')">Tabela</div>
+                <div class="tab" onclick="simulator.switchTab('fixtures')">Calendário</div>
+            </nav>
+
+            <!-- TABS CONTEÚDO -->
+            <div id="tab-central" class="tab-content">
+                <div class="career-layout">
+                    <div class="career-card interactive" onclick="simulator.simulateRound()" style="grid-column: span 2;">
+                        <p style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.7rem;">PRÓXIMO JOGO</p>
+                        <h3 id="next-opponent-name" style="font-size: 1.5rem; margin: 10px 0;">Time X</h3>
+                        <p id="match-details">Rodada 1 - 18/04/2026</p>
+                        <button style="margin-top: 2rem;">Simular Rodada</button>
+                    </div>
+                    <div class="career-card">
+                        <h3>Financeiro</h3>
+                        <p style="color: var(--text-secondary); margin-top: 10px;">Orçamento: <span class="player-strength" id="budget-info">R$ 50M</span></p>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">Salários: R$ 2.4M /mês</p>
+                    </div>
+                    <div class="career-card" style="grid-row: span 2;">
+                        <h3>Artilheiros</h3>
+                        <div id="top-scorers-list" style="margin-top: 1rem;">
+                            <!-- List of scorers -->
+                        </div>
+                    </div>
+                    <div class="career-card interactive" onclick="simulator.switchTab('standings')" style="grid-column: span 3;">
+                        <h3>Resumo da Liga</h3>
+                        <div id="league-summary-mini" style="margin-top: 1rem;">
+                            <!-- Mini standings table -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card" style="font-size: 0.85rem;">
-                <h3 style="margin-bottom: 1rem;">Resumo da Temporada</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Total de Gols: <span id="total-goals" style="color: #fff;">0</span></p>
-                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Méd. Gols/Jogo: <span id="avg-goals" style="color: #fff;">0</span></p>
-                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Rodada Atual: <span id="round-progress" style="color: #fff;">0/38</span></p>
+            <div id="tab-squad" class="tab-content" style="display: none;">
+                <div class="squad-management">
+                    <div class="card">
+                        <h3>Time Titular</h3>
+                        <div id="career-titulares" style="margin-top: 1rem;"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Reservas</h3>
+                        <div id="career-reservas" style="margin-top: 1rem;"></div>
+                    </div>
+                </div>
             </div>
 
+            <div id="tab-transfers" class="tab-content" style="display: none;">
+                <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+                    <input type="text" id="player-search" placeholder="Search a player..." style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; flex: 1;">
+                   <select id="transfer-serie-filter" style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px;">
+                       <option value="A">Série A</option>
+                       <option value="B">Série B</option>
+                   </select>
+                </div>
+                <div class="market-grid" id="market-display">
+                    <!-- Mercado aqui -->
+                </div>
+            </div>
+
+            <div id="tab-standings" class="tab-content" style="display: none;">
+                <div class="card table-container">
+                    <table id="career-standings">
+                        <!-- Cloned from regular table -->
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-fixtures" class="tab-content" style="display: none;">
+                <div class="card" id="career-calendar">
+                    <!-- Cloned from calendar -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA 4: AMISTOSO -->
+        <section id="friendly-setup-screen" class="screen">
+            <header class="fifa-header">
+                <h2>Selecione os Times</h2>
+                <button class="secondary" style="width: auto; margin: 0;" onclick="simulator.openScreen('main-menu')">Voltar</button>
+            </header>
+            <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+                <div style="display: flex; gap: 2rem; align-items: center; justify-content: center; margin-bottom: 2rem;">
+                    <div>
+                        <p>Mandante</p>
+                        <select id="friendly-home" style="width: 200px; padding: 10px;"></select>
+                    </div>
+                    <h2 style="color: var(--fifa-cyan);">VS</h2>
+                    <div>
+                        <p>Visitante</p>
+                        <select id="friendly-away" style="width: 200px; padding: 10px;"></select>
+                    </div>
+                </div>
+                <button onclick="simulator.playFriendly()">Simular Amistoso</button>
+                <div id="friendly-result" style="margin-top: 2rem; font-size: 2rem; font-weight: 800;"></div>
+            </div>
         </section>
     </div>
 
@@ -100,22 +171,18 @@
     <div id="team-modal" class="modal">
         <div class="modal-content card">
             <span class="close-modal" onclick="simulator.closeModal()">&times;</span>
-            <div id="modal-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
-                <!-- Header do time -->
-            </div>
+            <div id="modal-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                 <div id="titulares-list">
                     <h3 style="color: var(--gold); margin-bottom: 1rem;">Titulares</h3>
-                    <!-- Jogadores titulares -->
                 </div>
                 <div id="reservas-list">
                     <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Reservas</h3>
-                    <!-- Jogadores reservas -->
                 </div>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script.js?v=3"></script>
+    <script type="module" src="script.js?v=4"></script>
 </body>
 </html>

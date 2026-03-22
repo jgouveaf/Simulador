@@ -9,6 +9,13 @@ class BrasileiraoSimulator {
             'B': this.initLeague('B')
         };
         
+        this.career = {
+            active: false,
+            team: null,
+            budget: 50000000,
+            manager: 'João Gouvêa'
+        };
+
         this.init();
     }
 
@@ -42,15 +49,15 @@ class BrasileiraoSimulator {
         this.updateTable();
         this.displayRound();
         this.updateStats();
+        this.displayCalendar();
+        this.setupFriendlySelects();
         
-        document.getElementById('serie-selector').addEventListener('change', (e) => {
-            this.currentSerie = e.target.value;
-            const lg = this.leagues[this.currentSerie];
-            lg.viewedRound = lg.currentRound;
-            this.updateTable();
-            this.displayRound();
-            this.updateStats();
-            this.displayCalendar();
+        // Tab switching logic
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
         });
 
         window.onclick = (event) => {
@@ -59,8 +66,25 @@ class BrasileiraoSimulator {
                 this.closeModal();
             }
         };
+    }
 
-        this.displayCalendar();
+    openScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(`${screenId}-screen`).classList.add('active');
+        
+        if (screenId === 'career-hub') {
+            this.updateCareerDashboard();
+        }
+    }
+
+    switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        document.getElementById(`tab-${tabId}`).style.display = 'block';
+        
+        if (tabId === 'standings') this.renderCareerStandings();
+        if (tabId === 'fixtures') this.renderCareerFixtures();
+        if (tabId === 'transfers') this.renderMarket();
+        if (tabId === 'squad') this.renderCareerSquad();
     }
 
     generateRounds(teams) {
@@ -228,6 +252,10 @@ class BrasileiraoSimulator {
         this.displayRound();
         this.updateStats();
         this.displayCalendar();
+
+        if (this.career.active) {
+            this.updateCareerDashboard();
+        }
     }
 
     simulateSeason() {
@@ -472,12 +500,192 @@ class BrasileiraoSimulator {
     }
 
 
-    showTeamDetails(teamId) {
+    // --- CAREER MODE LOGIC ---
+
+    startTeamSelection() {
+        const grid = document.getElementById('selection-grid');
+        grid.innerHTML = '';
+        
+        this.allTeamsRaw.sort((a,b) => b.strength - a.strength).forEach(team => {
+            const card = document.createElement('div');
+            card.className = 'player-card interactive';
+            card.onclick = () => this.selectTeam(team.id);
+            card.innerHTML = `
+                <div style="font-size: 0.8rem; color: var(--fifa-cyan);">${team.serie === 'A' ? 'SÉRIE A' : 'SÉRIE B'}</div>
+                <div style="font-size: 1.2rem; font-weight: 800; margin: 10px 0;">${team.name}</div>
+                <div class="rating">${team.strength}</div>
+                <div style="font-size: 0.7rem; margin-top: 10px; color: var(--text-secondary);">Orçamento: R$ 50M</div>
+            `;
+            grid.appendChild(card);
+        });
+        
+        this.openScreen('team-selection');
+    }
+
+    selectTeam(teamId) {
         const team = this.allTeamsRaw.find(t => t.id === teamId);
-        if (!team || !team.roster) {
-            console.warn("Details not available for this team.");
+        this.currentSerie = team.serie;
+        this.career.active = true;
+        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === teamId);
+        
+        document.getElementById('user-team-name').textContent = team.name;
+        document.getElementById('user-team-logo').style.backgroundColor = team.color;
+        
+        this.openScreen('career-hub');
+        this.switchTab('central');
+    }
+
+    updateCareerDashboard() {
+        const lg = this.leagues[this.currentSerie];
+        const nextRound = lg.rounds[lg.currentRound];
+        
+        if (nextRound) {
+            const userMatch = nextRound.matches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+            const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
+            const opponent = lg.teams.find(t => t.id === opponentId);
+            
+            document.getElementById('next-opponent-name').textContent = `vs ${opponent.name}`;
+            document.getElementById('match-details').textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
+        } else {
+            document.getElementById('next-opponent-name').textContent = `Fim da Temporada`;
+        }
+
+        document.getElementById('money-display').textContent = `R$ ${this.career.budget.toLocaleString('pt-BR')}`;
+        document.getElementById('budget-info').textContent = `R$ ${(this.career.budget / 1000000).toFixed(0)}M`;
+        
+        this.renderMiniStandings();
+    }
+
+    renderMiniStandings() {
+        const lg = this.leagues[this.currentSerie];
+        const sorted = [...lg.teams].sort((a,b) => b.points - a.points);
+        const userPos = sorted.findIndex(t => t.id === this.career.team.id) + 1;
+        
+        const container = document.getElementById('league-summary-mini');
+        container.innerHTML = `
+            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                <span>Sua Posição: <strong>${userPos}º</strong></span>
+                <span>Pontos: <strong>${this.career.team.points}</strong></span>
+            </div>
+        `;
+    }
+
+    renderCareerSquad() {
+        const t = this.career.team;
+        const titContainer = document.getElementById('career-titulares');
+        const resContainer = document.getElementById('career-reservas');
+        
+        titContainer.innerHTML = '';
+        resContainer.innerHTML = '';
+        
+        t.roster.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'squad-slot';
+            div.innerHTML = `
+                <span><strong>${p.pos}</strong> ${p.name}</span>
+                <span class="player-strength">${p.strength}</span>
+            `;
+            if (p.status === 'Titular') titContainer.appendChild(div);
+            else resContainer.appendChild(div);
+        });
+    }
+
+    renderMarket() {
+        const grid = document.getElementById('market-display');
+        const serie = document.getElementById('transfer-serie-filter').value;
+        grid.innerHTML = '';
+        
+        const otherTeams = this.leagues[serie].teams.filter(t => t.id !== this.career.team.id);
+        
+        otherTeams.forEach(team => {
+            team.roster.forEach(p => {
+                const price = p.strength * 500000 + (Math.random() * 2000000);
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.innerHTML = `
+                    <div style="font-size: 0.7rem; color: var(--text-secondary);">${team.name}</div>
+                    <div style="font-weight: 700; margin: 5px 0;">${p.name}</div>
+                    <div class="rating">${p.strength}</div>
+                    <div style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.8rem; margin: 10px 0;">R$ ${(price/1000000).toFixed(1)}M</div>
+                    <button onclick="simulator.buyPlayer(${p.id}, ${team.id}, ${price})" style="padding: 5px; font-size: 0.7rem; margin: 0;">Contratar</button>
+                `;
+                grid.appendChild(card);
+            });
+        });
+    }
+
+    buyPlayer(playerId, fromTeamId, price) {
+        if (this.career.budget < price) {
+            alert("Orçamento insuficiente!");
             return;
         }
+
+        const fromTeam = this.allTeamsRaw.find(t => t.id === fromTeamId);
+        const playerIndex = fromTeam.roster.findIndex(p => p.id === playerId);
+        const player = fromTeam.roster.splice(playerIndex, 1)[0];
+        
+        player.status = 'Reserva';
+        this.career.team.roster.push(player);
+        this.career.budget -= price;
+        
+        alert(`${player.name} contratado com sucesso!`);
+        this.renderMarket();
+        this.updateCareerDashboard();
+    }
+
+    renderCareerStandings() {
+        const table = document.getElementById('career-standings');
+        this.updateTable(); // Update raw data
+        const originalTbody = document.getElementById('standings-body');
+        table.innerHTML = `<thead>${document.querySelector('table thead').innerHTML}</thead>`;
+        const newTbody = document.createElement('tbody');
+        newTbody.innerHTML = originalTbody.innerHTML;
+        table.appendChild(newTbody);
+    }
+
+    renderCareerFixtures() {
+        const container = document.getElementById('career-calendar');
+        this.displayCalendar();
+        container.innerHTML = document.getElementById('calendar-container').innerHTML;
+    }
+
+    // --- FRIENDLY LOGIC ---
+
+    setupFriendlySelects() {
+        const homeSel = document.getElementById('friendly-home');
+        const awaySel = document.getElementById('friendly-away');
+        homeSel.innerHTML = '';
+        awaySel.innerHTML = '';
+        
+        this.allTeamsRaw.sort((a,b) => a.name.localeCompare(b.name)).forEach(t => {
+            const opt = `<option value="${t.id}">${t.name}</option>`;
+            homeSel.innerHTML += opt;
+            awaySel.innerHTML += opt;
+        });
+    }
+
+    playFriendly() {
+        const hId = parseInt(document.getElementById('friendly-home').value);
+        const aId = parseInt(document.getElementById('friendly-away').value);
+        
+        const homeTeam = this.allTeamsRaw.find(t => t.id === hId);
+        const awayTeam = this.allTeamsRaw.find(t => t.id === aId);
+        
+        const match = { home: hId, away: aId, homeScore: null, awayScore: null };
+        
+        // Use a temporary copy of teams for the simulation function to avoid affecting main league data
+        const tempTeams = [JSON.parse(JSON.stringify(homeTeam)), JSON.parse(JSON.stringify(awayTeam))];
+        this.simulateMatch(match, tempTeams);
+        
+        document.getElementById('friendly-result').innerHTML = `
+            ${homeTeam.name} <span style="color: var(--fifa-cyan)">${match.homeScore}</span> X 
+            <span style="color: var(--fifa-cyan)">${match.awayScore}</span> ${awayTeam.name}
+        `;
+    }
+
+    showTeamDetails(teamId) {
+        const team = this.allTeamsRaw.find(t => t.id === teamId);
+        if (!team) return;
 
         const modal = document.getElementById('team-modal');
         const header = document.getElementById('modal-header');
@@ -491,8 +699,12 @@ class BrasileiraoSimulator {
         `;
 
         const renderRoster = (players, container) => {
-            const list = container.querySelector('.roster-list-inner') || document.createElement('div');
-            list.className = 'roster-list-inner';
+            let list = container.querySelector('.roster-list-inner');
+            if (!list) {
+                list = document.createElement('div');
+                list.className = 'roster-list-inner';
+                container.appendChild(list);
+            }
             list.innerHTML = '';
             players.forEach(p => {
                 const div = document.createElement('div');
@@ -506,7 +718,6 @@ class BrasileiraoSimulator {
                 `;
                 list.appendChild(div);
             });
-            if (!container.querySelector('.roster-list-inner')) container.appendChild(list);
         };
 
         renderRoster(team.roster.filter(p => p.status === 'Titular'), titulares);

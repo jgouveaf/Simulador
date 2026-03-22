@@ -98,6 +98,12 @@ class BrasileiraoSimulator {
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
         document.getElementById(`tab-${tabId}`).style.display = 'block';
         
+        // Update tab UI
+        document.querySelectorAll('.tab').forEach(t => {
+            t.classList.remove('active');
+            if (t.dataset.tab === tabId) t.classList.add('active');
+        });
+
         if (tabId === 'standings') this.renderCareerStandings();
         if (tabId === 'fixtures') this.renderCareerFixtures();
         if (tabId === 'transfers') this.renderMarket();
@@ -664,18 +670,120 @@ class BrasileiraoSimulator {
 
     renderCareerStandings() {
         const table = document.getElementById('career-standings');
-        this.updateTable(); // Update raw data
-        const originalTbody = document.getElementById('standings-body');
-        table.innerHTML = `<thead>${document.querySelector('table thead').innerHTML}</thead>`;
-        const newTbody = document.createElement('tbody');
-        newTbody.innerHTML = originalTbody.innerHTML;
-        table.appendChild(newTbody);
+        if (!table) return;
+        
+        const lg = this.leagues[this.currentSerie];
+        const sortedTeams = [...lg.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.won !== a.won) return b.won - a.won;
+            if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+            return b.goalsFor - a.goalsFor;
+        });
+
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th class="pos">#</th>
+                    <th>Time</th>
+                    <th class="stats">P</th>
+                    <th class="stats">J</th>
+                    <th class="stats">V</th>
+                    <th class="stats">E</th>
+                    <th class="stats">D</th>
+                    <th class="stats">GP</th>
+                    <th class="stats">GC</th>
+                    <th class="stats">SG</th>
+                    <th class="stats">%</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+        sortedTeams.forEach((team, index) => {
+            const tr = document.createElement('tr');
+            if (team.id === this.career.team.id) tr.style.background = 'rgba(0, 242, 255, 0.1)';
+            
+            tr.innerHTML = `
+                <td class="pos">${index + 1}</td>
+                <td>
+                    <div class="team-name team-clickable" data-id="${team.id}">
+                        <div class="team-color" style="background-color: ${team.color};"></div>
+                        ${team.name}
+                    </div>
+                </td>
+                <td class="stats pts">${team.points}</td>
+                <td class="stats">${team.played}</td>
+                <td class="stats">${team.won}</td>
+                <td class="stats">${team.drawn}</td>
+                <td class="stats">${team.lost}</td>
+                <td class="stats">${team.goalsFor}</td>
+                <td class="stats">${team.goalsAgainst}</td>
+                <td class="stats">${team.goalDiff}</td>
+                <td class="stats">${team.percentage}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Add team details listener to the names
+        tbody.querySelectorAll('.team-clickable').forEach(el => {
+            el.onclick = () => this.showTeamDetails(parseInt(el.dataset.id));
+        });
     }
 
     renderCareerFixtures() {
         const container = document.getElementById('career-calendar');
-        this.displayCalendar();
-        container.innerHTML = document.getElementById('calendar-container').innerHTML;
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const lg = this.leagues[this.currentSerie];
+        let currentMonth = -1;
+
+        lg.rounds.forEach((round, index) => {
+            const roundDate = round.date;
+            const month = roundDate.getMonth();
+
+            if (month !== currentMonth) {
+                currentMonth = month;
+                const monthName = roundDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'month-header';
+                monthHeader.style.padding = '1rem 0 0.5rem 0';
+                monthHeader.style.color = 'var(--fifa-cyan)';
+                monthHeader.style.fontWeight = '800';
+                monthHeader.style.fontSize = '1rem';
+                monthHeader.style.marginTop = '1.5rem';
+                monthHeader.style.borderBottom = '1px solid var(--border)';
+                monthHeader.textContent = monthName;
+                container.appendChild(monthHeader);
+            }
+
+            const roundWrapper = document.createElement('div');
+            roundWrapper.style.marginTop = '1rem';
+            roundWrapper.style.padding = '10px';
+            roundWrapper.style.background = 'rgba(255,255,255,0.02)';
+            roundWrapper.style.borderRadius = '8px';
+            
+            roundWrapper.innerHTML = `<div style="font-weight: 700; margin-bottom: 5px; font-size: 0.8rem;">Rodada ${index + 1}</div>`;
+
+            round.matches.forEach(match => {
+                const home = lg.teams.find(t => t.id === match.home);
+                const away = lg.teams.find(t => t.id === match.away);
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.fontSize = '0.75rem';
+                row.style.padding = '3px 0';
+                row.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                row.innerHTML = `
+                    <span style="width: 40%; text-align: left;">${home.name}</span>
+                    <span style="width: 20%; text-align: center; color: var(--fifa-cyan); font-weight: 700;">${match.homeScore ?? '-'} X ${match.awayScore ?? '-'}</span>
+                    <span style="width: 40%; text-align: right;">${away.name}</span>
+                `;
+                roundWrapper.appendChild(row);
+            });
+            container.appendChild(roundWrapper);
+        });
     }
 
     // --- FRIENDLY LOGIC ---

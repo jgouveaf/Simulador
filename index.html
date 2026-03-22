@@ -19,8 +19,8 @@
             </header>
             
             <div class="fifa-tiles">
-                <div class="tile" onclick="simulator.startTeamSelection()">
-                    <img src="career_mode_bg_1774208825670.png" class="tile-img">
+                <div class="tile" id="btn-start-career">
+                    <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80" class="tile-img">
                     <div class="tile-content">
                         <p style="color: var(--fifa-cyan); font-weight: 800;">NOVO</p>
                         <h2>Modo Carreira</h2>
@@ -28,8 +28,8 @@
                     </div>
                 </div>
                 
-                <div class="tile" onclick="simulator.openScreen('friendly-setup')">
-                    <img src="friendly_match_bg_1774208844130.png" class="tile-img">
+                <div class="tile" id="btn-start-friendly">
+                    <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80" class="tile-img">
                     <div class="tile-content">
                         <h2>Amistoso</h2>
                         <p>Escolha dois times para um confronto direto e veja o resultado agora.</p>
@@ -42,7 +42,7 @@
         <section id="team-selection-screen" class="screen">
             <header class="fifa-header">
                 <h2>Escolha seu Clube</h2>
-                <button class="secondary" style="width: auto; margin: 0;" onclick="simulator.openScreen('main-menu')">Voltar</button>
+                <button class="secondary btn-back-main" style="width: auto; margin: 0;">Voltar</button>
             </header>
             <div class="market-grid" id="selection-grid">
                 <!-- Times injetados aqui -->
@@ -61,22 +61,22 @@
                 </div>
                 <div class="user-info">
                     <div class="money-badge" id="money-display">R$ 50.000.000</div>
-                    <button class="secondary" style="width: auto; margin: 0; padding: 5px 15px;" onclick="simulator.openScreen('main-menu')">Sair da Carreira</button>
+                    <button class="secondary btn-back-main" style="width: auto; margin: 0; padding: 5px 15px;">Sair da Carreira</button>
                 </div>
             </header>
 
             <nav class="fifa-tabs">
-                <div class="tab active" onclick="simulator.switchTab('central')">Central</div>
-                <div class="tab" onclick="simulator.switchTab('squad')">Escalação</div>
-                <div class="tab" onclick="simulator.switchTab('transfers')">Mercado</div>
-                <div class="tab" onclick="simulator.switchTab('standings')">Tabela</div>
-                <div class="tab" onclick="simulator.switchTab('fixtures')">Calendário</div>
+                <div class="tab active" data-tab="central">Central</div>
+                <div class="tab" data-tab="squad">Escalação</div>
+                <div class="tab" data-tab="transfers">Mercado</div>
+                <div class="tab" data-tab="standings">Tabela</div>
+                <div class="tab" data-tab="fixtures">Calendário</div>
             </nav>
 
             <!-- TABS CONTEÚDO -->
             <div id="tab-central" class="tab-content">
                 <div class="career-layout">
-                    <div class="career-card interactive" onclick="simulator.simulateRound()" style="grid-column: span 2;">
+                    <div class="career-card interactive" id="btn-career-simulate" style="grid-column: span 2;">
                         <p style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.7rem;">PRÓXIMO JOGO</p>
                         <h3 id="next-opponent-name" style="font-size: 1.5rem; margin: 10px 0;">Time X</h3>
                         <p id="match-details">Rodada 1 - 18/04/2026</p>
@@ -93,7 +93,7 @@
                             <!-- List of scorers -->
                         </div>
                     </div>
-                    <div class="career-card interactive" onclick="simulator.switchTab('standings')" style="grid-column: span 3;">
+                    <div class="career-card interactive" id="btn-tab-standings" style="grid-column: span 3;">
                         <h3>Resumo da Liga</h3>
                         <div id="league-summary-mini" style="margin-top: 1rem;">
                             <!-- Mini standings table -->
@@ -147,7 +147,7 @@
         <section id="friendly-setup-screen" class="screen">
             <header class="fifa-header">
                 <h2>Selecione os Times</h2>
-                <button class="secondary" style="width: auto; margin: 0;" onclick="simulator.openScreen('main-menu')">Voltar</button>
+                <button class="secondary btn-back-main" style="width: auto; margin: 0;">Voltar</button>
             </header>
             <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
                 <div style="display: flex; gap: 2rem; align-items: center; justify-content: center; margin-bottom: 2rem;">
@@ -161,7 +161,7 @@
                         <select id="friendly-away" style="width: 200px; padding: 10px;"></select>
                     </div>
                 </div>
-                <button onclick="simulator.playFriendly()">Simular Amistoso</button>
+                <button id="btn-play-friendly">Simular Amistoso</button>
                 <div id="friendly-result" style="margin-top: 2rem; font-size: 2rem; font-weight: 800;"></div>
             </div>
         </section>
@@ -170,7 +170,7 @@
     <!-- Modal para Detalhes do Time -->
     <div id="team-modal" class="modal">
         <div class="modal-content card">
-            <span class="close-modal" onclick="simulator.closeModal()">&times;</span>
+            <span class="close-modal" id="btn-close-modal">&times;</span>
             <div id="modal-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                 <div id="titulares-list">
@@ -183,6 +183,6 @@
         </div>
     </div>
 
-    <script type="module" src="script.js?v=7"></script>
+    <script type="module" src="script.js?v=8"></script>
 </body>
 </html>

@@ -55,11 +55,25 @@ class BrasileiraoSimulator {
         // Force initial screen to be main menu
         this.openScreen('main-menu');
         
+        // Event Bindings
+        document.getElementById('btn-start-career')?.addEventListener('click', () => this.startTeamSelection());
+        document.getElementById('btn-start-friendly')?.addEventListener('click', () => this.openScreen('friendly-setup'));
+        document.getElementById('btn-career-simulate')?.addEventListener('click', () => this.simulateRound());
+        document.getElementById('btn-tab-standings')?.addEventListener('click', () => this.switchTab('standings'));
+        document.getElementById('btn-play-friendly')?.addEventListener('click', () => this.playFriendly());
+        document.getElementById('btn-close-modal')?.addEventListener('click', () => this.closeModal());
+        
+        document.querySelectorAll('.btn-back-main').forEach(btn => {
+            btn.addEventListener('click', () => this.openScreen('main-menu'));
+        });
+
         // Tab switching logic
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
+                const tabId = tab.dataset.tab;
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
+                if (tabId) this.switchTab(tabId);
             });
         });
 

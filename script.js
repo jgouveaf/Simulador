@@ -102,26 +102,36 @@ class BrasileiraoSimulator {
         const homeTeam = leagueTeams.find(t => t.id === match.home);
         const awayTeam = leagueTeams.find(t => t.id === match.away);
 
-        const homeAdvantage = 1.10;
-        const hStr = Math.pow(homeTeam.strength * homeAdvantage, 1.5);
-        const aStr = Math.pow(awayTeam.strength, 1.5);
+        // Home advantage: ~52% of points usually go to home teams in Brasileirao
+        const homeAdvantage = 1.15; 
+        const hStr = Math.pow(homeTeam.strength * homeAdvantage, 2.0); // Higher power for more impact
+        const aStr = Math.pow(awayTeam.strength, 2.0);
         const totalStr = hStr + aStr;
 
-        const targetMatchMean = 2.37;
+        // Base match mean: 2.37. Use a small variation per match to simulate "closed" vs "open" games.
+        const matchIntensity = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+        const targetMatchMean = 2.37 * matchIntensity;
+        
         const hMean = (hStr / totalStr) * targetMatchMean;
         const aMean = (aStr / totalStr) * targetMatchMean;
 
         let hScore = this.poissonRandom(hMean);
         let aScore = this.poissonRandom(aMean);
 
-        if (hScore === aScore && Math.random() < 0.3) {
-            if (hStr > aStr * 1.05) hScore++;
-            else if (aStr > hStr * 1.05) aScore++;
+        // Realistic draw reduction: only for matches where GER is significantly different
+        if (hScore === aScore && Math.random() < 0.25) {
+            const diff = Math.abs(homeTeam.strength - awayTeam.strength);
+            if (diff > 5) {
+                if (hStr > aStr) hScore++;
+                else aScore++;
+            }
         }
 
+        // Limit "absurd" scores while keeping them possible
         match.homeScore = Math.min(hScore, 9);
         match.awayScore = Math.min(aScore, 9);
 
+        // Ensure 0-0 happens (about 7-8% probability in reality)
         this.updateLeagueStandings(match, leagueTeams);
     }
 

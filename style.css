@@ -1,0 +1,215 @@
+:root {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --accent: #238636;
+    --accent-hover: #2ea043;
+    --border: #30363d;
+    --glass: rgba(22, 27, 34, 0.8);
+    --gold: #fcc200;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --red: #da3633;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+}
+
+header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #fff, #8b949e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th {
+    text-align: left;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* Standings Highlights */
+tr:nth-child(-n+4) td:first-child { border-left: 4px solid var(--gold); } /* G4 */
+tr:nth-child(n+17) td:first-child { border-left: 4px solid var(--red); } /* Z4 */
+
+.pos { width: 40px; text-align: center; font-weight: bold; }
+.team-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.team-color { width: 8px; height: 8px; border-radius: 50%; }
+
+.stats { text-align: center; width: 40px; }
+.pts { font-weight: 800; color: #fff; width: 50px; }
+
+/* Control Panel */
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.fixtures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.fixture {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.fixture:hover {
+    transform: translateX(5px);
+}
+
+.fixture-team {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.fixture-team.home { text-align: right; margin-right: 1rem; }
+.fixture-team.away { text-align: left; margin-left: 1rem; }
+
+.score-input {
+    width: 30px;
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+}
+
+button.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+}
+
+button.secondary:hover {
+    background: var(--border);
+    box-shadow: none;
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.round-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.round-info {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.5s ease forwards;
+}

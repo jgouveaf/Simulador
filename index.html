@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Brasileirão</title>
+    <!-- Google Fonts for premium look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="logo.png" alt="Logo" style="width: 50px; height: 50px;">
+                <h1>Simulador <span style="color: #238636;">Brasileirão</span> 2026</h1>
+            </div>
+            <div id="status-badge" class="badge secondary">Temporada Iniciada</div>
+        </header>
+
+        <section class="table-container card">
+            <h2 style="margin-bottom: 20px;">Tabela do Campeonato</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="pos">Pos</th>
+                        <th>Clube</th>
+                        <th class="stats">P</th>
+                        <th class="stats">J</th>
+                        <th class="stats">V</th>
+                        <th class="stats">E</th>
+                        <th class="stats">D</th>
+                        <th class="stats">GP</th>
+                        <th class="stats">GC</th>
+                        <th class="stats">SG</th>
+                        <th class="stats">%</th>
+                    </tr>
+                </thead>
+                <tbody id="standings-body">
+                    <!-- Teams will be injected here -->
+                </tbody>
+            </table>
+            <div style="display: flex; gap: 20px; font-size: 0.75rem; color: var(--text-secondary); margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <span style="display: flex; align-items: center; gap: 5px;"><div style="width: 10px; height: 10px; border-left: 2px solid var(--gold);"></div> Libertadores</span>
+                <span style="display: flex; align-items: center; gap: 5px;"><div style="width: 10px; height: 10px; border-left: 2px solid var(--red);"></div> Rebaixamento</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="card">
+                <div class="fixtures-header">
+                    <div class="round-nav">
+                        <span class="round-info">Rodada <span id="current-round-number">1</span>/38</span>
+                    </div>
+                    <button class="secondary" style="margin-top: 0; width: auto;" onclick="simulator.resetSeason()">Resetar</button>
+                </div>
+                
+                <div id="fixtures-container">
+                    <!-- Fixtures for the current round will be injected here -->
+                </div>
+                
+                <div id="simulation-controls">
+                    <button onclick="simulator.simulateRound()">Simular Rodada</button>
+                    <button class="secondary" onclick="simulator.simulateSeason()">Simular Temporada Inteira</button>
+                </div>
+            </div>
+
+            <div class="card" style="font-size: 0.85rem;">
+                <h3 style="margin-bottom: 1rem;">Resumo da Temporada</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Total de Gols: <span id="total-goals" style="color: #fff;">0</span></p>
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Méd. Gols/Jogo: <span id="avg-goals" style="color: #fff;">0</span></p>
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Rodada Atual: <span id="round-progress" style="color: #fff;">0/38</span></p>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

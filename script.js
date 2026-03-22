@@ -287,11 +287,9 @@ class BrasileiraoSimulator {
             div.className = 'fixture';
             div.innerHTML = `
                 <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span>
-                <div class="fixture-score">
-                    <span>${match.homeScore ?? '-'}</span>
-                    <span style="font-size: 0.6rem; color: var(--text-secondary);">X</span>
-                    <span>${match.awayScore ?? '-'}</span>
-                </div>
+                <span class="fixture-score-val">${match.homeScore ?? '-'}</span>
+                <span class="fixture-sep">X</span>
+                <span class="fixture-score-val">${match.awayScore ?? '-'}</span>
                 <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
             `;
             container.appendChild(div);
@@ -357,7 +355,9 @@ class BrasileiraoSimulator {
                 matchDiv.style.padding = '5px 0';
                 matchDiv.innerHTML = `
                     <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span> 
-                    <div class="fixture-score">${match.homeScore} - ${match.awayScore}</div>
+                    <span class="fixture-score-val">${match.homeScore}</span>
+                    <span class="fixture-sep">-</span>
+                    <span class="fixture-score-val">${match.awayScore}</span>
                     <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
                 `;
                 container.appendChild(matchDiv);

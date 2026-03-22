@@ -125,34 +125,43 @@ tr:nth-child(n+17) td:first-child { border-left: 4px solid var(--red); } /* Z4 *
 
 .fixture {
     display: grid;
-    grid-template-columns: 1fr 60px 1fr;
+    grid-template-columns: 1fr 35px 15px 35px 1fr;
     align-items: center;
-    padding: 0.8rem;
-    background: rgba(255,255,255,0.03);
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.02);
     border-radius: 8px;
-    margin-bottom: 0.5rem;
-    transition: transform 0.2s;
+    margin-bottom: 4px;
+    transition: all 0.2s;
 }
 
 .fixture:hover {
-    transform: translateX(5px);
+    background: rgba(255,255,255,0.05);
+    transform: scale(1.02);
 }
 
 .fixture-team {
     font-size: 0.85rem;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .fixture-team.home { text-align: right; }
 .fixture-team.away { text-align: left; }
 
-.fixture-score {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    font-weight: bold;
-    font-size: 0.9rem;
+.fixture-score-val {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-weight: 800;
+    font-size: 1rem;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.fixture-sep {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    text-align: center;
 }
 
 .score-input {

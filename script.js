@@ -42,14 +42,14 @@ class BrasileiraoSimulator {
         this.updateTable();
         this.displayRound();
         this.updateStats();
-        this.updateHistory();
         
         document.getElementById('serie-selector').addEventListener('change', (e) => {
             this.currentSerie = e.target.value;
+            const lg = this.leagues[this.currentSerie];
+            lg.viewedRound = lg.currentRound; // Sync view
             this.updateTable();
             this.displayRound();
             this.updateStats();
-            this.updateHistory();
         });
 
         window.onclick = (event) => {
@@ -207,11 +207,11 @@ class BrasileiraoSimulator {
 
         lg.rounds[lg.currentRound].forEach(m => this.simulateMatch(m, lg.teams));
         lg.currentRound++;
+        lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
         
         this.updateTable();
         this.displayRound();
         this.updateStats();
-        this.updateHistory();
     }
 
     simulateSeason() {
@@ -223,10 +223,11 @@ class BrasileiraoSimulator {
 
     resetSeason() {
         this.leagues[this.currentSerie] = this.initLeague(this.currentSerie);
+        const lg = this.leagues[this.currentSerie];
+        lg.viewedRound = 0;
         this.updateTable();
         this.displayRound();
         this.updateStats();
-        this.updateHistory();
     }
 
     updateTable() {
@@ -265,25 +266,48 @@ class BrasileiraoSimulator {
         });
     }
 
+    changeViewedRound(delta) {
+        const lg = this.leagues[this.currentSerie];
+        if (!lg.viewedRound && lg.viewedRound !== 0) lg.viewedRound = lg.currentRound;
+        
+        lg.viewedRound += delta;
+        if (lg.viewedRound < 0) lg.viewedRound = 0;
+        if (lg.viewedRound > 37) lg.viewedRound = 37;
+        
+        this.displayRound();
+    }
+
     displayRound() {
         const lg = this.leagues[this.currentSerie];
+        
+        // Ensure viewedRound exists
+        if (lg.viewedRound === undefined) lg.viewedRound = lg.currentRound;
+
         const container = document.getElementById('fixtures-container');
         const roundNumEl = document.getElementById('current-round-number');
+        const controls = document.getElementById('simulation-controls');
         
-        roundNumEl.textContent = lg.currentRound + 1;
+        roundNumEl.textContent = lg.viewedRound + 1;
         container.innerHTML = '';
 
-        if (lg.currentRound >= lg.rounds.length) {
+        // Show/Hide simulation buttons if we are viewing the current simulation round
+        if (lg.viewedRound === lg.currentRound && lg.currentRound < 38) {
+            controls.style.display = 'block';
+        } else {
+            controls.style.display = 'none';
+        }
+
+        if (lg.viewedRound >= lg.rounds.length) {
             container.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-secondary);">Temporada Finalizada!</div>';
             return;
         }
 
-        const currentMatches = lg.rounds[lg.currentRound];
+        const matches = lg.rounds[lg.viewedRound];
         const table = document.createElement('table');
         table.className = 'results-table';
         const tbody = document.createElement('tbody');
 
-        currentMatches.forEach(match => {
+        matches.forEach(match => {
             const home = lg.teams.find(t => t.id === match.home);
             const away = lg.teams.find(t => t.id === match.away);
             
@@ -327,52 +351,6 @@ class BrasileiraoSimulator {
         }
     }
 
-    updateHistory() {
-        const container = document.getElementById('history-container');
-        const lg = this.leagues[this.currentSerie];
-        
-        const lastRounds = lg.rounds
-            .slice(0, lg.currentRound)
-            .reverse() 
-            .slice(0, 3);
-
-        if (lastRounds.length === 0) {
-            container.innerHTML = '<div style="color: var(--text-secondary);">Nenhum jogo realizado ainda.</div>';
-            return;
-        }
-
-        container.innerHTML = '';
-        lastRounds.forEach((round, i) => {
-            const roundTitle = document.createElement('div');
-            roundTitle.style.fontWeight = 'bold';
-            roundTitle.style.marginTop = '10px';
-            roundTitle.style.borderBottom = '1px solid var(--border)';
-            roundTitle.style.paddingBottom = '5px';
-            roundTitle.textContent = `Rodada ${lg.currentRound - i}`;
-            container.appendChild(roundTitle);
-
-            const table = document.createElement('table');
-            table.className = 'results-table';
-            const tbody = document.createElement('tbody');
-
-            round.forEach(match => { // Changed from historyMatches to round
-                const home = lg.teams.find(t => t.id === match.home);
-                const away = lg.teams.find(t => t.id === match.away);
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="col-home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</td>
-                    <td class="col-score">${match.homeScore}</td>
-                    <td class="col-sep">-</td>
-                    <td class="col-score">${match.awayScore}</td>
-                    <td class="col-away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-            container.appendChild(table);
-        });
-    }
 
     showTeamDetails(teamId) {
         const team = this.allTeamsRaw.find(t => t.id === teamId);

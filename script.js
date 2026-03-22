@@ -302,6 +302,8 @@ class BrasileiraoSimulator {
         });
 
         const tbody = document.getElementById('standings-body');
+        if (!tbody) return; // Silent return if we are in a screen without the table
+        
         tbody.innerHTML = '';
 
         sortedTeams.forEach((team, index) => {
@@ -369,10 +371,12 @@ class BrasileiraoSimulator {
         if (lg.viewedRound === undefined) lg.viewedRound = lg.currentRound;
 
         const container = document.getElementById('fixtures-container');
+        if (!container) return; // Silent return
+        
         const roundNumEl = document.getElementById('current-round-number');
         const controls = document.getElementById('simulation-controls');
         
-        roundNumEl.textContent = lg.viewedRound + 1;
+        if (roundNumEl) roundNumEl.textContent = lg.viewedRound + 1;
         container.innerHTML = '';
 
         if (lg.rounds[lg.viewedRound].date) {
@@ -424,6 +428,7 @@ class BrasileiraoSimulator {
     displayCalendar() {
         const lg = this.leagues[this.currentSerie];
         const container = document.getElementById('calendar-container');
+        if (!container) return; // Silent return
         container.innerHTML = '';
 
         let currentMonth = -1;
@@ -502,17 +507,24 @@ class BrasileiraoSimulator {
             }
         }));
 
-        document.getElementById('total-goals').textContent = totalGoals;
-        document.getElementById('avg-goals').textContent = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(2) : '0';
-        document.getElementById('round-progress').textContent = `${lg.currentRound}/38`;
+        const totalGoalsEl = document.getElementById('total-goals');
+        if (totalGoalsEl) totalGoalsEl.textContent = totalGoals;
+        
+        const avgGoalsEl = document.getElementById('avg-goals');
+        if (avgGoalsEl) avgGoalsEl.textContent = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(2) : '0';
+        
+        const roundProgressEl = document.getElementById('round-progress');
+        if (roundProgressEl) roundProgressEl.textContent = `${lg.currentRound}/38`;
         
         const badge = document.getElementById('status-badge');
-        if (lg.currentRound === 38) {
-            badge.textContent = 'Temporada Encerrada';
-            badge.style.color = 'var(--gold)';
-        } else {
-            badge.textContent = 'Em Andamento';
-            badge.style.color = 'var(--accent)';
+        if (badge) {
+            if (lg.currentRound === 38) {
+                badge.textContent = 'Temporada Encerrada';
+                badge.style.color = 'var(--gold)';
+            } else {
+                badge.textContent = 'Em Andamento';
+                badge.style.color = 'var(--accent)';
+            }
         }
     }
 

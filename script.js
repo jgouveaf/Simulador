@@ -287,10 +287,10 @@ class BrasileiraoSimulator {
             div.className = 'fixture';
             div.innerHTML = `
                 <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span>
-                <div style="display: flex; gap: 5px; align-items: center;">
-                    <span class="score-input">${match.homeScore ?? '-'}</span>
+                <div class="fixture-score">
+                    <span>${match.homeScore ?? '-'}</span>
                     <span style="font-size: 0.6rem; color: var(--text-secondary);">X</span>
-                    <span class="score-input">${match.awayScore ?? '-'}</span>
+                    <span>${match.awayScore ?? '-'}</span>
                 </div>
                 <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
             `;
@@ -352,10 +352,14 @@ class BrasileiraoSimulator {
                 const home = lg.teams.find(t => t.id === match.home);
                 const away = lg.teams.find(t => t.id === match.away);
                 const matchDiv = document.createElement('div');
-                matchDiv.style.display = 'flex';
-                matchDiv.style.justifyContent = 'space-between';
+                matchDiv.className = 'fixture';
+                matchDiv.style.background = 'none';
                 matchDiv.style.padding = '5px 0';
-                matchDiv.innerHTML = `<span class="team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span> <span style="font-weight:bold;">${match.homeScore} - ${match.awayScore}</span> <span class="team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>`;
+                matchDiv.innerHTML = `
+                    <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span> 
+                    <div class="fixture-score">${match.homeScore} - ${match.awayScore}</div>
+                    <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
+                `;
                 container.appendChild(matchDiv);
             });
         });

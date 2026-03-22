@@ -124,9 +124,9 @@ tr:nth-child(n+17) td:first-child { border-left: 4px solid var(--red); } /* Z4 *
 }
 
 .fixture {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
     align-items: center;
-    justify-content: space-between;
     padding: 0.8rem;
     background: rgba(255,255,255,0.03);
     border-radius: 8px;
@@ -139,13 +139,21 @@ tr:nth-child(n+17) td:first-child { border-left: 4px solid var(--red); } /* Z4 *
 }
 
 .fixture-team {
-    flex: 1;
     font-size: 0.85rem;
     font-weight: 500;
 }
 
-.fixture-team.home { text-align: right; margin-right: 1rem; }
-.fixture-team.away { text-align: left; margin-left: 1rem; }
+.fixture-team.home { text-align: right; }
+.fixture-team.away { text-align: left; }
+
+.fixture-score {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
 
 .score-input {
     width: 30px;

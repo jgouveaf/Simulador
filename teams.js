@@ -971,11 +971,126 @@ const teams = [
             { "pos": "CA", "name": "Ademilson", "strength": 76, "status": "Reserva" }
         ]
     },
-    { id: 36, name: "Londrina", short: "LEC", color: "#00AEEF", strength: 68, serie: "B" },
-    { id: 37, name: "Náutico", short: "NAU", color: "#FF0000", strength: 69, serie: "B" },
-    { id: 38, name: "São Bernardo", short: "SBE", color: "#FFFF00", strength: 70, serie: "B" },
-    { id: 39, name: "Botafogo-SP", short: "BSP", color: "#FF0000", strength: 72, serie: "B" },
-    { id: 40, name: "Athletic Club", short: "ATH", color: "#000000", strength: 70, serie: "B" }
+    { 
+        id: 36, 
+        name: "Londrina", 
+        short: "LEC", 
+        color: "#00AEEF", 
+        strength: 68, 
+        serie: "B",
+        roster: [
+            { "pos": "GOL", "name": "Mauricio Kozlinski", "strength": 72, "status": "Titular" },
+            { "pos": "LD", "name": "André Dhominique", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Gabriel Lacerda", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "João Maistro", "strength": 69, "status": "Titular" },
+            { "pos": "LE", "name": "Kevyn", "strength": 67, "status": "Titular" },
+            { "pos": "VOL", "name": "João Tavares", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "André Luiz", "strength": 69, "status": "Titular" },
+            { "pos": "MEI", "name": "Nadson", "strength": 71, "status": "Titular" },
+            { "pos": "MEI", "name": "Gian Tortorella", "strength": 68, "status": "Titular" },
+            { "pos": "ATA", "name": "Iago Teles", "strength": 70, "status": "Titular" },
+            { "pos": "CA", "name": "Diego Quirino", "strength": 71, "status": "Titular" },
+            { "pos": "GOL", "name": "Gabriel Felix", "strength": 66, "status": "Reserva" },
+            { "pos": "ZAG", "name": "Wallace", "strength": 68, "status": "Reserva" },
+            { "pos": "CA", "name": "Elias", "strength": 69, "status": "Reserva" }
+        ]
+    },
+    { 
+        id: 37, 
+        name: "Náutico", 
+        short: "NAU", 
+        color: "#FF0000", 
+        strength: 69, 
+        serie: "B",
+        roster: [
+            { "pos": "GOL", "name": "Gastón Guruceaga", "strength": 72, "status": "Titular" },
+            { "pos": "LD", "name": "Arnaldo", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Alemão", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Mateus Silva", "strength": 71, "status": "Titular" },
+            { "pos": "LE", "name": "Luiz Paulo", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "Auremir", "strength": 70, "status": "Titular" },
+            { "pos": "VOL", "name": "Leonai", "strength": 69, "status": "Titular" },
+            { "pos": "MEI", "name": "Dodô", "strength": 72, "status": "Titular" },
+            { "pos": "MEI", "name": "Juninho", "strength": 68, "status": "Titular" },
+            { "pos": "ATA", "name": "Vinícius", "strength": 71, "status": "Titular" },
+            { "pos": "CA", "name": "Felipe Azevedo", "strength": 73, "status": "Titular" },
+            { "pos": "GOL", "name": "Muriel", "strength": 71, "status": "Reserva" },
+            { "pos": "MEI", "name": "Vitinho", "strength": 68, "status": "Reserva" },
+            { "pos": "ATA", "name": "Jonas Toró", "strength": 70, "status": "Reserva" }
+        ]
+    },
+    { 
+        id: 38, 
+        name: "São Bernardo", 
+        short: "SBE", 
+        color: "#FFFF00", 
+        strength: 70, 
+        serie: "B",
+        roster: [
+            { "pos": "GOL", "name": "Alex Alves", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Rodrigo Ferreira", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Rafael Forster", "strength": 72, "status": "Titular" },
+            { "pos": "ZAG", "name": "Hélder Maciel", "strength": 70, "status": "Titular" },
+            { "pos": "LE", "name": "Arthur Henrique", "strength": 69, "status": "Titular" },
+            { "pos": "VOL", "name": "Rodrigo Souza", "strength": 71, "status": "Titular" },
+            { "pos": "VOL", "name": "Emerson Santos", "strength": 70, "status": "Titular" },
+            { "pos": "MEI", "name": "Lucas Lima", "strength": 73, "status": "Titular" },
+            { "pos": "MEI", "name": "Alan Santos", "strength": 71, "status": "Titular" },
+            { "pos": "ATA", "name": "Victor Andrade", "strength": 72, "status": "Titular" },
+            { "pos": "CA", "name": "Kayke", "strength": 74, "status": "Titular" },
+            { "pos": "GOL", "name": "Vanderlei", "strength": 72, "status": "Reserva" },
+            { "pos": "ATA", "name": "Echaporã", "strength": 70, "status": "Reserva" },
+            { "pos": "CA", "name": "Silvinho", "strength": 71, "status": "Reserva" }
+        ]
+    },
+    { 
+        id: 39, 
+        name: "Botafogo-SP", 
+        short: "BSP", 
+        color: "#FF0000", 
+        strength: 72, 
+        serie: "B",
+        roster: [
+            { "pos": "GOL", "name": "Victor Souza", "strength": 73, "status": "Titular" },
+            { "pos": "LD", "name": "Thassio", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Matheus Costa", "strength": 72, "status": "Titular" },
+            { "pos": "ZAG", "name": "Bernardo Schappo", "strength": 73, "status": "Titular" },
+            { "pos": "LE", "name": "Jean Victor", "strength": 71, "status": "Titular" },
+            { "pos": "VOL", "name": "Matheus Sales", "strength": 74, "status": "Titular" },
+            { "pos": "VOL", "name": "Everton Morelli", "strength": 72, "status": "Titular" },
+            { "pos": "MEI", "name": "Rafael Gava", "strength": 76, "status": "Titular" },
+            { "pos": "MEI", "name": "Marquinho", "strength": 71, "status": "Titular" },
+            { "pos": "ATA", "name": "Douglas Baggio", "strength": 75, "status": "Titular" },
+            { "pos": "CA", "name": "Alex Sandro", "strength": 74, "status": "Titular" },
+            { "pos": "GOL", "name": "Jordan", "strength": 71, "status": "Reserva" },
+            { "pos": "LD", "name": "Matheus Barbosa", "strength": 72, "status": "Reserva" },
+            { "pos": "CA", "name": "Leandro Pereira", "strength": 73, "status": "Reserva" }
+        ]
+    },
+    { 
+        id: 40, 
+        name: "Athletic Club", 
+        short: "ATH", 
+        color: "#000000", 
+        strength: 70, 
+        serie: "B",
+        roster: [
+            { "pos": "GOL", "name": "Jhonatan", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Douglas Pelé", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Philipe Sampaio", "strength": 73, "status": "Titular" },
+            { "pos": "ZAG", "name": "Sidimar", "strength": 72, "status": "Titular" },
+            { "pos": "LE", "name": "Nathan", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "David Braga", "strength": 70, "status": "Titular" },
+            { "pos": "VOL", "name": "Ian Luccas", "strength": 71, "status": "Titular" },
+            { "pos": "MEI", "name": "Chico Geraldes", "strength": 75, "status": "Titular" },
+            { "pos": "MEI", "name": "Gustavinho", "strength": 72, "status": "Titular" },
+            { "pos": "ATA", "name": "Welinton", "strength": 71, "status": "Titular" },
+            { "pos": "CA", "name": "Jonathas", "strength": 74, "status": "Titular" },
+            { "pos": "GOL", "name": "Glauco", "strength": 68, "status": "Reserva" },
+            { "pos": "MEI", "name": "Gian Cabezas", "strength": 69, "status": "Reserva" },
+            { "pos": "CA", "name": "Denilson", "strength": 72, "status": "Reserva" }
+        ]
+    }
 ];
 
 export default teams;

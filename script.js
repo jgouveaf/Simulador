@@ -52,7 +52,6 @@ class BrasileiraoSimulator {
             this.updateHistory();
         });
 
-        // Close modal on outside click
         window.onclick = (event) => {
             const modal = document.getElementById('team-modal');
             if (event.target == modal) {
@@ -96,42 +95,64 @@ class BrasileiraoSimulator {
         return [...schedule, ...secondLeg];
     }
 
+    // Helper to calculate ATK and DEF from roster
+    getTeamStats(team) {
+        if (!team.roster || team.roster.length === 0) {
+            return { atk: team.strength, def: team.strength };
+        }
+
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        if (titulares.length === 0) return { atk: team.strength, def: team.strength };
+
+        const defPositions = ['GOL', 'ZAG', 'LD', 'LE', 'VOL'];
+        const atkPositions = ['MEI', 'ATA', 'CA'];
+
+        const defPlayers = titulares.filter(p => defPositions.includes(p.pos));
+        const atkPlayers = titulares.filter(p => atkPositions.includes(p.pos));
+
+        const avgDef = defPlayers.reduce((sum, p) => sum + p.strength, 0) / (defPlayers.length || 1);
+        const avgAtk = atkPlayers.reduce((sum, p) => sum + p.strength, 0) / (atkPlayers.length || 1);
+
+        return { atk: avgAtk, def: avgDef };
+    }
+
     simulateMatch(match, leagueTeams) {
         if (match.homeScore !== null) return;
 
         const homeTeam = leagueTeams.find(t => t.id === match.home);
         const awayTeam = leagueTeams.find(t => t.id === match.away);
 
-        // Home advantage: ~52% of points usually go to home teams in Brasileirao
-        const homeAdvantage = 1.15; 
-        const hStr = Math.pow(homeTeam.strength * homeAdvantage, 2.0); // Higher power for more impact
-        const aStr = Math.pow(awayTeam.strength, 2.0);
-        const totalStr = hStr + aStr;
+        const homeStats = this.getTeamStats(homeTeam);
+        const awayStats = this.getTeamStats(awayTeam);
 
-        // Base match mean: 2.37. Use a small variation per match to simulate "closed" vs "open" games.
-        const matchIntensity = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
-        const targetMatchMean = 2.37 * matchIntensity;
+        // Factors for simulation
+        const homeAdvantage = 1.15; // +15% power for home team
+        const targetMatchMean = 2.37; // User requested average goals
         
-        const hMean = (hStr / totalStr) * targetMatchMean;
-        const aMean = (aStr / totalStr) * targetMatchMean;
+        // Intensity variation (closeness of the game)
+        const matchIntensity = 0.85 + Math.random() * 0.3; // 0.85 to 1.15
+
+        // Logic: Goals = (Team ATK / Opponent DEF) * Baseline
+        // Using Math.pow(ratio, 2.5) to amplify the difference for realism
+        const hRatio = Math.pow((homeStats.atk * homeAdvantage) / awayStats.def, 2.5);
+        const aRatio = Math.pow(awayStats.atk / homeStats.def, 2.5);
+        
+        const totalRatio = hRatio + aRatio;
+        const hMean = (hRatio / totalRatio) * targetMatchMean * matchIntensity;
+        const aMean = (aRatio / totalRatio) * targetMatchMean * matchIntensity;
 
         let hScore = this.poissonRandom(hMean);
         let aScore = this.poissonRandom(aMean);
 
-        // Realistic draw reduction: only for matches where GER is significantly different
-        if (hScore === aScore && Math.random() < 0.25) {
-            const diff = Math.abs(homeTeam.strength - awayTeam.strength);
-            if (diff > 5) {
-                if (hStr > aStr) hScore++;
-                else aScore++;
-            }
+        // Draw reduction for high GER differences
+        if (hScore === aScore && Math.random() < 0.2) {
+            if (homeTeam.strength > awayTeam.strength + 4) hScore++;
+            else if (awayTeam.strength > homeTeam.strength + 4) aScore++;
         }
 
-        // Limit "absurd" scores while keeping them possible
         match.homeScore = Math.min(hScore, 9);
         match.awayScore = Math.min(aScore, 9);
 
-        // Ensure 0-0 happens (about 7-8% probability in reality)
         this.updateLeagueStandings(match, leagueTeams);
     }
 
@@ -350,7 +371,8 @@ class BrasileiraoSimulator {
         `;
 
         const renderRoster = (players, container) => {
-            const list = container.querySelector('div') || document.createElement('div');
+            const list = container.querySelector('.roster-list-inner') || document.createElement('div');
+            list.className = 'roster-list-inner';
             list.innerHTML = '';
             players.forEach(p => {
                 const div = document.createElement('div');
@@ -364,7 +386,7 @@ class BrasileiraoSimulator {
                 `;
                 list.appendChild(div);
             });
-            container.appendChild(list);
+            if (!container.querySelector('.roster-list-inner')) container.appendChild(list);
         };
 
         renderRoster(team.roster.filter(p => p.status === 'Titular'), titulares);

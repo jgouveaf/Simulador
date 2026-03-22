@@ -94,18 +94,29 @@ class BrasileiraoSimulator {
         const homeTeam = leagueTeams.find(t => t.id === match.home);
         const awayTeam = leagueTeams.find(t => t.id === match.away);
 
-        const homeAdvantage = 1.05;
-        const homeStrength = homeTeam.strength * homeAdvantage;
-        const awayStrength = awayTeam.strength;
-        const totalStrength = homeStrength + awayStrength;
+        const homeAdvantage = 1.10; // Advantage for playing at home
+        const hStr = Math.pow(homeTeam.strength * homeAdvantage, 1.5);
+        const aStr = Math.pow(awayTeam.strength, 1.5);
+        const totalStr = hStr + aStr;
 
-        // User requested 2.77 goals per MATCH (average).
+        // Target 2.77 goals per match
         const targetMatchMean = 2.77;
-        const hMean = (homeStrength / totalStrength) * targetMatchMean * 0.55; 
-        const aMean = (awayStrength / totalStrength) * targetMatchMean * 0.45;
+        const hMean = (hStr / totalStr) * targetMatchMean;
+        const aMean = (aStr / totalStr) * targetMatchMean;
 
-        match.homeScore = this.poissonRandom(hMean);
-        match.awayScore = this.poissonRandom(aMean);
+        let hScore = this.poissonRandom(hMean);
+        let aScore = this.poissonRandom(aMean);
+
+        // Reduction of draws: if it's a draw, there's a 30% chance to break it 
+        // if the strength difference is significant (>5%)
+        if (hScore === aScore && Math.random() < 0.3) {
+            if (hStr > aStr * 1.05) hScore++;
+            else if (aStr > hStr * 1.05) aScore++;
+        }
+
+        // Limit goleadas but allow them (rarely over 7)
+        match.homeScore = Math.min(hScore, 9);
+        match.awayScore = Math.min(aScore, 9);
 
         this.updateLeagueStandings(match, leagueTeams);
     }

@@ -15,11 +15,19 @@
                 <img src="logo.png" alt="Logo" style="width: 50px; height: 50px;">
                 <h1>Simulador <span style="color: #238636;">Brasileirão</span> 2026</h1>
             </div>
-            <div id="status-badge" class="badge secondary">Temporada Iniciada</div>
+            <div style="display: flex; gap: 10px;">
+                <select id="serie-selector" style="background: var(--card-bg); color: #fff; border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; cursor: pointer;">
+                    <option value="A">Série A</option>
+                    <option value="B">Série B</option>
+                </select>
+                <div id="status-badge" class="badge secondary">Temporada Iniciada</div>
+            </div>
         </header>
 
         <section class="table-container card">
-            <h2 style="margin-bottom: 20px;">Tabela do Campeonato</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Tabela do Campeonato</h2>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -70,6 +78,13 @@
                 <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Total de Gols: <span id="total-goals" style="color: #fff;">0</span></p>
                 <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Méd. Gols/Jogo: <span id="avg-goals" style="color: #fff;">0</span></p>
                 <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Rodada Atual: <span id="round-progress" style="color: #fff;">0/38</span></p>
+            </div>
+
+            <div class="card" style="max-height: 400px; overflow-y: auto;">
+                <h3 style="margin-bottom: 1rem;">Histórico de Resultados (Últimos Jogos)</h3>
+                <div id="history-container" style="font-size: 0.75rem;">
+                    <!-- History will be injected here -->
+                </div>
             </div>
         </section>
     </div>

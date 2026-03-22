@@ -2,51 +2,71 @@ import teamsData from './teams.js';
 
 class BrasileiraoSimulator {
     constructor() {
-        this.teams = teamsData.map(team => ({
-            ...team,
-            points: 0,
-            played: 0,
-            won: 0,
-            drawn: 0,
-            lost: 0,
-            goalsFor: 0,
-            goalsAgainst: 0,
-            goalDiff: 0,
-            percentage: 0
-        }));
-        
-        this.rounds = [];
-        this.currentRound = 0;
-        this.allMatches = [];
+        this.allTeamsRaw = teamsData;
+        this.currentSerie = 'A';
+        this.leagues = {
+            'A': this.initLeague('A'),
+            'B': this.initLeague('B')
+        };
         
         this.init();
     }
 
-    init() {
-        this.generateRounds();
-        this.updateTable();
-        this.displayRound();
+    initLeague(serie) {
+        const teams = this.allTeamsRaw
+            .filter(t => t.serie === serie)
+            .map(team => ({
+                ...team,
+                points: 0,
+                played: 0,
+                won: 0,
+                drawn: 0,
+                lost: 0,
+                goalsFor: 0,
+                goalsAgainst: 0,
+                goalDiff: 0,
+                percentage: 0
+            }));
+
+        const rounds = this.generateRounds(teams);
+        
+        return {
+            teams,
+            rounds,
+            currentRound: 0,
+            status: 'Iniciada'
+        };
     }
 
-    // Berger Algorithm to generate 38 rounds
-    generateRounds() {
-        const teamIds = this.teams.map(t => t.id);
+    init() {
+        this.updateTable();
+        this.displayRound();
+        this.updateStats();
+        this.updateHistory();
+        
+        document.getElementById('serie-selector').addEventListener('change', (e) => {
+            this.currentSerie = e.target.value;
+            this.updateTable();
+            this.displayRound();
+            this.updateStats();
+            this.updateHistory();
+        });
+    }
+
+    generateRounds(teams) {
+        const teamIds = teams.map(t => t.id);
         const n = teamIds.length;
         const roundsCount = n - 1;
         const matchesPerRound = n / 2;
 
         let schedule = [];
-
-        // Round Robin (First Leg)
         for (let r = 0; r < roundsCount; r++) {
             let matches = [];
             for (let i = 0; i < matchesPerRound; i++) {
                 const home = (r + i) % (n - 1);
                 let away = (n - 1 - i + r) % (n - 1);
-                
                 if (i === 0) away = n - 1;
 
-                // Home/away alternation
                 if (r % 2 === 0) {
                     matches.push({ home: teamIds[home], away: teamIds[away], homeScore: null, awayScore: null });
                 } else {
@@ -56,7 +76,6 @@ class BrasileiraoSimulator {
             schedule.push(matches);
         }
 
-        // Second Leg (Reverse fixtures)
         const secondLeg = schedule.map(round => {
             return round.map(match => ({
                 home: match.away,
@@ -66,31 +85,29 @@ class BrasileiraoSimulator {
             }));
         });
 
-        this.rounds = [...schedule, ...secondLeg];
+        return [...schedule, ...secondLeg];
     }
 
-    simulateMatch(match) {
-        if (match.homeScore !== null) return; // Already simulated
+    simulateMatch(match, leagueTeams) {
+        if (match.homeScore !== null) return;
 
-        const homeTeam = this.teams.find(t => t.id === match.home);
-        const awayTeam = this.teams.find(t => t.id === match.away);
+        const homeTeam = leagueTeams.find(t => t.id === match.home);
+        const awayTeam = leagueTeams.find(t => t.id === match.away);
 
-        // Strength-based simulation (simplified Poisson-like)
-        const homeAdvantage = 1.1; // 10% home advantage
+        const homeAdvantage = 1.05;
         const homeStrength = homeTeam.strength * homeAdvantage;
         const awayStrength = awayTeam.strength;
-
         const totalStrength = homeStrength + awayStrength;
-        
-        // Random goals based on strength
-        // Mean goals ~ 1.5 per team, adjusted
-        const homeMean = (homeStrength / totalStrength) * 3;
-        const awayMean = (awayStrength / totalStrength) * 2.5;
 
-        match.homeScore = this.poissonRandom(homeMean);
-        match.awayScore = this.poissonRandom(awayMean);
+        // User requested 1.3 goals per MATCH (average).
+        const targetMatchMean = 1.3;
+        const hMean = (homeStrength / totalStrength) * targetMatchMean * 0.55; 
+        const aMean = (awayTeam.strength / totalStrength) * targetMatchMean * 0.45;
 
-        this.updateStandings(match);
+        match.homeScore = this.poissonRandom(hMean);
+        match.awayScore = this.poissonRandom(aMean);
+
+        this.updateLeagueStandings(match, leagueTeams);
     }
 
     poissonRandom(mean) {
@@ -104,9 +121,9 @@ class BrasileiraoSimulator {
         return k - 1;
     }
 
-    updateStandings(match) {
-        const home = this.teams.find(t => t.id === match.home);
-        const away = this.teams.find(t => t.id === match.away);
+    updateLeagueStandings(match, teams) {
+        const home = teams.find(t => t.id === match.home);
+        const away = teams.find(t => t.id === match.away);
 
         home.played++;
         away.played++;
@@ -116,66 +133,50 @@ class BrasileiraoSimulator {
         away.goalsAgainst += match.homeScore;
 
         if (match.homeScore > match.awayScore) {
-            home.points += 3;
-            home.won++;
-            away.lost++;
+            home.points += 3; home.won++; away.lost++;
         } else if (match.homeScore < match.awayScore) {
-            away.points += 3;
-            away.won++;
-            home.lost++;
+            away.points += 3; away.won++; home.lost++;
         } else {
-            home.points += 1;
-            away.points += 1;
-            home.drawn++;
-            away.drawn++;
+            home.points += 1; away.points += 1; home.drawn++; away.drawn++;
         }
 
         home.goalDiff = home.goalsFor - home.goalsAgainst;
         away.goalDiff = away.goalsFor - away.goalsAgainst;
-
         home.percentage = home.played > 0 ? ((home.points / (home.played * 3)) * 100).toFixed(1) : 0;
         away.percentage = away.played > 0 ? ((away.points / (away.played * 3)) * 100).toFixed(1) : 0;
     }
 
     simulateRound() {
-        if (this.currentRound >= this.rounds.length) return;
+        const lg = this.leagues[this.currentSerie];
+        if (lg.currentRound >= lg.rounds.length) return;
 
-        const roundMatches = this.rounds[this.currentRound];
-        roundMatches.forEach(m => this.simulateMatch(m));
-
-        this.currentRound++;
+        lg.rounds[lg.currentRound].forEach(m => this.simulateMatch(m, lg.teams));
+        lg.currentRound++;
+        
         this.updateTable();
         this.displayRound();
         this.updateStats();
+        this.updateHistory();
     }
 
     simulateSeason() {
-        while (this.currentRound < this.rounds.length) {
+        const lg = this.leagues[this.currentSerie];
+        while (lg.currentRound < lg.rounds.length) {
             this.simulateRound();
         }
     }
 
     resetSeason() {
-        this.teams.forEach(t => {
-            t.points = 0; t.played = 0; t.won = 0; t.drawn = 0;
-            t.lost = 0; t.goalsFor = 0; t.goalsAgainst = 0;
-            t.goalDiff = 0; t.percentage = 0;
-        });
-        
-        this.rounds.forEach(r => r.forEach(m => {
-            m.homeScore = null;
-            m.awayScore = null;
-        }));
-        
-        this.currentRound = 0;
+        this.leagues[this.currentSerie] = this.initLeague(this.currentSerie);
         this.updateTable();
         this.displayRound();
         this.updateStats();
+        this.updateHistory();
     }
 
     updateTable() {
-        // Sort criteria: Points > Wins > GD > GF
-        const sortedTeams = [...this.teams].sort((a, b) => {
+        const lg = this.leagues[this.currentSerie];
+        const sortedTeams = [...lg.teams].sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
             if (b.won !== a.won) return b.won - a.won;
             if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
@@ -210,29 +211,30 @@ class BrasileiraoSimulator {
     }
 
     displayRound() {
+        const lg = this.leagues[this.currentSerie];
         const container = document.getElementById('fixtures-container');
         const roundNumEl = document.getElementById('current-round-number');
         
-        if (this.currentRound >= this.rounds.length) {
+        roundNumEl.textContent = lg.currentRound + 1;
+        container.innerHTML = '';
+
+        if (lg.currentRound >= lg.rounds.length) {
             container.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-secondary);">Temporada Finalizada!</div>';
             return;
         }
 
-        roundNumEl.textContent = this.currentRound + 1;
-        container.innerHTML = '';
-
-        const currentMatches = this.rounds[this.currentRound];
+        const currentMatches = lg.rounds[lg.currentRound];
         currentMatches.forEach(match => {
-            const home = this.teams.find(t => t.id === match.home);
-            const away = this.teams.find(t => t.id === match.away);
+            const home = lg.teams.find(t => t.id === match.home);
+            const away = lg.teams.find(t => t.id === match.away);
 
             const div = document.createElement('div');
             div.className = 'fixture';
             div.innerHTML = `
                 <span class="fixture-team home">${home.name}</span>
-                <div style="display: flex; gap: 5px;">
+                <div style="display: flex; gap: 5px; align-items: center;">
                     <span class="score-input">${match.homeScore ?? '-'}</span>
-                    <span>X</span>
+                    <span style="font-size: 0.6rem; color: var(--text-secondary);">X</span>
                     <span class="score-input">${match.awayScore ?? '-'}</span>
                 </div>
                 <span class="fixture-team away">${away.name}</span>
@@ -242,10 +244,11 @@ class BrasileiraoSimulator {
     }
 
     updateStats() {
+        const lg = this.leagues[this.currentSerie];
         let totalGoals = 0;
         let totalMatches = 0;
         
-        this.rounds.forEach(r => r.forEach(m => {
+        lg.rounds.forEach(r => r.forEach(m => {
             if (m.homeScore !== null) {
                 totalGoals += m.homeScore + m.awayScore;
                 totalMatches++;
@@ -254,20 +257,55 @@ class BrasileiraoSimulator {
 
         document.getElementById('total-goals').textContent = totalGoals;
         document.getElementById('avg-goals').textContent = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(2) : '0';
-        document.getElementById('round-progress').textContent = `${this.currentRound}/38`;
+        document.getElementById('round-progress').textContent = `${lg.currentRound}/38`;
         
-        if (this.currentRound === 38) {
-            document.getElementById('status-badge').textContent = 'Temporada Encerrada';
-            document.getElementById('status-badge').style.borderColor = 'var(--gold)';
-            document.getElementById('status-badge').style.color = 'var(--gold)';
+        const badge = document.getElementById('status-badge');
+        if (lg.currentRound === 38) {
+            badge.textContent = 'Temporada Encerrada';
+            badge.style.color = 'var(--gold)';
         } else {
-            document.getElementById('status-badge').textContent = 'Temporada em Andamento';
-            document.getElementById('status-badge').style.borderColor = 'var(--accent)';
-            document.getElementById('status-badge').style.color = 'var(--accent)';
+            badge.textContent = 'Em Andamento';
+            badge.style.color = 'var(--accent)';
         }
+    }
+
+    updateHistory() {
+        const container = document.getElementById('history-container');
+        const lg = this.leagues[this.currentSerie];
+        
+        const lastRounds = lg.rounds
+            .slice(0, lg.currentRound)
+            .reverse() 
+            .slice(0, 3);
+
+        if (lastRounds.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-secondary);">Nenhum jogo realizado ainda.</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        lastRounds.forEach((round, i) => {
+            const roundTitle = document.createElement('div');
+            roundTitle.style.fontWeight = 'bold';
+            roundTitle.style.marginTop = '10px';
+            roundTitle.style.borderBottom = '1px solid var(--border)';
+            roundTitle.style.paddingBottom = '5px';
+            roundTitle.textContent = `Rodada ${lg.currentRound - i}`;
+            container.appendChild(roundTitle);
+
+            round.forEach(match => {
+                const home = lg.teams.find(t => t.id === match.home);
+                const away = lg.teams.find(t => t.id === match.away);
+                const matchDiv = document.createElement('div');
+                matchDiv.style.display = 'flex';
+                matchDiv.style.justifyContent = 'space-between';
+                matchDiv.style.padding = '5px 0';
+                matchDiv.innerHTML = `<span>${home.name}</span> <span style="font-weight:bold;">${match.homeScore} - ${match.awayScore}</span> <span>${away.name}</span>`;
+                container.appendChild(matchDiv);
+            });
+        });
     }
 }
 
-// Global instance for onclick access
 window.simulator = new BrasileiraoSimulator();
 export default window.simulator;

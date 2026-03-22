@@ -51,6 +51,14 @@ class BrasileiraoSimulator {
             this.updateStats();
             this.updateHistory();
         });
+
+        // Close modal on outside click
+        window.onclick = (event) => {
+            const modal = document.getElementById('team-modal');
+            if (event.target == modal) {
+                this.closeModal();
+            }
+        };
     }
 
     generateRounds(teams) {
@@ -94,12 +102,11 @@ class BrasileiraoSimulator {
         const homeTeam = leagueTeams.find(t => t.id === match.home);
         const awayTeam = leagueTeams.find(t => t.id === match.away);
 
-        const homeAdvantage = 1.10; // Advantage for playing at home
+        const homeAdvantage = 1.10;
         const hStr = Math.pow(homeTeam.strength * homeAdvantage, 1.5);
         const aStr = Math.pow(awayTeam.strength, 1.5);
         const totalStr = hStr + aStr;
 
-        // User requested exactly 2.37 goals per match
         const targetMatchMean = 2.37;
         const hMean = (hStr / totalStr) * targetMatchMean;
         const aMean = (aStr / totalStr) * targetMatchMean;
@@ -107,14 +114,11 @@ class BrasileiraoSimulator {
         let hScore = this.poissonRandom(hMean);
         let aScore = this.poissonRandom(aMean);
 
-        // Reduction of draws: if it's a draw, there's a 30% chance to break it 
-        // if the strength difference is significant (>5%)
         if (hScore === aScore && Math.random() < 0.3) {
             if (hStr > aStr * 1.05) hScore++;
             else if (aStr > hStr * 1.05) aScore++;
         }
 
-        // Limit goleadas but allow them (rarely over 7)
         match.homeScore = Math.min(hScore, 9);
         match.awayScore = Math.min(aScore, 9);
 
@@ -202,7 +206,7 @@ class BrasileiraoSimulator {
             tr.innerHTML = `
                 <td class="pos">${index + 1}</td>
                 <td>
-                    <div class="team-name">
+                    <div class="team-name team-clickable" onclick="simulator.showTeamDetails(${team.id})">
                         <div class="team-color" style="background-color: ${team.color};"></div>
                         ${team.name}
                     </div>
@@ -242,13 +246,13 @@ class BrasileiraoSimulator {
             const div = document.createElement('div');
             div.className = 'fixture';
             div.innerHTML = `
-                <span class="fixture-team home">${home.name}</span>
+                <span class="fixture-team home team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span>
                 <div style="display: flex; gap: 5px; align-items: center;">
                     <span class="score-input">${match.homeScore ?? '-'}</span>
                     <span style="font-size: 0.6rem; color: var(--text-secondary);">X</span>
                     <span class="score-input">${match.awayScore ?? '-'}</span>
                 </div>
-                <span class="fixture-team away">${away.name}</span>
+                <span class="fixture-team away team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>
             `;
             container.appendChild(div);
         });
@@ -311,10 +315,56 @@ class BrasileiraoSimulator {
                 matchDiv.style.display = 'flex';
                 matchDiv.style.justifyContent = 'space-between';
                 matchDiv.style.padding = '5px 0';
-                matchDiv.innerHTML = `<span>${home.name}</span> <span style="font-weight:bold;">${match.homeScore} - ${match.awayScore}</span> <span>${away.name}</span>`;
+                matchDiv.innerHTML = `<span class="team-clickable" onclick="simulator.showTeamDetails(${home.id})">${home.name}</span> <span style="font-weight:bold;">${match.homeScore} - ${match.awayScore}</span> <span class="team-clickable" onclick="simulator.showTeamDetails(${away.id})">${away.name}</span>`;
                 container.appendChild(matchDiv);
             });
         });
+    }
+
+    showTeamDetails(teamId) {
+        const team = this.allTeamsRaw.find(t => t.id === teamId);
+        if (!team || !team.roster) {
+            console.warn("Details not available for this team.");
+            return;
+        }
+
+        const modal = document.getElementById('team-modal');
+        const header = document.getElementById('modal-header');
+        const titulares = document.getElementById('titulares-list');
+        const reservas = document.getElementById('reservas-list');
+
+        header.innerHTML = `
+            <div style="width: 15px; height: 15px; background: ${team.color}; border-radius: 50%;"></div>
+            <h2 style="font-size: 2rem;">${team.name}</h2>
+            <div class="badge" style="background: var(--border); margin-left: auto;">GER: ${team.strength}</div>
+        `;
+
+        const renderRoster = (players, container) => {
+            const list = container.querySelector('div') || document.createElement('div');
+            list.innerHTML = '';
+            players.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `
+                    <div style="display: flex; gap: 10px;">
+                        <span class="player-pos">${p.pos}</span>
+                        <span>${p.name}</span>
+                    </div>
+                    <span class="player-strength">${p.strength}</span>
+                `;
+                list.appendChild(div);
+            });
+            container.appendChild(list);
+        };
+
+        renderRoster(team.roster.filter(p => p.status === 'Titular'), titulares);
+        renderRoster(team.roster.filter(p => p.status === 'Reserva'), reservas);
+
+        modal.style.display = 'block';
+    }
+
+    closeModal() {
+        document.getElementById('team-modal').style.display = 'none';
     }
 }
 

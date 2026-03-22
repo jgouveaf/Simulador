@@ -89,6 +89,26 @@
         </section>
     </div>
 
+    <!-- Modal para Detalhes do Time -->
+    <div id="team-modal" class="modal">
+        <div class="modal-content card">
+            <span class="close-modal" onclick="simulator.closeModal()">&times;</span>
+            <div id="modal-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                <!-- Header do time -->
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div id="titulares-list">
+                    <h3 style="color: var(--gold); margin-bottom: 1rem;">Titulares</h3>
+                    <!-- Jogadores titulares -->
+                </div>
+                <div id="reservas-list">
+                    <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Reservas</h3>
+                    <!-- Jogadores reservas -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>

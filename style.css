@@ -205,11 +205,70 @@ button.secondary:hover {
 }
 
 /* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
 }
 
-.card {
-    animation: fadeIn 0.5s ease forwards;
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 5% auto;
+    padding: 2.5rem;
+    width: 80%;
+    max-width: 900px;
+    border-radius: 20px;
+    position: relative;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.close-modal {
+    color: var(--text-secondary);
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #fff;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.player-pos {
+    width: 45px;
+    color: var(--text-secondary);
+    font-weight: 800;
+    font-size: 0.75rem;
+}
+
+.player-strength {
+    color: var(--gold);
+    font-weight: bold;
+}
+
+.team-clickable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.team-clickable:hover {
+    color: var(--accent-hover);
 }

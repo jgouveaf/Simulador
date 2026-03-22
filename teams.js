@@ -122,7 +122,7 @@ const teams = [
     },
     {
         id: 5,
-        name: "Clube de Regatas do Flamengo",
+        name: "Flamengo",
         short: "FLA",
         color: "#C40000",
         strength: 96,
@@ -581,7 +581,7 @@ const teams = [
     },
     {
         id: 20,
-        name: "Clube do Remo",
+        name: "Remo",
         short: "REM",
         color: "#0B173B",
         strength: 74,

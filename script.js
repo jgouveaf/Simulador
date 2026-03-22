@@ -99,10 +99,10 @@ class BrasileiraoSimulator {
         const awayStrength = awayTeam.strength;
         const totalStrength = homeStrength + awayStrength;
 
-        // User requested 1.3 goals per MATCH (average).
-        const targetMatchMean = 1.3;
+        // User requested 2.77 goals per MATCH (average).
+        const targetMatchMean = 2.77;
         const hMean = (homeStrength / totalStrength) * targetMatchMean * 0.55; 
-        const aMean = (awayTeam.strength / totalStrength) * targetMatchMean * 0.45;
+        const aMean = (awayStrength / totalStrength) * targetMatchMean * 0.45;
 
         match.homeScore = this.poissonRandom(hMean);
         match.awayScore = this.poissonRandom(aMean);

@@ -52,6 +52,9 @@ class BrasileiraoSimulator {
         this.displayCalendar();
         this.setupFriendlySelects();
         
+        // Force initial screen to be main menu
+        this.openScreen('main-menu');
+        
         // Tab switching logic
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', (e) => {

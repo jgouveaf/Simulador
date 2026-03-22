@@ -20,7 +20,6 @@
                     <option value="A">Série A</option>
                     <option value="B">Série B</option>
                 </select>
-                <button id="view-toggle" class="secondary" style="width: auto; margin-top: 0;" onclick="simulator.toggleView()">Ver Calendário</button>
                 <div id="status-badge" class="badge secondary">Temporada Iniciada</div>
             </div>
         </header>
@@ -83,6 +82,7 @@
                 <div id="simulation-controls">
                     <button onclick="simulator.simulateRound()">Simular Rodada</button>
                     <button class="secondary" onclick="simulator.simulateSeason()">Simular Temporada Inteira</button>
+                    <button id="view-toggle" class="secondary" style="margin-top: 1rem; width: 100%; border: 1px solid var(--accent); color: var(--accent);" onclick="simulator.toggleView()">Ver Calendário Completo</button>
                 </div>
             </div>
 

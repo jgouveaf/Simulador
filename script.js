@@ -280,16 +280,19 @@ class BrasileiraoSimulator {
     toggleView() {
         const tableView = document.getElementById('table-view');
         const calendarView = document.getElementById('calendar-view');
+        const detailPanel = document.querySelector('.panel'); // The sidebar/round nav
         const btn = document.getElementById('view-toggle');
 
         if (tableView.style.display === 'none') {
             tableView.style.display = 'block';
+            detailPanel.style.display = 'block';
             calendarView.style.display = 'none';
-            btn.textContent = 'Ver Calendário';
+            if (btn) btn.textContent = 'Ver Calendário Completo';
         } else {
             tableView.style.display = 'none';
+            detailPanel.style.display = 'none';
             calendarView.style.display = 'block';
-            btn.textContent = 'Ver Tabela';
+            if (btn) btn.textContent = 'Voltar para Tabela';
             this.displayCalendar();
         }
     }

@@ -99,8 +99,8 @@ class BrasileiraoSimulator {
         const aStr = Math.pow(awayTeam.strength, 1.5);
         const totalStr = hStr + aStr;
 
-        // Target 2.77 goals per match
-        const targetMatchMean = 2.77;
+        // User requested exactly 2.37 goals per match
+        const targetMatchMean = 2.37;
         const hMean = (hStr / totalStr) * targetMatchMean;
         const aMean = (aStr / totalStr) * targetMatchMean;
 

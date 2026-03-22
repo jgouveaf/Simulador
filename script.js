@@ -86,6 +86,15 @@ class BrasileiraoSimulator {
             schedule.push(matches);
         }
 
+        const secondLeg = schedule.map(round => {
+            return round.map(match => ({
+                home: match.away,
+                away: match.home,
+                homeScore: null,
+                awayScore: null
+            }));
+        });
+
         return [...schedule, ...secondLeg].map((round, index) => {
             return {
                 matches: round,

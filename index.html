@@ -103,14 +103,118 @@
             </div>
 
             <div id="tab-squad" class="tab-content" style="display: none;">
-                <div class="squad-management">
-                    <div class="card">
-                        <h3>Time Titular</h3>
-                        <div id="career-titulares" style="margin-top: 1rem;"></div>
+                <!-- Sub-abas do Elenco -->
+                <nav class="fifa-tabs secondary-tabs">
+                    <div class="tab sub-tab active" data-subtab="roster">Elenco</div>
+                    <div class="tab sub-tab" data-subtab="formation">Formação</div>
+                    <div class="tab sub-tab" data-subtab="instructions">Instruções</div>
+                    <div class="tab sub-tab" data-subtab="tactics">Táticas</div>
+                    <div class="tab sub-tab" data-subtab="roles">Funções</div>
+                </nav>
+
+                <!-- 1. ABA ELENCO (ROSTER/MOVE) -->
+                <div id="subtab-roster" class="sub-tab-content active">
+                    <div class="squad-management">
+                        <div class="card">
+                            <h3>Titulares (Starting XI) <span class="badge">11</span></h3>
+                            <div id="career-titulares" class="player-drop-zone" style="margin-top: 1rem;"></div>
+                        </div>
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Reservas (Subs) <span class="badge">7</span></h3>
+                                <p style="font-size: 0.7rem; color: var(--text-secondary);">Relacionados para o jogo</p>
+                            </div>
+                            <div id="career-reservas" class="player-drop-zone" style="margin-top: 1rem;"></div>
+                            
+                            <hr style="margin: 1.5rem 0; opacity: 0.1;">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Não Relacionados (Reserves)</h3>
+                                <p style="font-size: 0.7rem; color: var(--text-secondary);">Fora do banco</p>
+                            </div>
+                            <div id="career-not-related" class="player-drop-zone" style="margin-top: 1rem;"></div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- 2. ABA FORMAÇÃO -->
+                <div id="subtab-formation" class="sub-tab-content" style="display: none;">
+                    <div class="formation-grid">
+                        <div class="card formation-preview">
+                            <div class="pitch-formation" id="pitch-formation-display">
+                                <!-- Jogadores posicionados aqui via JS -->
+                            </div>
+                        </div>
+                        <div class="card formation-selector">
+                            <h3 style="margin-bottom: 1.5rem;">Escolher Esquema</h3>
+                            <div class="formation-options">
+                                <button class="btn-formation" data-formation="4-3-3">4-3-3</button>
+                                <button class="btn-formation" data-formation="4-4-2">4-4-2</button>
+                                <button class="btn-formation" data-formation="3-5-2">3-5-2</button>
+                                <button class="btn-formation" data-formation="5-3-2">5-3-2</button>
+                                <button class="btn-formation" data-formation="4-2-3-1">4-2-3-1</button>
+                            </div>
+                            <div style="margin-top: 2rem;">
+                                <p style="font-size: 0.8rem; color: var(--text-secondary);">Dica: Ao mudar a formação, reajuste as posições manualmente na aba Elenco.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ABA INSTRUÇÕES -->
+                <div id="subtab-instructions" class="sub-tab-content" style="display: none;">
                     <div class="card">
-                        <h3>Reservas</h3>
-                        <div id="career-reservas" style="margin-top: 1rem;"></div>
+                        <h3>Instruções Individuais</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Selecione um jogador no campo para dar comandos específicos.</p>
+                        <div class="instructions-layout">
+                            <div class="pitch-mini" id="pitch-mini-instructions"></div>
+                            <div class="instruction-panel" id="instruction-panel-details">
+                                <p style="text-align: center; color: var(--text-secondary);">Selecione um jogador no campinho ao lado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. ABA TÁTICAS -->
+                <div id="subtab-tactics" class="sub-tab-content" style="display: none;">
+                    <div class="tactics-grid">
+                        <div class="card">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--fifa-cyan);">Defesa</h3>
+                            <div class="tactic-item">
+                                <label>Amplitude</label>
+                                <input type="range" min="1" max="10" value="5" id="tactics-def-width">
+                            </div>
+                            <div class="tactic-item">
+                                <label>Profundidade</label>
+                                <input type="range" min="1" max="10" value="5" id="tactics-def-depth">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-bottom: 1.5rem; color: var(--fifa-pink);">Ataque</h3>
+                            <div class="tactic-item">
+                                <label>Estilo de Chegada</label>
+                                <select id="tactics-atk-style">
+                                    <option value="balanced">Equilibrado</option>
+                                    <option value="possession">Posse de Bola</option>
+                                    <option value="direct">Passe Direcionado</option>
+                                    <option value="fast">Contra-ataque Rápido</option>
+                                </select>
+                            </div>
+                            <div class="tactic-item">
+                                <label>Amplitude</label>
+                                <input type="range" min="1" max="10" value="5" id="tactics-atk-width">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. ABA FUNÇÕES -->
+                <div id="subtab-roles" class="sub-tab-content" style="display: none;">
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem;">Funções do Time</h3>
+                        <div class="roles-grid" id="roles-config">
+                            <!-- Roles injected via JS -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -143,7 +247,90 @@
             </div>
         </section>
 
-        <!-- TELA 4: AMISTOSO -->
+        <!-- TELA 4: SIMULAÇÃO DE PARTIDA (ESTILO FIFA) -->
+        <section id="match-simulation-screen" class="screen">
+            <div class="simulation-container">
+                <!-- Header: Scoreboard -->
+                <header class="sim-header">
+                    <div class="sim-team home">
+                        <div class="sim-team-logo" id="sim-home-logo"></div>
+                        <h2 id="sim-home-name">MANDANTE</h2>
+                    </div>
+                    <div class="sim-score-board">
+                        <div class="sim-score" id="sim-score-value">0 - 0</div>
+                        <div class="sim-time" id="sim-time-value">00:00</div>
+                    </div>
+                    <div class="sim-team away">
+                        <h2 id="sim-away-name">VISITANTE</h2>
+                        <div class="sim-team-logo" id="sim-away-logo"></div>
+                    </div>
+                </header>
+
+                <div class="sim-main-content">
+                    <!-- Left Sidebar: Home Roster -->
+                    <aside class="sim-sidebar left">
+                        <div class="sim-tabs-side">
+                            <span class="active">TITULARES</span>
+                        </div>
+                        <div class="sim-player-list" id="sim-home-players">
+                            <!-- Injected players -->
+                        </div>
+                    </aside>
+
+                    <!-- Center: Pitch -->
+                    <main class="sim-pitch-area">
+                        <div class="soccer-pitch">
+                            <div class="pitch-line center-line"></div>
+                            <div class="pitch-line center-circle"></div>
+                            <div class="pitch-line box-home"></div>
+                            <div class="pitch-line box-away"></div>
+                            <!-- Player Dots will be here -->
+                            <div id="sim-pitch-players"></div>
+                            <div id="sim-pitch-ball" class="ball"></div>
+                        </div>
+                    </main>
+
+                    <!-- Right Sidebar: Away Roster -->
+                    <aside class="sim-sidebar right">
+                        <div class="sim-tabs-side">
+                            <span class="active">TITULARES</span>
+                        </div>
+                        <div class="sim-player-list" id="sim-away-players">
+                            <!-- Injected players -->
+                        </div>
+                    </aside>
+                </div>
+
+                <!-- Footer: Controls -->
+                <footer class="sim-footer">
+                    <div class="sim-controls">
+                        <button id="btn-sim-skip" class="secondary">Pular Simulação</button>
+                    </div>
+                    <nav class="sim-nav-tabs">
+                        <div class="sim-nav-item active">ESTATÍSTICAS</div>
+                        <div class="sim-nav-item">NOTAS</div>
+                        <div class="sim-nav-item" id="btn-sim-tactic-opener">TÁTICA</div>
+                    </nav>
+
+                    <!-- CONTROLES RÁPIDOS (D-PAD) -->
+                    <div class="sim-quick-controls">
+                        <div class="mentality-control">
+                            <button class="btn-mentality" data-mentality="ultra-def">U. DEF</button>
+                            <button class="btn-mentality" data-mentality="def">DEF</button>
+                            <button class="btn-mentality active" data-mentality="bal">BAL</button>
+                            <button class="btn-mentality" data-mentality="atk">ATK</button>
+                            <button class="btn-mentality" data-mentality="ultra-atk">U. ATK</button>
+                        </div>
+                        <div class="quick-tactics">
+                            <button class="btn-quick-t" title="Pressão Total">🔥 PRESS</button>
+                            <button class="btn-quick-t" title="Subir Laterais">↗️ LATS</button>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </section>
+
+        <!-- TELA 5: AMISTOSO -->
         <section id="friendly-setup-screen" class="screen">
             <header class="fifa-header">
                 <h2>Selecione os Times</h2>

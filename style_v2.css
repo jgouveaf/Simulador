@@ -154,6 +154,26 @@ body {
     border-bottom-color: var(--fifa-cyan);
 }
 
+.secondary-tabs {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.secondary-tabs .tab {
+    font-size: 0.75rem;
+    padding: 8px 15px;
+}
+
+.badge {
+    background: var(--fifa-cyan);
+    color: #000;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
 /* Career Layout */
 .career-layout {
     display: grid;
@@ -235,6 +255,179 @@ table tr:hover { background: rgba(0, 242, 255, 0.05); }
 
 .squad-slot:hover { background: rgba(255,255,255,0.05); }
 
+/* Formation Pitch */
+.formation-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+}
+
+.pitch-formation {
+    width: 100%;
+    aspect-ratio: 1.2;
+    background: #0a1b33;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pitch-player {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: var(--card-bg);
+    border: 1px solid var(--fifa-cyan);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.pitch-player:hover {
+    background: rgba(0, 242, 255, 0.2);
+    border-color: #fff;
+    z-index: 10;
+}
+
+.pitch-player .pos-label {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--fifa-cyan);
+}
+
+.pitch-player .name-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 2px;
+}
+
+.formation-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-formation {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 0.2s;
+}
+
+.btn-formation:hover, .btn-formation.active {
+    background: var(--fifa-cyan);
+    color: #000;
+    border-color: var(--fifa-cyan);
+}
+
+/* Tactics UI */
+.tactics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.tactic-item {
+    margin-bottom: 2rem;
+}
+
+.tactic-item label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+input[type=range] {
+    width: 100%;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: var(--fifa-cyan);
+    cursor: pointer;
+    margin-top: -7px;
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+/* Instructions UI */
+.instructions-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+}
+
+.pitch-mini {
+    aspect-ratio: 0.8;
+    background: #0a1b33;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+}
+
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.role-item {
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.role-label {
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.role-select {
+    background: var(--bg-color);
+    color: #fff;
+    border: 1px solid var(--border);
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
 /* Modal Styles Restored */
 .modal {
     display: none;
@@ -303,4 +496,324 @@ table tr:hover { background: rgba(0, 242, 255, 0.05); }
 
 .team-clickable:hover {
     color: var(--fifa-cyan);
+}
+
+/* --- MATCH SIMULATION SCREEN (FIFA STYLE) --- */
+#match-simulation-screen {
+    background: radial-gradient(circle at center, #0d1e3d 0%, #050b15 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    padding: 0;
+    overflow: hidden;
+    display: none; /* Default hidden */
+}
+
+#match-simulation-screen.active {
+    display: block !important;
+}
+
+.simulation-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.sim-header {
+    height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4rem;
+    padding: 0 4rem;
+    background: linear-gradient(to bottom, rgba(0, 212, 255, 0.1), transparent);
+    border-bottom: 1px solid var(--border);
+}
+
+.sim-team {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.sim-team.home { justify-content: flex-end; }
+.sim-team.away { justify-content: flex-start; }
+
+.sim-team-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.2);
+    background-color: #333;
+}
+
+.sim-team h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.sim-score-board {
+    text-align: center;
+    min-width: 250px;
+}
+
+.sim-score {
+    font-size: 3.5rem;
+    font-weight: 900;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 5px;
+    text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+}
+
+.sim-time {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--fifa-cyan);
+    margin-top: -5px;
+}
+
+.sim-main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.sim-sidebar {
+    width: 320px;
+    background: rgba(13, 30, 61, 0.4);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-right: 1px solid var(--border);
+}
+
+.sim-sidebar.right {
+    border-right: none;
+    border-left: 1px solid var(--border);
+}
+
+.sim-tabs-side {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 5px;
+}
+
+.sim-tabs-side span {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--fifa-cyan);
+}
+
+.sim-player-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sim-player-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sim-player-pos {
+    width: 30px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+
+.sim-player-name {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.sim-player-status {
+    width: 40px;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.sim-player-bar {
+    height: 100%;
+    background: var(--fifa-cyan);
+    width: 100%;
+}
+
+.sim-pitch-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: radial-gradient(circle, rgba(0, 242, 255, 0.05) 0%, transparent 70%);
+}
+
+.soccer-pitch {
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 1.5;
+    background: #0a1b33;
+    border: 2px solid rgba(255,255,255,0.2);
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.pitch-line {
+    position: absolute;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.center-line {
+    top: 0; bottom: 0; left: 50%;
+    width: 0;
+}
+
+.center-circle {
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px; height: 120px;
+    border-radius: 50%;
+}
+
+.box-home {
+    top: 20%; bottom: 20%; left: 0;
+    width: 12%; border-left: none;
+}
+
+.box-away {
+    top: 20%; bottom: 20%; right: 0;
+    width: 12%; border-right: none;
+}
+
+.player-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    transition: top 3s ease-in-out, left 3s ease-in-out;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    border: 2px solid white;
+}
+
+.ball {
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    transition: top 1s ease-in-out, left 1s ease-in-out;
+    box-shadow: 0 0 15px white;
+    z-index: 10;
+}
+
+.sim-footer {
+    height: 80px;
+    background: var(--glass);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.sim-nav-tabs {
+    display: flex;
+    gap: 30px;
+}
+
+.sim-nav-item {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: 0.2s;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 5px;
+}
+
+.sim-nav-item.active, .sim-nav-item:hover {
+    color: var(--fifa-cyan);
+    border-bottom-color: var(--fifa-cyan);
+}
+
+/* Sim Quick Controls */
+.sim-quick-controls {
+    display: flex;
+    gap: 3rem;
+    align-items: center;
+}
+
+.mentality-control {
+    background: rgba(0,0,0,0.5);
+    border-radius: 40px;
+    padding: 5px;
+    display: flex;
+    gap: 5px;
+}
+
+.btn-mentality {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 8px 12px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-mentality.active {
+    background: var(--fifa-cyan);
+    color: #000;
+}
+
+.quick-tactics {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-quick-t {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btn-quick-t:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--fifa-pink);
+}
+
+.goal-flash {
+    animation: flash 0.5s ease 3;
+}
+
+@keyframes flash {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(0, 242, 255, 0.2); }
+}
+
+@media (max-width: 1000px) {
+    .sim-sidebar { display: none; }
 }

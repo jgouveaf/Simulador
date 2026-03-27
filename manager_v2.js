@@ -67,11 +67,26 @@ class BrasileiraoSimulator {
             btn.addEventListener('click', () => this.openScreen('main-menu'));
         });
 
+        // Keyboard Shortcuts (D-Pad style)
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('match-simulation-screen').classList.contains('active')) {
+                this.handleMatchShortcuts(e);
+            }
+        });
+
+        // Sub-Tab logic
+        document.querySelectorAll('.sub-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const subId = tab.dataset.subtab;
+                if (subId) this.switchSubTab(subId);
+            });
+        });
+
         // Tab switching logic
-        document.querySelectorAll('.tab').forEach(tab => {
+        document.querySelectorAll('.tab:not(.sub-tab)').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabId = tab.dataset.tab;
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab:not(.sub-tab)').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 if (tabId) this.switchTab(tabId);
             });
@@ -110,7 +125,26 @@ class BrasileiraoSimulator {
         if (tabId === 'standings') this.renderCareerStandings();
         if (tabId === 'fixtures') this.renderCareerFixtures();
         if (tabId === 'transfers') this.renderMarket();
-        if (tabId === 'squad') this.renderCareerSquad();
+        if (tabId === 'squad') {
+            this.switchSubTab('roster');
+            this.renderCareerSquad();
+        }
+    }
+
+    switchSubTab(subTabId) {
+        document.querySelectorAll('.sub-tab-content').forEach(c => c.style.display = 'none');
+        document.getElementById(`subtab-${subTabId}`).style.display = 'block';
+
+        document.querySelectorAll('.sub-tab').forEach(t => {
+            t.classList.remove('active');
+            if (t.dataset.subtab === subTabId) t.classList.add('active');
+        });
+
+        if (subTabId === 'roster') this.renderCareerSquad();
+        if (subTabId === 'formation') this.renderFormation();
+        if (subTabId === 'instructions') this.renderInstructions();
+        if (subTabId === 'tactics') this.renderTactics();
+        if (subTabId === 'roles') this.renderRoles();
     }
 
     generateRounds(teams) {
@@ -267,28 +301,271 @@ class BrasileiraoSimulator {
     }
 
     simulateRound() {
+        console.log("Simulating Round...");
         const lg = this.leagues[this.currentSerie];
-        if (lg.currentRound >= lg.rounds.length) return;
+        if (!lg || lg.currentRound >= lg.rounds.length) {
+            console.log("Round finished or league error.");
+            return;
+        }
 
-        lg.rounds[lg.currentRound].matches.forEach(m => this.simulateMatch(m, lg.teams));
-        lg.currentRound++;
-        lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+        const roundMatches = lg.rounds[lg.currentRound].matches;
         
-        this.updateTable();
-        this.displayRound();
-        this.updateStats();
-        this.displayCalendar();
+        // Find user match
+        let userMatch = null;
+        if (this.career.active && this.career.team) {
+            userMatch = roundMatches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+            console.log("Found user match for visual sim:", userMatch);
+        }
 
-        if (this.career.active) {
-            this.updateCareerDashboard();
+        if (userMatch && !userMatch.simulated) {
+            // Visually simulate user match
+            const home = lg.teams.find(t => t.id === userMatch.home);
+            const away = lg.teams.find(t => t.id === userMatch.away);
+            
+            if (home && away) {
+                console.log("Starting visual sim:", home.name, "vs", away.name);
+                this.startVisualSimulation(userMatch, home, away, () => {
+                    console.log("Visual sim completed. Simulating others.");
+                    roundMatches.forEach(m => {
+                        if (m !== userMatch) this.simulateMatch(m, lg.teams);
+                    });
+                    
+                    lg.currentRound++;
+                    lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+                    
+                    this.updateTable();
+                    this.displayRound();
+                    this.updateStats();
+                    this.displayCalendar();
+                    if (this.career.active) this.updateCareerDashboard();
+                });
+            } else {
+                console.error("Teams not found for visual sim!");
+                // Fallback
+                roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
+                lg.currentRound++;
+                lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+                this.updateTable();
+                this.displayRound();
+                this.updateStats();
+                this.displayCalendar();
+                if (this.career.active) this.updateCareerDashboard();
+            }
+        } else {
+            console.log("Background simulation only.");
+            roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
+            lg.currentRound++;
+            lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+            
+            this.updateTable();
+            this.displayRound();
+            this.updateStats();
+            this.displayCalendar();
+            if (this.career.active) this.updateCareerDashboard();
+        }
+    }
+
+    startVisualSimulation(match, home, away, callback) {
+        console.log("Opening visual simulation screen...");
+        this.openScreen('match-simulation');
+        console.log("Screen active. Setting up UI...");
+        
+        // Setup UI
+        document.getElementById('sim-home-name').textContent = home.name.toUpperCase();
+        document.getElementById('sim-away-name').textContent = away.name.toUpperCase();
+        document.getElementById('sim-home-logo').style.backgroundColor = home.color;
+        document.getElementById('sim-away-logo').style.backgroundColor = away.color;
+        document.getElementById('sim-score-value').textContent = "0 - 0";
+        document.getElementById('sim-time-value').textContent = "00:00";
+        
+        // Setup Players
+        const homeList = document.getElementById('sim-home-players');
+        const awayList = document.getElementById('sim-away-players');
+        homeList.innerHTML = '';
+        awayList.innerHTML = '';
+        
+        const renderSimPlayers = (team, container) => {
+            team.roster.filter(p => p.status === 'Titular').forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'sim-player-row';
+                row.innerHTML = `
+                    <div class="sim-player-pos">${p.pos}</div>
+                    <div class="sim-player-name">${p.name}</div>
+                    <div class="sim-player-status"><div class="sim-player-bar"></div></div>
+                `;
+                container.appendChild(row);
+            });
+        };
+        
+        renderSimPlayers(home, homeList);
+        renderSimPlayers(away, awayList);
+        
+        // Setup Pitch Dots
+        const pitch = document.getElementById('sim-pitch-players');
+        pitch.innerHTML = '';
+        
+        const createDots = (team, isHome) => {
+            team.roster.filter(p => p.status === 'Titular').forEach((p, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'player-dot';
+                dot.style.backgroundColor = team.color;
+                dot.style.left = isHome ? '25%' : '75%';
+                dot.style.top = `${10 + (i * 8)}%`;
+                dot.id = `player-dot-${p.id}`;
+                pitch.appendChild(dot);
+            });
+        };
+        
+        createDots(home, true);
+        createDots(away, false);
+        
+        // Pre-simulate the match result to know when goals happen
+        // We pass [home, away] to ensure simulateMatch finds them regardless of league status
+        const tempMatch = { ...match, homeScore: null, awayScore: null };
+        this.simulateMatch(tempMatch, [home, away]);
+        
+        // Distribution of goals over time
+        const goalEvents = [];
+        for(let i=0; i<tempMatch.homeScore; i++) goalEvents.push({ team: 'home', min: Math.floor(Math.random() * 90) });
+        for(let i=0; i<tempMatch.awayScore; i++) goalEvents.push({ team: 'away', min: Math.floor(Math.random() * 90) });
+        
+        let simMinute = 0;
+        let homeScore = 0;
+        let awayScore = 0;
+        
+        const ball = document.getElementById('sim-pitch-ball');
+        
+        const simInterval = setInterval(() => {
+            simMinute++;
+            document.getElementById('sim-time-value').textContent = `${simMinute.toString().padStart(2, '0')}:00`;
+            
+            // Random dot movement
+            document.querySelectorAll('.player-dot').forEach(dot => {
+                const noiseX = (Math.random() - 0.5) * 10;
+                const noiseY = (Math.random() - 0.5) * 10;
+                const currentLeft = parseFloat(dot.style.left);
+                const currentTop = parseFloat(dot.style.top);
+                
+                // Keep them roughly in their half but moving
+                let newLeft = currentLeft + (Math.random() - 0.5) * 5;
+                let newTop = currentTop + (Math.random() - 0.5) * 5;
+                
+                if (newLeft < 5) newLeft = 5;
+                if (newLeft > 95) newLeft = 95;
+                if (newTop < 5) newTop = 5;
+                if (newTop > 95) newTop = 95;
+                
+                dot.style.left = `${newLeft}%`;
+                dot.style.top = `${newTop}%`;
+            });
+            
+            // Ball movement (follow a random dot)
+            const dots = document.querySelectorAll('.player-dot');
+            const targetDot = dots[Math.floor(Math.random() * dots.length)];
+            ball.style.left = targetDot.style.left;
+            ball.style.top = targetDot.style.top;
+            
+            // Check for goals
+            const goalsNow = goalEvents.filter(g => g.min === simMinute);
+            goalsNow.forEach(g => {
+                if (g.team === 'home') homeScore++;
+                else awayScore++;
+                
+                document.getElementById('sim-score-value').textContent = `${homeScore} - ${awayScore}`;
+                document.querySelector('.soccer-pitch').classList.add('goal-flash');
+                setTimeout(() => document.querySelector('.soccer-pitch').classList.remove('goal-flash'), 1000);
+                
+                // Teleport ball to center after goal
+                ball.style.left = '50%';
+                ball.style.top = '50%';
+            });
+            
+            if (simMinute >= 90) {
+                clearInterval(simInterval);
+                match.homeScore = homeScore;
+                match.awayScore = awayScore;
+                match.simulated = true;
+                
+                // IMPORTANT: Update league tables if not a friendly
+                if (!match.isFriendly) {
+                    const lg = this.leagues[this.currentSerie];
+                    if (lg) this.updateLeagueStandings(match, lg.teams);
+                }
+                
+                // Add a small delay then close
+                setTimeout(() => {
+                    callback();
+                }, 2000);
+            }
+        }, 150); // Speed of sim
+
+        // Skip button
+        document.getElementById('btn-sim-skip').onclick = () => {
+            clearInterval(simInterval);
+            match.homeScore = tempMatch.homeScore;
+            match.awayScore = tempMatch.awayScore;
+            match.simulated = true;
+            
+            if (!match.isFriendly) {
+                const lg = this.leagues[this.currentSerie];
+                if (lg) this.updateLeagueStandings(match, lg.teams);
+            }
+            
+            callback();
+        };
+
+        // Mentality Logic
+        document.querySelectorAll('.btn-mentality').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.btn-mentality').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                match.currentMentality = btn.dataset.mentality;
+                console.log("Mentality changed to:", match.currentMentality);
+                // In a real sim, this would nudge the mean score calculation live
+            };
+        });
+
+        // Quick Tactics
+        document.querySelectorAll('.btn-quick-t').forEach(btn => {
+            btn.onclick = () => {
+                btn.classList.toggle('active-t');
+                btn.style.borderColor = btn.classList.contains('active-t') ? 'var(--fifa-pink)' : 'var(--border)';
+            };
+        });
+    }
+
+    handleMatchShortcuts(e) {
+        // Mentality (Left / Right)
+        const mentalities = ['ultra-def', 'def', 'bal', 'atk', 'ultra-atk'];
+        const currentBtn = document.querySelector('.btn-mentality.active');
+        const currentIndex = mentalities.indexOf(currentBtn?.dataset.mentality || 'bal');
+
+        if (e.key === 'ArrowLeft' && currentIndex > 0) {
+            document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex - 1]}"]`).click();
+        } else if (e.key === 'ArrowRight' && currentIndex < mentalities.length - 1) {
+            document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex + 1]}"]`).click();
+        }
+
+        // Quick Tactics (Up / Down)
+        if (e.key === 'ArrowUp') {
+            document.querySelector('.btn-quick-t[title="Pressão Total"]').click();
+        } else if (e.key === 'ArrowDown') {
+            document.querySelector('.btn-quick-t[title="Subir Laterais"]').click();
         }
     }
 
     simulateSeason() {
         const lg = this.leagues[this.currentSerie];
         while (lg.currentRound < lg.rounds.length) {
-            this.simulateRound();
+            // Force background for whole season
+            lg.rounds[lg.currentRound].matches.forEach(m => this.simulateMatch(m, lg.teams));
+            lg.currentRound++;
         }
+        lg.viewedRound = 37;
+        this.updateTable();
+        this.displayRound();
+        this.updateStats();
+        this.displayCalendar();
     }
 
     resetSeason() {
@@ -610,22 +887,305 @@ class BrasileiraoSimulator {
 
     renderCareerSquad() {
         const t = this.career.team;
+        if (!t) return;
+
         const titContainer = document.getElementById('career-titulares');
         const resContainer = document.getElementById('career-reservas');
+        const notContainer = document.getElementById('career-not-related');
         
         titContainer.innerHTML = '';
         resContainer.innerHTML = '';
+        notContainer.innerHTML = '';
         
+        // Atribuir status padrão se não houver
+        if (t.roster.filter(p => p.status === 'Titular').length === 0) {
+            t.roster.forEach((p, i) => {
+                if (i < 11) p.status = 'Titular';
+                else if (i < 18) p.status = 'Reserva';
+                else p.status = 'Não Relacionado';
+            });
+        }
+
         t.roster.forEach(p => {
             const div = document.createElement('div');
-            div.className = 'squad-slot';
+            div.className = 'squad-slot player-item-interactive';
+            if (this.selectedPlayerToSwap && this.selectedPlayerToSwap.id === p.id) {
+                div.classList.add('selected-to-swap');
+                div.style.borderColor = 'var(--fifa-cyan)';
+                div.style.boxShadow = '0 0 10px var(--fifa-cyan)';
+            }
+            
             div.innerHTML = `
-                <span><strong>${p.pos}</strong> ${p.name}</span>
-                <span class="player-strength">${p.strength}</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="player-pos" style="font-size: 0.6rem;">${p.pos}</span>
+                    <span style="font-size: 0.85rem; font-weight: 600;">${p.name}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span class="player-strength" style="font-size: 0.8rem;">${p.strength}</span>
+                    <button class="small-btn btn-swap-trigger" data-id="${p.id}" style="padding: 2px 8px; font-size: 0.6rem;">${this.selectedPlayerToSwap ? 'TROCAR' : 'SELEC.'}</button>
+                </div>
             `;
+
+            div.querySelector('.btn-swap-trigger').onclick = (e) => {
+                e.stopPropagation();
+                this.handlePlayerSwap(p);
+            };
+
             if (p.status === 'Titular') titContainer.appendChild(div);
-            else resContainer.appendChild(div);
+            else if (p.status === 'Reserva') resContainer.appendChild(div);
+            else notContainer.appendChild(div);
         });
+    }
+
+    handlePlayerSwap(player) {
+        if (!this.selectedPlayerToSwap) {
+            this.selectedPlayerToSwap = player;
+            this.renderCareerSquad();
+            return;
+        }
+
+        if (this.selectedPlayerToSwap.id === player.id) {
+            this.selectedPlayerToSwap = null;
+            this.renderCareerSquad();
+            return;
+        }
+
+        // Swap Logic
+        const p1Status = this.selectedPlayerToSwap.status;
+        const p2Status = player.status;
+
+        // Limitações de escalação
+        const team = this.career.team;
+        const titularCount = team.roster.filter(p => p.status === 'Titular').length;
+        const subCount = team.roster.filter(p => p.status === 'Reserva').length;
+
+        // Se p1 é titular e p2 é reserva, ok.
+        // Se p1 é titular e p2 é não relacionado por exemplo:
+        this.selectedPlayerToSwap.status = p2Status;
+        player.status = p1Status;
+
+        this.selectedPlayerToSwap = null;
+        this.renderCareerSquad();
+    }
+
+    renderFormation() {
+        const pitch = document.getElementById('pitch-formation-display');
+        pitch.innerHTML = '';
+        
+        const team = this.career.team;
+        const formation = team.formation || '4-3-3';
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        
+        // Ativar botão da formação atual
+        document.querySelectorAll('.btn-formation').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.formation === formation);
+            btn.onclick = () => {
+                team.formation = btn.dataset.formation;
+                this.renderFormation();
+            };
+        });
+
+        const positions = this.getFormationCoordinates(formation);
+        titulares.forEach((p, i) => {
+            const coord = positions[i] || { x: 50, y: 50 };
+            const div = document.createElement('div');
+            div.className = 'pitch-player';
+            div.style.left = `${coord.x}%`;
+            div.style.top = `${coord.y}%`;
+            div.innerHTML = `
+                <span class="pos-label">${p.pos}</span>
+                <span class="name-label">${p.name.split(' ').pop()}</span>
+                <span style="font-size: 0.65rem; color: var(--gold);">${p.strength}</span>
+            `;
+            pitch.appendChild(div);
+        });
+    }
+
+    getFormationCoordinates(formation) {
+        // Base coordinates [0-100] for a 1.2 aspect pitch
+        const base = {
+            'GOL': { x: 50, y: 90 },
+            'ZAG_L': { x: 35, y: 75 },
+            'ZAG_R': { x: 65, y: 75 },
+            'LD': { x: 85, y: 65 },
+            'LE': { x: 15, y: 65 },
+            'VOL': { x: 50, y: 60 },
+            'MEI_L': { x: 30, y: 45 },
+            'MEI_R': { x: 70, y: 45 },
+            'MC': { x: 50, y: 40 },
+            'ATA_L': { x: 25, y: 25 },
+            'ATA_R': { x: 75, y: 25 },
+            'ATA_C': { x: 50, y: 15 }
+        };
+
+        if (formation === '4-3-3') {
+            return [
+                {x: 50, y: 90}, // GOL
+                {x: 15, y: 72}, {x: 35, y: 75}, {x: 65, y: 75}, {x: 85, y: 72}, // Defesa
+                {x: 50, y: 55}, {x: 30, y: 42}, {x: 70, y: 42}, // Meio
+                {x: 20, y: 20}, {x: 80, y: 20}, {x: 50, y: 15}  // Ataque
+            ];
+        } else if (formation === '4-4-2') {
+            return [
+                {x: 50, y: 90},
+                {x: 10, y: 72}, {x: 35, y: 75}, {x: 65, y: 75}, {x: 90, y: 72},
+                {x: 15, y: 45}, {x: 40, y: 48}, {x: 60, y: 48}, {x: 85, y: 45},
+                {x: 40, y: 20}, {x: 60, y: 20}
+            ];
+        } else if (formation === '3-5-2') {
+            return [
+                {x: 50, y: 90},
+                {x: 25, y: 75}, {x: 50, y: 78}, {x: 75, y: 75},
+                {x: 10, y: 45}, {x: 35, y: 48}, {x: 50, y: 55}, {x: 65, y: 48}, {x: 90, y: 45},
+                {x: 40, y: 20}, {x: 60, y: 20}
+            ];
+        }
+        return Array(11).fill({x: 50, y: 50});
+    }
+
+    renderInstructions() {
+        const pitch = document.getElementById('pitch-mini-instructions');
+        const panel = document.getElementById('instruction-panel-details');
+        pitch.innerHTML = '';
+        
+        const team = this.career.team;
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        const formation = team.formation || '4-3-3';
+        const coords = this.getFormationCoordinates(formation);
+
+        titulares.forEach((p, i) => {
+            const c = coords[i];
+            const div = document.createElement('div');
+            div.className = 'pitch-player mini';
+            div.style.left = `${c.x}%`;
+            div.style.top = `${c.y}%`;
+            div.style.width = '35px';
+            div.style.height = '35px';
+            div.innerHTML = `<span style="font-size: 0.5rem; font-weight: 900;">${p.pos}</span>`;
+            
+            div.onclick = () => {
+                pitch.querySelectorAll('.pitch-player').forEach(d => d.style.borderColor = 'var(--fifa-cyan)');
+                div.style.borderColor = '#fff';
+                this.showPlayerInstructionControls(p);
+            };
+            
+            pitch.appendChild(div);
+        });
+    }
+
+    showPlayerInstructionControls(player) {
+        const panel = document.getElementById('instruction-panel-details');
+        player.instructions = player.instructions || {};
+
+        let controlsHTML = `
+            <div class="card" style="margin: 0; background: rgba(0,0,0,0.2);">
+                <h4 style="color: var(--fifa-cyan); margin-bottom: 0.5rem;">${player.name}</h4>
+                <p style="font-size: 0.7rem; margin-bottom: 1.5rem;">Posição: ${player.pos}</p>
+        `;
+
+        if (['LD', 'LE'].includes(player.pos)) {
+            controlsHTML += `
+                <div class="tactic-item">
+                    <label>Apoio Ofensivo</label>
+                    <select onchange="simulator.setInstruction(${player.id}, 'atk_support', this.value)">
+                        <option value="balanced" ${player.instructions.atk_support === 'balanced' ? 'selected' : ''}>Equilibrado</option>
+                        <option value="stay_back" ${player.instructions.atk_support === 'stay_back' ? 'selected' : ''}>Ficar na Defesa</option>
+                        <option value="join_atk" ${player.instructions.atk_support === 'join_atk' ? 'selected' : ''}>Apoiar Ataque</option>
+                    </select>
+                </div>
+            `;
+        } else if (['VOL', 'MC'].includes(player.pos)) {
+            controlsHTML += `
+                <div class="tactic-item">
+                    <label>Posicionamento Defensivo</label>
+                    <select onchange="simulator.setInstruction(${player.id}, 'def_pos', this.value)">
+                        <option value="center" ${player.instructions.def_pos === 'center' ? 'selected' : ''}>Cobrir Centro</option>
+                        <option value="wing" ${player.instructions.def_pos === 'wing' ? 'selected' : ''}>Cobrir Lateral</option>
+                    </select>
+                </div>
+            `;
+        } else if (['ATA', 'CA'].includes(player.pos)) {
+            controlsHTML += `
+                <div class="tactic-item">
+                    <label>Infiltração</label>
+                    <select onchange="simulator.setInstruction(${player.id}, 'run_type', this.value)">
+                        <option value="balanced" ${player.instructions.run_type === 'balanced' ? 'selected' : ''}>Equilibrado</option>
+                        <option value="behind" ${player.instructions.run_type === 'behind' ? 'selected' : ''}>Chegar por Trás</option>
+                        <option value="pivot" ${player.instructions.run_type === 'pivot' ? 'selected' : ''}>Pivô</option>
+                    </select>
+                </div>
+            `;
+        } else {
+            controlsHTML += `<p style="font-size: 0.8rem; color: var(--text-secondary);">Sem instruções específicas para esta posição.</p>`;
+        }
+
+        controlsHTML += `</div>`;
+        panel.innerHTML = controlsHTML;
+    }
+
+    setInstruction(playerId, key, value) {
+        const p = this.career.team.roster.find(p => p.id === playerId);
+        if (p) {
+            p.instructions = p.instructions || {};
+            p.instructions[key] = value;
+        }
+    }
+
+    renderTactics() {
+        const t = this.career.team;
+        t.tactics = t.tactics || { def_width: 5, def_depth: 5, atk_style: 'balanced', atk_width: 5 };
+        
+        document.getElementById('tactics-def-width').value = t.tactics.def_width;
+        document.getElementById('tactics-def-depth').value = t.tactics.def_depth;
+        document.getElementById('tactics-atk-style').value = t.tactics.atk_style;
+        document.getElementById('tactics-atk-width').value = t.tactics.atk_width;
+
+        // Bind events
+        ['def-width', 'def-depth', 'atk-width'].forEach(id => {
+            const el = document.getElementById(`tactics-${id}`);
+            el.oninput = () => {
+                const key = id.replace('-', '_');
+                t.tactics[key] = parseInt(el.value);
+            };
+        });
+        
+        document.getElementById('tactics-atk-style').onchange = (e) => {
+            t.tactics.atk_style = e.target.value;
+        };
+    }
+
+    renderRoles() {
+        const team = this.career.team;
+        const config = document.getElementById('roles-config');
+        config.innerHTML = '';
+        
+        const roles = [
+            { id: 'captain', label: 'Capitão' },
+            { id: 'fk_short', label: 'Faltas Curtas' },
+            { id: 'fk_long', label: 'Faltas Longas' },
+            { id: 'penalty', label: 'Pênaltis' },
+            { id: 'corner', label: 'Escanteios' }
+        ];
+
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+
+        roles.forEach(role => {
+            const div = document.createElement('div');
+            div.className = 'role-item';
+            div.innerHTML = `
+                <span class="role-label">${role.label}</span>
+                <select class="role-select" onchange="simulator.setRole('${role.id}', this.value)">
+                    ${titulares.map(p => `<option value="${p.id}" ${team.roles && team.roles[role.id] == p.id ? 'selected' : ''}>${p.name} (${p.strength})</option>`).join('')}
+                </select>
+            `;
+            config.appendChild(div);
+        });
+    }
+
+    setRole(roleId, playerId) {
+        const team = this.career.team;
+        team.roles = team.roles || {};
+        team.roles[roleId] = parseInt(playerId);
     }
 
     renderMarket() {
@@ -811,16 +1371,17 @@ class BrasileiraoSimulator {
         const homeTeam = this.allTeamsRaw.find(t => t.id === hId);
         const awayTeam = this.allTeamsRaw.find(t => t.id === aId);
         
-        const match = { home: hId, away: aId, homeScore: null, awayScore: null };
+        if (!homeTeam || !awayTeam) return;
+
+        const match = { home: hId, away: aId, homeScore: null, awayScore: null, isFriendly: true };
         
-        // Use a temporary copy of teams for the simulation function to avoid affecting main league data
-        const tempTeams = [JSON.parse(JSON.stringify(homeTeam)), JSON.parse(JSON.stringify(awayTeam))];
-        this.simulateMatch(match, tempTeams);
-        
-        document.getElementById('friendly-result').innerHTML = `
-            ${homeTeam.name} <span style="color: var(--fifa-cyan)">${match.homeScore}</span> X 
-            <span style="color: var(--fifa-cyan)">${match.awayScore}</span> ${awayTeam.name}
-        `;
+        this.startVisualSimulation(match, homeTeam, awayTeam, () => {
+            this.openScreen('friendly-setup');
+            document.getElementById('friendly-result').innerHTML = `
+                ${homeTeam.name} <span style="color: var(--fifa-cyan)">${match.homeScore}</span> X 
+                <span style="color: var(--fifa-cyan)">${match.awayScore}</span> ${awayTeam.name}
+            `;
+        });
     }
 
     showTeamDetails(teamId) {

@@ -10,6 +10,7 @@ class BrasileiraoSimulator {
             team.roster.forEach(p => {
                 if (!p.id) p.id = playerCounter++;
             });
+            team.strength = this.calculateTeamOverall(team);
         });
 
         this.currentSerie = 'A';
@@ -41,7 +42,8 @@ class BrasileiraoSimulator {
                 goalsFor: 0,
                 goalsAgainst: 0,
                 goalDiff: 0,
-                percentage: 0
+                percentage: 0,
+                strength: this.calculateTeamOverall(team)
             }));
 
         const rounds = this.generateRounds(teams);
@@ -1235,9 +1237,14 @@ class BrasileiraoSimulator {
         this.career.team.roster.push(player);
         this.career.budget -= price;
         
+        // Dynamic Overall Update
+        this.career.team.strength = this.calculateTeamOverall(this.career.team);
+        if (fromTeam) fromTeam.strength = this.calculateTeamOverall(fromTeam);
+        
         alert(`${player.name} contratado com sucesso!`);
         this.renderMarket();
         this.updateCareerDashboard();
+        this.updateTable(); // Sync all tables with new overalls
     }
 
     renderCareerStandings() {
@@ -1434,6 +1441,12 @@ class BrasileiraoSimulator {
         renderRoster(team.roster.filter(p => p.status === 'Reserva'), reservas);
 
         modal.style.display = 'block';
+    }
+
+    calculateTeamOverall(team) {
+        if (!team.roster || team.roster.length === 0) return 70;
+        const sum = team.roster.reduce((acc, p) => acc + p.strength, 0);
+        return Math.round(sum / team.roster.length);
     }
 
     closeModal() {

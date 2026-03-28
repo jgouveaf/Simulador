@@ -547,7 +547,7 @@ const teams = [
         "strength": 82,
         "serie": "A",
         "roster": [
-            { "pos": "GOL", "name": "Gabriel Brazão", "strength": 99, "status": "Titular" },
+            { "pos": "GOL", "name": "Gabriel Brazão", "strength": 84, "status": "Titular" },
             { "pos": "LD", "name": "Mayke", "strength": 82, "status": "Titular" },
             { "pos": "ZAG", "name": "Lucas Verissimo", "strength": 84, "status": "Titular" },
             { "pos": "ZAG", "name": "Luan Peres", "strength": 81, "status": "Titular" },

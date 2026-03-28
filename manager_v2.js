@@ -3,6 +3,15 @@ import teamsData from './teams.js';
 class BrasileiraoSimulator {
     constructor() {
         this.allTeamsRaw = teamsData;
+        
+        // Ensure every player has a unique ID for the transfer market
+        let playerCounter = 1;
+        this.allTeamsRaw.forEach(team => {
+            team.roster.forEach(p => {
+                if (!p.id) p.id = playerCounter++;
+            });
+        });
+
         this.currentSerie = 'A';
         this.leagues = {
             'A': this.initLeague('A'),
@@ -1185,7 +1194,7 @@ class BrasileiraoSimulator {
     setRole(roleId, playerId) {
         const team = this.career.team;
         team.roles = team.roles || {};
-        team.roles[roleId] = parseInt(playerId);
+        team.roles[roleId] = playerId; 
     }
 
     renderMarket() {

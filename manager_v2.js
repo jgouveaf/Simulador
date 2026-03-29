@@ -1068,8 +1068,8 @@ class BrasileiraoSimulator {
                     <button class="nav-arrow" onclick="simulator.navigateTeamSelection(-1)">❮</button>
                     
                     <div class="team-showcase">
-                        <div class="team-logo-big" style="background-color: ${team.color}; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); display:flex; align-items:center; justify-content:center;">
-                            ${team.logo ? `<img src="${team.logo}" alt="${team.name}" style="width:80px; height:80px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7));">` : `<span style="font-size: 3rem; font-weight: 900; color: #fff;">${team.name.substring(0,2)}</span>`}
+                        <div class="team-logo-big" style="display:flex; align-items:center; justify-content:center;">
+                            ${team.logo ? `<img src="${team.logo}" alt="${team.name}" style="width:140px; height:140px; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));">` : `<span style="font-size: 4rem; font-weight: 900; color: #fff;">${team.name.substring(0,2)}</span>`}
                         </div>
                         <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
                         <div class="stars-container">${starHTML}</div>
@@ -1114,9 +1114,9 @@ class BrasileiraoSimulator {
         const ovr = team.strength;
         let stars = 0;
 
-        // Exception for Santos
-        if (team.id == 17 || team.name === 'Santos') {
-            stars = 4;
+        // Exception for Santos (id: 17) and Corinthians (id: 5)
+        if (team.id == 17 || team.name === 'Santos' || team.id == 5 || team.name === 'Corinthians') {
+            stars = 4.5;
         } else {
             if (ovr >= 84) stars = 5;
             else if (ovr === 83) stars = 4.5;

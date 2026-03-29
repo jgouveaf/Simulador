@@ -1,4 +1,4 @@
-const teams = [
+﻿const teams = [
     {
         "id": 1,
         "name": "Palmeiras",
@@ -1467,5 +1467,6 @@ const teams = [
 ];
 
 export default teams;
+
 
 

@@ -514,12 +514,15 @@ class BrasileiraoSimulator {
                 }
             }
 
-            if (simMinute >= 90) {
+            // Final do Jogo
+            if (simMinute >= 90 && !match.simulated) {
+                match.simulated = true; 
                 clearInterval(this.simInterval);
+                this.simInterval = null;
+                
                 addMsg(90, "Fim de jogo!", "sys-msg");
                 match.homeScore = homeScore;
                 match.awayScore = awayScore;
-                match.simulated = true;
                 
                 if (!match.isFriendly) {
                     const lg = this.leagues[this.currentSerie];
@@ -550,12 +553,15 @@ class BrasileiraoSimulator {
         if (skipBtn) {
             skipBtn.onclick = (e) => {
                 e.preventDefault();
+                if (match.simulated) return;
+                match.simulated = true;
+                
                 console.log("Simulação pular!");
-                clearInterval(simInterval);
+                clearInterval(this.simInterval);
+                this.simInterval = null;
                 
                 match.homeScore = tempMatch.homeScore;
                 match.awayScore = tempMatch.awayScore;
-                match.simulated = true;
                 
                 if (!match.isFriendly) {
                     const lg = this.leagues[this.currentSerie];
@@ -635,84 +641,109 @@ class BrasileiraoSimulator {
 
     openTacticalModal() {
         this.pauseSim();
-        this.renderMatchTactics();
+        this.renderSimTactics();
         document.getElementById('match-tactical-modal').style.display = 'block';
     }
 
     closeTacticalModal() {
         document.getElementById('match-tactical-modal').style.display = 'none';
+        this.selectedInSimMatch = null;
         this.unpauseSim();
     }
 
-    renderMatchTactics() {
-        // Find which team to manage. If career, it's the player's team. If friendly, let's show home team as default user team.
-        let teamToManage = null;
+    renderSimTactics() {
+        // Find user team
+        let team = null;
         if (this.career.active && this.career.team) {
-            if (this.currentSimHome.id === this.career.team.id) teamToManage = this.currentSimHome;
-            else if (this.currentSimAway.id === this.career.team.id) teamToManage = this.currentSimAway;
+            if (this.currentSimHome.id === this.career.team.id) team = this.currentSimHome;
+            else if (this.currentSimAway.id === this.career.team.id) team = this.currentSimAway;
         }
-        
-        // If still no team (friendly mode), default to the home team
-        if (!teamToManage) teamToManage = this.currentSimHome;
+        if (!team) team = this.currentSimHome;
 
-        const container = document.getElementById('match-squad-list');
-        container.innerHTML = `<h3 style="margin-bottom: 10px; color: var(--fifa-cyan);">${teamToManage.name.toUpperCase()}</h3>`;
-        
-        teamToManage.roster.sort((a,b) => {
-            if (a.status === 'Titular' && b.status !== 'Titular') return -1;
-            if (a.status !== 'Titular' && b.status === 'Titular') return 1;
-            return 0;
-        }).forEach(p => {
+        const pitch = document.getElementById('sim-tactical-board');
+        const list = document.getElementById('sim-reserva-list');
+        if (!pitch || !list) return;
+
+        pitch.innerHTML = '';
+        list.innerHTML = '';
+
+        const formation = team.formation || '4-3-3';
+        const coords = this.getFormationCoordinates(formation);
+        const starters = team.roster.filter(p => p.status === 'Titular');
+        const bench = team.roster.filter(p => p.status === 'Reserva');
+
+        starters.forEach((p, i) => {
+            const pos = coords[i] || { x: 50, y: 50 };
+            const marker = document.createElement('div');
+            marker.className = 'tactical-player';
+            if (this.selectedInSimMatch && this.selectedInSimMatch.id === p.id) marker.classList.add('selected');
+            
+            marker.style.left = `${pos.x}%`;
+            marker.style.top = `${pos.y}%`;
+            marker.style.transform = 'translate(-50%, -50%) scale(0.85)';
+
+            marker.innerHTML = `
+                <div class="player-circle">${p.strength}</div>
+                <div class="player-name-tag">${p.name.split(' ').pop()} ${this.isQueued(p.id) ? '⏳' : ''}</div>
+                <div style="font-size: 0.5rem; font-weight: 800; color: var(--fifa-cyan);">${pos.pos || p.pos}</div>
+            `;
+
+            marker.onclick = (e) => {
+                e.stopPropagation();
+                this.handleSimTacticalClick(p, team);
+            };
+            pitch.appendChild(marker);
+        });
+
+        bench.forEach(p => {
             const div = document.createElement('div');
-            div.className = 'squad-slot interactive';
-            div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
+            div.className = `squad-slot interactive ${this.selectedInSimMatch && this.selectedInSimMatch.id === p.id ? 'selected-to-swap' : ''}`;
             div.style.padding = '8px';
             div.style.marginBottom = '5px';
-            div.style.borderLeft = p.status === 'Titular' ? '4px solid var(--fifa-cyan)' : '4px solid gray';
-            if (this.tempSelected && this.tempSelected.id === p.id) div.style.backgroundColor = 'rgba(0, 242, 255, 0.2)';
+            div.style.borderLeft = this.isQueued(p.id) ? '4px solid var(--gold)' : '4px solid gray';
             
             div.innerHTML = `
-                <span><strong>${p.pos}</strong> ${p.name} ${this.isQueued(p.id) ? '⏳' : ''}</span>
-                <span class="player-strength">${p.strength}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.8rem;"><strong>${p.pos}</strong> ${p.name}</span>
+                    <span class="rating" style="font-size: 0.7rem;">${p.strength}</span>
+                </div>
             `;
-            div.onclick = () => this.handleTacticalClick(p, teamToManage);
-            container.appendChild(div);
+            div.onclick = () => this.handleSimTacticalClick(p, team);
+            list.appendChild(div);
         });
     }
 
-    isQueued(pid) {
-        return this.queuedSubs.some(s => s.in.id === pid || s.out.id === pid);
-    }
-
-    handleTacticalClick(player, teamToManage) {
-        if (!this.tempSelected) {
-            this.tempSelected = player;
-            this.renderMatchTactics();
+    handleSimTacticalClick(player, team) {
+        if (!this.selectedInSimMatch) {
+            this.selectedInSimMatch = player;
         } else {
-            if (this.tempSelected.id === player.id) {
-                this.tempSelected = null;
-                this.renderMatchTactics();
-                return;
+            if (this.selectedInSimMatch.id === player.id) {
+                this.selectedInSimMatch = null;
+            } else {
+                if (this.selectedInSimMatch.status !== player.status) {
+                    const sub = {
+                        team: team,
+                        out: this.selectedInSimMatch.status === 'Titular' ? this.selectedInSimMatch : player,
+                        in: this.selectedInSimMatch.status === 'Titular' ? player : this.selectedInSimMatch
+                    };
+                    
+                    if (sub.out.status === 'Titular' && sub.in.status === 'Reserva') {
+                        this.queuedSubs.push(sub);
+                    } else {
+                        alert("Selecione um TITULAR (no campo) e um RESERVA (na lista) para substituir.");
+                    }
+                } else if (this.selectedInSimMatch.status === 'Titular' && player.status === 'Titular') {
+                    // Position swap
+                    const idx1 = team.roster.findIndex(p => p.id === this.selectedInSimMatch.id);
+                    const idx2 = team.roster.findIndex(p => p.id === player.id);
+                    const temp = team.roster[idx1];
+                    team.roster[idx1] = team.roster[idx2];
+                    team.roster[idx2] = temp;
+                }
+                this.selectedInSimMatch = null;
             }
-            
-            const sub = { 
-                team: teamToManage,
-                out: this.tempSelected.status === 'Titular' ? this.tempSelected : player, 
-                in: this.tempSelected.status === 'Titular' ? player : this.tempSelected 
-            };
-            
-            if (sub.out.status !== 'Titular' || sub.in.status === 'Titular') {
-                alert("Selecione um TITULAR e um RESERVA para a substituição.");
-                this.tempSelected = null;
-                this.renderMatchTactics();
-                return;
-            }
-
-            this.queuedSubs.push(sub);
-            this.tempSelected = null;
-            this.renderMatchTactics();
         }
+        this.renderSimTactics();
     }
 
     processQueuedSubs(home, away, addMsg, min) {

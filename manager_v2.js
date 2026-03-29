@@ -26,6 +26,14 @@ class BrasileiraoSimulator {
             manager: 'João Gouvêa'
         };
 
+        // UI & Sim State
+        this.isPaused = false;
+        this.simInterval = null;
+        this.queuedSubs = [];
+        this.currentSimMatch = null;
+        this.simCallback = null;
+        this.tempSelected = null;
+
         this.init();
     }
 
@@ -417,13 +425,23 @@ class BrasileiraoSimulator {
         let simMinute = 0;
         let homeScore = 0;
         let awayScore = 0;
+        this.isPaused = false;
+        this.currentSimMatch = match;
+        this.simCallback = callback;
 
-        const simInterval = setInterval(() => {
+        const runSimTick = () => {
+            if (this.isPaused) return;
+
             simMinute++;
             document.getElementById('sim-time-value').textContent = `${simMinute.toString().padStart(2, '0')}:00`;
             
-            if (simMinute === 1) addMsg(1, "Apita o árbitro! Bola rolando.", "sys-msg");
+            if (simMinute === 1) addMsg(1, "Apita o árbitro! Começa a partida.", "sys-msg");
             
+            // Process queued subs (the "ball went out" logic)
+            if (this.queuedSubs.length > 0 && Math.random() < 0.3) {
+                this.processQueuedSubs(home, away, addMsg, simMinute);
+            }
+
             const goalsNow = goalEvents.filter(g => g.min === simMinute);
             goalsNow.forEach(g => {
                 if (g.team === home.name) homeScore++;
@@ -432,7 +450,7 @@ class BrasileiraoSimulator {
                 addMsg(simMinute, `<strong>GOOOOOL DO ${g.team.toUpperCase()}!!</strong>`, "goal");
             });
 
-            if (goalsNow.length === 0 && Math.random() < 0.15) {
+            if (goalsNow.length === 0 && Math.random() < 0.1) {
                 const rand = Math.random();
                 if (rand < 0.4) {
                     const t = Math.random() < 0.5 ? home : away;
@@ -447,8 +465,20 @@ class BrasileiraoSimulator {
                 }
             }
 
+            if (simMinute === 45) {
+                this.pauseSim();
+                addMsg(45, "Intervalo de jogo!", "sys-msg");
+                const btn = document.getElementById('btn-next-half');
+                btn.style.display = 'block';
+                btn.onclick = () => {
+                    btn.style.display = 'none';
+                    this.unpauseSim();
+                    addMsg(45, "Começa o segundo tempo!", "sys-msg");
+                };
+            }
+
             if (simMinute >= 90) {
-                clearInterval(simInterval);
+                clearInterval(this.simInterval);
                 addMsg(90, "Fim de jogo!", "sys-msg");
                 match.homeScore = homeScore;
                 match.awayScore = awayScore;
@@ -460,7 +490,9 @@ class BrasileiraoSimulator {
                 }
                 setTimeout(() => callback(), 2000);
             }
-        }, 150);
+        };
+
+        this.simInterval = setInterval(runSimTick, 400); // Slower pace
 
         // Sidebar lists
         const renderSimPlayers = (team, container) => {
@@ -529,11 +561,11 @@ class BrasileiraoSimulator {
             document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex + 1]}"]`).click();
         }
 
-        // Quick Tactics (Up / Down)
-        if (e.key === 'ArrowUp') {
-            document.querySelector('.btn-quick-t[title="Pressão Total"]').click();
-        } else if (e.key === 'ArrowDown') {
-            document.querySelector('.btn-quick-t[title="Subir Laterais"]').click();
+        if (e.key.toLowerCase() === 'e') {
+            const screen = document.getElementById('match-simulation-screen');
+            if (screen && screen.classList.contains('active')) {
+                this.openTacticalModal();
+            }
         }
     }
 
@@ -549,6 +581,114 @@ class BrasileiraoSimulator {
         this.displayRound();
         this.updateStats();
         this.displayCalendar();
+    }
+
+    pauseSim() {
+        this.isPaused = true;
+    }
+
+    unpauseSim() {
+        this.isPaused = false;
+    }
+
+    openTacticalModal() {
+        this.pauseSim();
+        this.renderMatchTactics();
+        document.getElementById('match-tactical-modal').style.display = 'block';
+    }
+
+    closeTacticalModal() {
+        document.getElementById('match-tactical-modal').style.display = 'none';
+        this.unpauseSim();
+    }
+
+    renderMatchTactics() {
+        if (!this.career.active || !this.career.team) return;
+        const container = document.getElementById('match-squad-list');
+        container.innerHTML = '';
+        
+        const team = this.career.team;
+        team.roster.sort((a,b) => (a.status === 'Titular' ? -1 : 1)).forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'squad-slot interactive';
+            div.style.borderLeft = p.status === 'Titular' ? '4px solid var(--fifa-cyan)' : '4px solid gray';
+            div.innerHTML = `
+                <span><strong>${p.pos}</strong> ${p.name} ${this.isQueued(p.id) ? '⏳' : ''}</span>
+                <span class="player-strength">${p.strength}</span>
+            `;
+            div.onclick = () => this.handleTacticalClick(p);
+            container.appendChild(div);
+        });
+    }
+
+    isQueued(pid) {
+        return this.queuedSubs.some(s => s.in.id === pid || s.out.id === pid);
+    }
+
+    handleTacticalClick(player) {
+        if (!this.tempSelected) {
+            this.tempSelected = player;
+            this.renderMatchTactics();
+        } else {
+            if (this.tempSelected.id === player.id) {
+                this.tempSelected = null;
+                this.renderMatchTactics();
+                return;
+            }
+            
+            const sub = { 
+                out: this.tempSelected.status === 'Titular' ? this.tempSelected : player, 
+                in: this.tempSelected.status === 'Titular' ? player : this.tempSelected 
+            };
+            
+            if (sub.out.status !== 'Titular' || sub.in.status === 'Titular') {
+                alert("Selecione um TITULAR e um RESERVA para a substituição.");
+                this.tempSelected = null;
+                this.renderMatchTactics();
+                return;
+            }
+
+            this.queuedSubs.push(sub);
+            this.tempSelected = null;
+            this.renderMatchTactics();
+        }
+    }
+
+    processQueuedSubs(home, away, addMsg, min) {
+        // Only process subs for the user's team in career mode
+        const userTeam = this.career.team;
+        if (!userTeam) return;
+
+        this.queuedSubs.forEach(sub => {
+            const pOut = userTeam.roster.find(p => p.id === sub.out.id);
+            const pIn = userTeam.roster.find(p => p.id === sub.in.id);
+            
+            if (pOut && pIn) {
+                pOut.status = 'Reserva';
+                pIn.status = 'Titular';
+                addMsg(min, `SUBSTITUIÇÃO no ${userTeam.name.toUpperCase()}: Sai ${pOut.name}, entra ${pIn.name}.`);
+            }
+        });
+        
+        this.queuedSubs = [];
+        // Update the sidebar lists
+        this.renderSimPlayerLists(home, away);
+    }
+
+    renderSimPlayerLists(home, away) {
+        const renderList = (team, containerId) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            team.roster.filter(p => p.status === 'Titular').forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'sim-player-row';
+                row.innerHTML = `<div class="sim-player-pos">${p.pos}</div><div class="sim-player-name">${p.name}</div>`;
+                container.appendChild(row);
+            });
+        };
+        renderList(home, 'sim-home-players');
+        renderList(away, 'sim-away-players');
     }
 
     resetSeason() {

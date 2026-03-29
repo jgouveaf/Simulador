@@ -262,6 +262,7 @@
                     <div class="sim-score-board">
                         <div class="sim-score" id="sim-score-value">0 - 0</div>
                         <div class="sim-time" id="sim-time-value">00:00</div>
+                        <button id="btn-next-half" class="badge" style="display: none; cursor: pointer; border: none; padding: 8px 20px; background: var(--gold); color: #000; font-weight: 800; border-radius: 4px; margin-top: 10px;">IR PARA O 2º TEMPO</button>
                     </div>
                     <div class="sim-team away">
                         <h2 id="sim-away-name">VISITANTE</h2>
@@ -364,6 +365,18 @@
                     <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Reservas</h3>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Match Tactical Modal (Overlay) -->
+    <div id="match-tactical-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="simulator.closeTacticalModal()">&times;</span>
+            <h2 style="margin-bottom: 2rem;">SUBSTITUIÇÕES / TÁTICA</h2>
+            <div id="match-squad-list" class="squad-management">
+                <!-- Squad will be listed here for quick swaps -->
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1.5rem;">As trocas serão processadas assim que a bola sair de jogo.</p>
         </div>
     </div>
 

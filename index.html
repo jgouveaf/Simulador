@@ -280,16 +280,10 @@
                         </div>
                     </aside>
 
-                    <!-- Center: Pitch -->
-                    <main class="sim-pitch-area">
-                        <div class="soccer-pitch">
-                            <div class="pitch-line center-line"></div>
-                            <div class="pitch-line center-circle"></div>
-                            <div class="pitch-line box-home"></div>
-                            <div class="pitch-line box-away"></div>
-                            <!-- Player Dots will be here -->
-                            <div id="sim-pitch-players"></div>
-                            <div id="sim-pitch-ball" class="ball"></div>
+                    <!-- Center: Visual Events Feed (GE Style) -->
+                    <main class="sim-pitch-area" style="background: rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column;">
+                        <div id="sim-events-ticker" class="events-feed">
+                            <div class="event-entry sys-msg">Início da partida!</div>
                         </div>
                     </main>
 

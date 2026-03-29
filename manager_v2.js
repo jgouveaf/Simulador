@@ -380,9 +380,7 @@ class BrasileiraoSimulator {
     }
 
     startVisualSimulation(match, home, away, callback) {
-        console.log("Opening visual simulation screen...");
         this.openScreen('match-simulation');
-        console.log("Screen active. Setting up UI...");
         
         // Setup UI
         document.getElementById('sim-home-name').textContent = home.name.toUpperCase();
@@ -392,126 +390,91 @@ class BrasileiraoSimulator {
         document.getElementById('sim-score-value').textContent = "0 - 0";
         document.getElementById('sim-time-value').textContent = "00:00";
         
-        // Setup Players
-        const homeList = document.getElementById('sim-home-players');
-        const awayList = document.getElementById('sim-away-players');
-        homeList.innerHTML = '';
-        awayList.innerHTML = '';
+        const ticker = document.getElementById('sim-events-ticker');
+        ticker.innerHTML = '<div class="sys-msg">Partida prestes a começar...</div>';
         
-        const renderSimPlayers = (team, container) => {
-            team.roster.filter(p => p.status === 'Titular').forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'sim-player-row';
-                row.innerHTML = `
-                    <div class="sim-player-pos">${p.pos}</div>
-                    <div class="sim-player-name">${p.name}</div>
-                    <div class="sim-player-status"><div class="sim-player-bar"></div></div>
-                `;
-                container.appendChild(row);
-            });
+        const addMsg = (min, text, type = '') => {
+            const entry = document.createElement('div');
+            entry.className = `event-entry ${type}`;
+            entry.innerHTML = `
+                <div class="event-time">${min}'</div>
+                <div class="event-text">${text}</div>
+            `;
+            ticker.appendChild(entry);
+            ticker.scrollTop = ticker.scrollHeight;
         };
-        
-        renderSimPlayers(home, homeList);
-        renderSimPlayers(away, awayList);
-        
-        // Setup Pitch Dots
-        const pitch = document.getElementById('sim-pitch-players');
-        pitch.innerHTML = '';
-        
-        const createDots = (team, isHome) => {
-            team.roster.filter(p => p.status === 'Titular').forEach((p, i) => {
-                const dot = document.createElement('div');
-                dot.className = 'player-dot';
-                dot.style.backgroundColor = team.color;
-                dot.style.left = isHome ? '25%' : '75%';
-                dot.style.top = `${10 + (i * 8)}%`;
-                dot.id = `player-dot-${p.id}`;
-                pitch.appendChild(dot);
-            });
-        };
-        
-        createDots(home, true);
-        createDots(away, false);
-        
-        // Pre-simulate the match result to know when goals happen
-        // We pass [home, away] to ensure simulateMatch finds them regardless of league status
+              const attackPhrases = ["{team} ataca com perigo!", "{team} troca passes no campo ofensivo.", "Chance clara para o {team}!", "Pressão total do {team}!", "Cruzamento na área do {team}!", "{team} tenta o chute de longe!"];
+        const genericPhrases = ["Jogo disputado no meio de campo.", "Muita marcação de ambos os lados.", "Posse de bola equilibrada.", "Partida truncada até agora.", "Torcida canta alto no estádio!"];
+        const foulPhrases = ["Falta marcada para o {team}.", "Jogo parado. Falta do {team}.", "Cartão amarelo mostrado para o {team}!", "Infração do {team} no setor defensivo."];
+
         const tempMatch = { ...match, homeScore: null, awayScore: null };
         this.simulateMatch(tempMatch, [home, away], false);
         
-        // Distribution of goals over time
         const goalEvents = [];
-        for(let i=0; i<tempMatch.homeScore; i++) goalEvents.push({ team: 'home', min: Math.floor(Math.random() * 90) });
-        for(let i=0; i<tempMatch.awayScore; i++) goalEvents.push({ team: 'away', min: Math.floor(Math.random() * 90) });
+        for(let i=0; i<tempMatch.homeScore; i++) goalEvents.push({ team: home.name, min: Math.floor(Math.random() * 88) + 1 });
+        for(let i=0; i<tempMatch.awayScore; i++) goalEvents.push({ team: away.name, min: Math.floor(Math.random() * 88) + 1 });
         
         let simMinute = 0;
         let homeScore = 0;
         let awayScore = 0;
-        
-        const ball = document.getElementById('sim-pitch-ball');
-        
+
         const simInterval = setInterval(() => {
             simMinute++;
             document.getElementById('sim-time-value').textContent = `${simMinute.toString().padStart(2, '0')}:00`;
             
-            // Random dot movement
-            document.querySelectorAll('.player-dot').forEach(dot => {
-                const noiseX = (Math.random() - 0.5) * 10;
-                const noiseY = (Math.random() - 0.5) * 10;
-                const currentLeft = parseFloat(dot.style.left);
-                const currentTop = parseFloat(dot.style.top);
-                
-                // Keep them roughly in their half but moving
-                let newLeft = currentLeft + (Math.random() - 0.5) * 5;
-                let newTop = currentTop + (Math.random() - 0.5) * 5;
-                
-                if (newLeft < 5) newLeft = 5;
-                if (newLeft > 95) newLeft = 95;
-                if (newTop < 5) newTop = 5;
-                if (newTop > 95) newTop = 95;
-                
-                dot.style.left = `${newLeft}%`;
-                dot.style.top = `${newTop}%`;
-            });
+            if (simMinute === 1) addMsg(1, "Apita o árbitro! Bola rolando.", "sys-msg");
             
-            // Ball movement (follow a random dot)
-            const dots = document.querySelectorAll('.player-dot');
-            const targetDot = dots[Math.floor(Math.random() * dots.length)];
-            ball.style.left = targetDot.style.left;
-            ball.style.top = targetDot.style.top;
-            
-            // Check for goals
             const goalsNow = goalEvents.filter(g => g.min === simMinute);
             goalsNow.forEach(g => {
-                if (g.team === 'home') homeScore++;
+                if (g.team === home.name) homeScore++;
                 else awayScore++;
-                
                 document.getElementById('sim-score-value').textContent = `${homeScore} - ${awayScore}`;
-                document.querySelector('.soccer-pitch').classList.add('goal-flash');
-                setTimeout(() => document.querySelector('.soccer-pitch').classList.remove('goal-flash'), 1000);
-                
-                // Teleport ball to center after goal
-                ball.style.left = '50%';
-                ball.style.top = '50%';
+                addMsg(simMinute, `<strong>GOOOOOL DO ${g.team.toUpperCase()}!!</strong>`, "goal");
             });
-            
+
+            if (goalsNow.length === 0 && Math.random() < 0.15) {
+                const rand = Math.random();
+                if (rand < 0.4) {
+                    const t = Math.random() < 0.5 ? home : away;
+                    const p = attackPhrases[Math.floor(Math.random() * attackPhrases.length)].replace('{team}', t.name);
+                    addMsg(simMinute, p);
+                } else if (rand < 0.6) {
+                    const t = Math.random() < 0.5 ? home : away;
+                    const p = foulPhrases[Math.floor(Math.random() * foulPhrases.length)].replace('{team}', t.name);
+                    addMsg(simMinute, p, "warning");
+                } else {
+                    addMsg(simMinute, genericPhrases[Math.floor(Math.random() * genericPhrases.length)]);
+                }
+            }
+
             if (simMinute >= 90) {
                 clearInterval(simInterval);
+                addMsg(90, "Fim de jogo!", "sys-msg");
                 match.homeScore = homeScore;
                 match.awayScore = awayScore;
                 match.simulated = true;
                 
-                // IMPORTANT: Update league tables if not a friendly
                 if (!match.isFriendly) {
                     const lg = this.leagues[this.currentSerie];
                     if (lg) this.updateLeagueStandings(match, lg.teams);
                 }
-                
-                // Add a small delay then close
-                setTimeout(() => {
-                    callback();
-                }, 2000);
+                setTimeout(() => callback(), 2000);
             }
-        }, 150); // Speed of sim
+        }, 150);
+
+        // Sidebar lists
+        const renderSimPlayers = (team, container) => {
+            if (!container) return;
+            container.innerHTML = '';
+            team.roster.filter(p => p.status === 'Titular').forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'sim-player-row';
+                row.innerHTML = `<div class="sim-player-pos">${p.pos}</div><div class="sim-player-name">${p.name}</div>`;
+                container.appendChild(row);
+            });
+        };
+        renderSimPlayers(home, document.getElementById('sim-home-players'));
+        renderSimPlayers(away, document.getElementById('sim-away-players'));
 
         // Skip button
         const skipBtn = document.getElementById('btn-sim-skip');

@@ -427,8 +427,12 @@ class BrasileiraoSimulator {
         // Setup UI
         document.getElementById('sim-home-name').textContent = home.name.toUpperCase();
         document.getElementById('sim-away-name').textContent = away.name.toUpperCase();
-        document.getElementById('sim-home-logo').style.backgroundColor = home.color;
-        document.getElementById('sim-away-logo').style.backgroundColor = away.color;
+        const simHomeLogo = document.getElementById('sim-home-logo');
+        const simAwayLogo = document.getElementById('sim-away-logo');
+        simHomeLogo.style.backgroundColor = home.color;
+        simAwayLogo.style.backgroundColor = away.color;
+        simHomeLogo.innerHTML = home.logo ? `<img src="${home.logo}" alt="${home.name}" style="width:100%;height:100%;object-fit:contain;padding:4px;">` : `<span style="font-size:0.9rem;font-weight:900;color:#fff;">${home.short||home.name.substring(0,3)}</span>`;
+        simAwayLogo.innerHTML = away.logo ? `<img src="${away.logo}" alt="${away.name}" style="width:100%;height:100%;object-fit:contain;padding:4px;">` : `<span style="font-size:0.9rem;font-weight:900;color:#fff;">${away.short||away.name.substring(0,3)}</span>`;
         document.getElementById('sim-score-value').textContent = "0 - 0";
         document.getElementById('sim-time-value').textContent = "00:00";
         
@@ -643,23 +647,31 @@ class BrasileiraoSimulator {
     }
 
     openTacticalModal() {
+        // Guard: only open if we are inside an active visual simulation
+        if (!this.currentSimHome || !this.currentSimAway) {
+            console.warn('openTacticalModal: no active simulation, ignoring.');
+            return;
+        }
         this.pauseSim();
         this.renderSimTactics();
-        document.getElementById('match-tactical-modal').style.display = 'block';
+        const modal = document.getElementById('match-tactical-modal');
+        if (modal) modal.style.display = 'block';
     }
 
     closeTacticalModal() {
-        document.getElementById('match-tactical-modal').style.display = 'none';
+        const modal = document.getElementById('match-tactical-modal');
+        if (modal) modal.style.display = 'none';
         this.selectedInSimMatch = null;
-        this.unpauseSim();
+        if (this.currentSimHome) this.unpauseSim();
     }
 
     renderSimTactics() {
         // Find user team
         let team = null;
+        if (!this.currentSimHome) return; // Guard: no active sim
         if (this.career.active && this.career.team) {
             if (this.currentSimHome.id === this.career.team.id) team = this.currentSimHome;
-            else if (this.currentSimAway.id === this.career.team.id) team = this.currentSimAway;
+            else if (this.currentSimAway && this.currentSimAway.id === this.career.team.id) team = this.currentSimAway;
         }
         if (!team) team = this.currentSimHome;
 
@@ -1056,8 +1068,8 @@ class BrasileiraoSimulator {
                     <button class="nav-arrow" onclick="simulator.navigateTeamSelection(-1)">❮</button>
                     
                     <div class="team-showcase">
-                        <div class="team-logo-big" style="background-color: ${team.color}; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);">
-                            <span style="font-size: 3rem; font-weight: 900; color: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">${team.name.substring(0,2)}</span>
+                        <div class="team-logo-big" style="background-color: ${team.color}; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); display:flex; align-items:center; justify-content:center;">
+                            ${team.logo ? `<img src="${team.logo}" alt="${team.name}" style="width:80px; height:80px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7));">` : `<span style="font-size: 3rem; font-weight: 900; color: #fff;">${team.name.substring(0,2)}</span>`}
                         </div>
                         <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
                         <div class="stars-container">${starHTML}</div>
@@ -1145,7 +1157,13 @@ class BrasileiraoSimulator {
         this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id == teamId);
         
         document.getElementById('user-team-name').textContent = team.name;
-        document.getElementById('user-team-logo').style.backgroundColor = team.color;
+        const logoEl = document.getElementById('user-team-logo');
+        logoEl.style.backgroundColor = team.color;
+        if (team.logo) {
+            logoEl.innerHTML = `<img src="${team.logo}" alt="${team.name}" style="width:40px; height:40px; object-fit:contain;">`;
+        } else {
+            logoEl.innerHTML = '';
+        }
         document.getElementById('user-team-overall').textContent = team.strength;
         
         this.openScreen('career-hub');

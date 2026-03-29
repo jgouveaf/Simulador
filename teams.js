@@ -1,4 +1,4 @@
-﻿const teams = [
+const teams = [
     {
         "id": 1,
         "name": "Palmeiras",
@@ -700,7 +700,8 @@
     },
     {
         "id": 2,
-        "name": "São\ Paulo",
+        "name": "São Paulo",
+        "logo": "https://static.wixstatic.com/media/29c778_d03261d1c31e44628515aca079e0926b~mv2.png",
         "short": "SAO",
         "color": "#FE0000",
         "strength": 83,

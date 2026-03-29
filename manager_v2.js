@@ -81,6 +81,7 @@ class BrasileiraoSimulator {
         document.getElementById('btn-tab-standings')?.addEventListener('click', () => this.switchTab('standings'));
         document.getElementById('btn-play-friendly')?.addEventListener('click', () => this.playFriendly());
         document.getElementById('btn-close-modal')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('btn-sim-tactic-opener')?.addEventListener('click', () => this.openTacticalModal());
         
         document.querySelectorAll('.btn-back-main').forEach(btn => {
             btn.addEventListener('click', () => this.openScreen('main-menu'));
@@ -564,7 +565,12 @@ class BrasileiraoSimulator {
         if (e.key.toLowerCase() === 'e') {
             const screen = document.getElementById('match-simulation-screen');
             if (screen && screen.classList.contains('active')) {
-                this.openTacticalModal();
+                const modal = document.getElementById('match-tactical-modal');
+                if (modal.style.display === 'block') {
+                    this.closeTacticalModal();
+                } else {
+                    this.openTacticalModal();
+                }
             }
         }
     }

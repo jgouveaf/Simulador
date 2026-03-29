@@ -386,30 +386,34 @@
 
     <!-- Match Tactical Modal (Overlay) -->
     <div id="match-tactical-modal" class="modal">
-        <div class="modal-content" style="max-width: 900px; padding: 0; background: var(--bg);">
-            <header class="fifa-header" style="padding: 1rem 2rem;">
+        <div class="modal-content">
+            <header class="fifa-header" style="padding: 1rem 2rem; border-bottom: 2px solid rgba(255,255,255,0.05);">
                 <h2>ESTRATÉGIA DE JOGO</h2>
-                <span class="close-modal close-tactical" style="position: relative; top: 0;" onclick="simulator.closeTacticalModal()">&times;</span>
+                <span class="close-modal close-tactical" onclick="simulator.closeTacticalModal()">&times;</span>
             </header>
             
             <div class="match-tactical-layout">
                 <!-- Left: Interactive Pitch -->
-                <div class="card" style="margin: 0; padding: 0; border: none; border-radius: 0;">
-                    <div class="soccer-pitch" id="sim-tactical-board" style="width: 100%; height: 550px; position: relative;">
+                <div class="tactical-board-full">
+                    <div class="soccer-pitch" id="sim-tactical-board">
                         <!-- Titulares aqui -->
                     </div>
                 </div>
                 
                 <!-- Right: Squad List for Subs -->
-                <div class="card" style="margin: 0; padding: 1.5rem; border: none; border-radius: 0; background: rgba(0,0,0,0.3); overflow-y: auto; max-height: 550px;">
-                    <h3 style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--gold);">BANCO DE RESERVAS</h3>
+                <div class="tactical-squad-sidebar">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--gold); border-bottom: 1px solid rgba(255,193,7,0.2); padding-bottom: 0.5rem;">BANCO DE RESERVAS</h3>
                     <div id="sim-reserva-list" class="squad-management">
                         <!-- Reservas aqui -->
                     </div>
-                    <p style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 2rem; line-height: 1.4;">
-                        Dica: Clique em um titular no campo e depois em um reserva na lista para substituir. <br>
-                        Clique em dois titulares no campo para trocar suas posições.
-                    </p>
+                    
+                    <div style="background: rgba(0,242,255,0.05); padding: 1rem; border-radius: 8px; margin-top: 2rem; font-size: 0.7rem; border-left: 3px solid var(--fifa-cyan);">
+                        <p style="color: var(--text-secondary); line-height: 1.5;">
+                            <strong>FIFA PRO TIP:</strong><br>
+                            - Arraste ou clique para substituir.<br>
+                            - Notas coloridas mostram o cansaço/ritmo.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1478,33 +1478,33 @@ class BrasileiraoSimulator {
         const map = {
             '4-4-2': [
                 {x:50, y:88, pos:'GK'},
-                {x:20, y:68, pos:'LD'}, {x:40, y:72, pos:'ZAG'}, {x:60, y:72, pos:'ZAG'}, {x:80, y:68, pos:'LE'},
-                {x:20, y:45, pos:'MD'}, {x:40, y:45, pos:'MC'}, {x:60, y:45, pos:'MC'}, {x:80, y:45, pos:'ME'},
-                {x:40, y:18, pos:'ATA'}, {x:60, y:18, pos:'ST'}
+                {x:80, y:68, pos:'LD'}, {x:60, y:72, pos:'ZAG'}, {x:40, y:72, pos:'ZAG'}, {x:20, y:68, pos:'LE'},
+                {x:80, y:45, pos:'MD'}, {x:60, y:45, pos:'MC'}, {x:40, y:45, pos:'MC'}, {x:20, y:45, pos:'ME'},
+                {x:60, y:18, pos:'ATA'}, {x:40, y:18, pos:'ST'}
             ],
             '4-3-3': [
                 {x:50, y:88, pos:'GK'},
-                {x:20, y:68, pos:'LD'}, {x:40, y:72, pos:'ZAG'}, {x:60, y:72, pos:'ZAG'}, {x:80, y:68, pos:'LE'},
-                {x:30, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:70, y:45, pos:'MC'},
-                {x:20, y:18, pos:'PE'}, {x:50, y:12, pos:'ATA'}, {x:80, y:18, pos:'PD'}
+                {x:80, y:68, pos:'LD'}, {x:60, y:72, pos:'ZAG'}, {x:40, y:72, pos:'ZAG'}, {x:20, y:68, pos:'LE'},
+                {x:70, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:30, y:45, pos:'MC'},
+                {x:80, y:18, pos:'PD'}, {x:50, y:12, pos:'ATA'}, {x:20, y:18, pos:'PE'}
             ],
             '3-5-2': [
                 {x:50, y:88, pos:'GK'},
-                {x:25, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:75, y:72, pos:'ZAG'},
-                {x:12, y:45, pos:'ALA'}, {x:35, y:48, pos:'VOL'}, {x:50, y:52, pos:'MC'}, {x:65, y:48, pos:'VOL'}, {x:88, y:45, pos:'ALA'},
-                {x:40, y:18, pos:'ATA'}, {x:60, y:18, pos:'ST'}
+                {x:75, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:25, y:72, pos:'ZAG'},
+                {x:88, y:45, pos:'ALA'}, {x:65, y:48, pos:'VOL'}, {x:50, y:52, pos:'MC'}, {x:35, y:48, pos:'VOL'}, {x:12, y:45, pos:'ALA'},
+                {x:60, y:18, pos:'ST'}, {x:40, y:18, pos:'ATA'}
             ],
             '5-3-2': [
                 {x:50, y:88, pos:'GK'},
-                {x:12, y:68, pos:'LD'}, {x:32, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:68, y:72, pos:'ZAG'}, {x:88, y:68, pos:'LE'},
-                {x:30, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:70, y:45, pos:'MC'},
-                {x:40, y:18, pos:'ATA'}, {x:60, y:18, pos:'ST'}
+                {x:88, y:68, pos:'LD'}, {x:68, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:32, y:72, pos:'ZAG'}, {x:12, y:68, pos:'LE'},
+                {x:70, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:30, y:45, pos:'MC'},
+                {x:60, y:18, pos:'ST'}, {x:40, y:18, pos:'ATA'}
             ],
             '4-2-3-1': [
                 {x:50, y:88, pos:'GK'},
-                {x:20, y:68, pos:'LD'}, {x:40, y:72, pos:'ZAG'}, {x:60, y:72, pos:'ZAG'}, {x:80, y:68, pos:'LE'},
-                {x:40, y:48, pos:'VOL'}, {x:60, y:48, pos:'VOL'},
-                {x:20, y:28, pos:'MD'}, {x:50, y:32, pos:'MEI'}, {x:80, y:28, pos:'ME'},
+                {x:80, y:68, pos:'LD'}, {x:60, y:72, pos:'ZAG'}, {x:40, y:72, pos:'ZAG'}, {x:20, y:68, pos:'LE'},
+                {x:60, y:48, pos:'VOL'}, {x:40, y:48, pos:'VOL'},
+                {x:80, y:28, pos:'PD'}, {x:50, y:32, pos:'MEI'}, {x:20, y:28, pos:'PE'},
                 {x:50, y:12, pos:'ST'}
             ]
         };

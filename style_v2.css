@@ -457,6 +457,45 @@ input[type=range]::-webkit-slider-thumb {
     transition: filter 0.3s ease;
 }
 
+/* TACTICAL MODAL FULLSCREEN LAYOUT */
+.match-tactical-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 20px;
+    padding: 20px 40px;
+    height: calc(100vh - 100px);
+}
+
+.tactical-board-full {
+    flex: 1.5;
+    display: flex;
+    flex-direction: column;
+}
+
+.soccer-pitch {
+    flex: 1;
+    background: radial-gradient(circle at center, rgba(0, 242, 255, 0.1) 0%, rgba(5, 11, 21, 0) 70%), 
+                linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+                url('https://img.freepik.com/free-photo/football-pitch-top-view_23-2148118640.jpg?size=626&ext=jpg');
+    background-size: cover;
+    background-position: center;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+
+.tactical-squad-sidebar {
+    flex: 1;
+    max-width: 400px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 20px;
+    padding: 1.5rem;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+}
+
 .rating-badge {
     padding: 2px 5px;
     border-radius: 4px;

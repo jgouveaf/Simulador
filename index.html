@@ -237,10 +237,26 @@
             </div>
 
             <div id="tab-standings" class="tab-content" style="display: none;">
-                <div class="card table-container">
-                    <table id="career-standings">
-                        <!-- Cloned from regular table -->
+                <div class="tnt-table-container">
+                    <table class="tnt-table" id="career-standings">
+                        <thead>
+                            <tr>
+                                <th class="pos">POS</th>
+                                <th style="text-align: left;">EQUIPE</th>
+                                <th class="pts-cell">PTS</th>
+                                <th class="stats-cell">J</th>
+                                <th class="stats-cell">V</th>
+                                <th class="stats-cell">SG</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standings-body"></tbody>
                     </table>
+                    <div class="tnt-zones-container">
+                        <div class="tnt-zone-label lib">LIBERTADORES</div>
+                        <div class="tnt-zone-label pre">PRÉ-LIB</div>
+                        <div class="tnt-zone-label sul">SUL-AMERICANA</div>
+                        <div class="tnt-zone-label reb">REBAIXADOS</div>
+                    </div>
                 </div>
             </div>
 
@@ -377,7 +393,7 @@
                 <span class="close-modal close-tactical" style="position: relative; top: 0;" onclick="simulator.closeTacticalModal()">&times;</span>
             </header>
             
-            <div class="match-tactical-layout" style="display: grid; grid-template-columns: 1fr 350px; gap: 0; min-height: 550px;">
+            <div class="match-tactical-layout">
                 <!-- Left: Interactive Pitch -->
                 <div class="card" style="margin: 0; padding: 0; border: none; border-radius: 0;">
                     <div class="soccer-pitch" id="sim-tactical-board" style="width: 100%; height: 550px; position: relative;">

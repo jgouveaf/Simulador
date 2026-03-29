@@ -461,10 +461,17 @@ class BrasileiraoSimulator {
         const ticker = document.getElementById('sim-events-ticker');
         ticker.innerHTML = '<div class="sys-msg">Partida prestes a começar...</div>';
         
-        const addMsg = (min, text, type = '') => {
+        // Match state for display
+        match.events = match.events || []; // {type, min, player, team}
+
+        const addMsg = (min, text, type = '', player = null) => {
             // ONLY ADD MESSAGE IF WE ARE IN THE CURRENT GENERATION
             if (this.simGeneration !== currentGen) return;
             
+            if (player) {
+                match.events.push({ type: type, min: min, player: player, team: player.team || (text.includes(home.name) ? home.name : away.name) });
+            }
+
             const entry = document.createElement('div');
             entry.className = `event-entry ${type}`;
             entry.innerHTML = `
@@ -493,7 +500,6 @@ class BrasileiraoSimulator {
         this.simCallback = callback;
 
         const runSimTick = () => {
-            // HARD EXIT: Kill interval if it belongs to an older match or if match is finished
             if (this.simGeneration !== currentGen || match.simulated) {
                 if (localIntervalId) clearInterval(localIntervalId);
                 return;
@@ -507,7 +513,14 @@ class BrasileiraoSimulator {
             
             if (simMinute === 1) addMsg(1, "Apita o árbitro! Começa a partida.", "sys-msg");
             
-            // Process queued subs
+            // Random Cards
+            if (Math.random() < 0.035) {
+                const team = Math.random() < 0.5 ? home : away;
+                const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
+                addMsg(simMinute, `CARTÃO AMARELO para ${p.name} (${team.name})!`, "warning", {name: p.name, id: p.id, type: 'card'});
+            }
+
+            // Subs
             if (this.queuedSubs.length > 0 && Math.random() < 0.3) {
                 this.processQueuedSubs(home, away, addMsg, simMinute);
             }
@@ -527,18 +540,20 @@ class BrasileiraoSimulator {
                 }
             }
 
-            // Only proceed if not paused during the tick (half-time check)
             if (this.isPaused) return;
 
             const goalsNow = goalEvents.filter(g => g.min === simMinute);
             goalsNow.forEach(g => {
+                const team = (g.team === home.name) ? home : away;
+                const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
+                
                 if (g.team === home.name) homeScore++;
                 else awayScore++;
                 
                 const scoreEl = document.getElementById('sim-score-value');
                 if (scoreEl) scoreEl.textContent = `${homeScore} - ${awayScore}`;
                 
-                addMsg(simMinute, `<strong>GOOOOOL DO ${g.team.toUpperCase()}!!</strong>`, "goal");
+                addMsg(simMinute, `<strong>GOOOOOL DO ${g.team.toUpperCase()}!!</strong> ${p.name} balança as redes!`, "goal", {name: p.name, id: p.id, type: 'goal'});
             });
 
             if (goalsNow.length === 0 && Math.random() < 0.1) {
@@ -556,7 +571,6 @@ class BrasileiraoSimulator {
                 }
             }
 
-            // Final do Jogo
             if (simMinute >= 90 && !match.simulated) {
                 match.simulated = true; 
                 if (localIntervalId) clearInterval(localIntervalId);
@@ -764,9 +778,16 @@ class BrasileiraoSimulator {
             marker.style.top = `${pos.y}%`;
             marker.style.transform = 'translate(-50%, -50%) scale(0.85)';
 
+            const pGoals = (match.events || []).filter(e => e.type === 'goal' && e.player.id === p.id).length;
+            const hasCard = (match.events || []).some(e => e.type === 'warning' && e.player.id === p.id);
+
             marker.innerHTML = `
                 <div class="player-circle">${p.strength}</div>
-                <div class="player-name-tag">${p.name.split(' ').pop()} ${this.isQueued(p.id) ? '⏳' : ''}</div>
+                <div class="player-name-tag">
+                    ${p.name.split(' ').pop()} ${this.isQueued(p.id) ? '⏳' : ''}
+                    ${pGoals > 0 ? `<span class="event-mini-icon icon-goal">⚽${pGoals > 1 ? pGoals : ''}</span>` : ''}
+                    ${hasCard ? `<span class="event-mini-icon icon-card">🟨</span>` : ''}
+                </div>
                 <div style="font-size: 0.5rem; font-weight: 800; color: var(--fifa-cyan);">${pos.pos || p.pos}</div>
             `;
 
@@ -888,32 +909,34 @@ class BrasileiraoSimulator {
         });
 
         const tbody = document.getElementById('standings-body');
-        if (!tbody) return; // Silent return if we are in a screen without the table
+        if (!tbody) return; 
         
         tbody.innerHTML = '';
 
         sortedTeams.forEach((team, index) => {
             const tr = document.createElement('tr');
-            if (index < 4) tr.style.borderLeft = '4px solid var(--gold)';
-            else if (index >= 16) tr.style.borderLeft = '4px solid var(--red)';
+            
+            // TNT Zone Logic
+            let zone = "";
+            if (index < 4) zone = "libertadores";
+            else if (index < 6) zone = "pre-libertadores";
+            else if (index < 12) zone = "sul-americana";
+            else if (index >= 16) zone = "rebaixados";
+            
+            tr.setAttribute('data-zone', zone);
             
             tr.innerHTML = `
                 <td class="pos">${index + 1}</td>
                 <td>
-                    <div class="team-name team-clickable" onclick="simulator.showTeamDetails(${team.id})">
-                        <div class="team-color" style="background-color: ${team.color};"></div>
+                    <div class="team-cell team-clickable" onclick="simulator.showTeamDetails(${team.id})">
+                        ${team.logo ? `<img src="${team.logo}" class="team-logo-small">` : `<div style="width:24px;height:24px;background:${team.color};border-radius:50%"></div>`}
                         ${team.name}
                     </div>
                 </td>
-                <td class="stats pts">${team.points}</td>
-                <td class="stats">${team.played}</td>
-                <td class="stats">${team.won}</td>
-                <td class="stats">${team.drawn}</td>
-                <td class="stats">${team.lost}</td>
-                <td class="stats">${team.goalsFor}</td>
-                <td class="stats">${team.goalsAgainst}</td>
-                <td class="stats">${team.goalDiff}</td>
-                <td class="stats">${team.percentage}%</td>
+                <td class="pts-cell">${team.points}</td>
+                <td class="stats-cell">${team.played}</td>
+                <td class="stats-cell">${team.won}</td>
+                <td class="stats-cell">${team.goalDiff}</td>
             `;
             tbody.appendChild(tr);
         });

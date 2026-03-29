@@ -429,31 +429,159 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* Modal Styles Restored */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.8);
-    backdrop-filter: blur(5px);
+/* Tactical Modal Fullscreen Base */
+#match-tactical-modal .modal-content {
+    background-color: #050b15;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    animation: zoomInFast 0.25s cubic-bezier(0, 0, 0.2, 1);
 }
 
-.modal-content {
-    background-color: #050b15;
-    margin: 5% auto;
-    padding: 2.5rem;
-    width: 80%;
-    max-width: 900px;
-    border-radius: 20px;
-    position: relative;
-    max-height: 85vh;
-    overflow-y: auto;
-    border: 2px solid var(--fifa-cyan);
-    box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+@keyframes zoomInFast {
+    from { opacity: 0; transform: scale(1.05); filter: blur(10px); }
+    to { opacity: 1; transform: scale(1); filter: blur(0); }
 }
+
+.match-tactical-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 0;
+    overflow: hidden;
+}
+
+#match-tactical-modal .fifa-header {
+    margin-bottom: 0;
+    padding: 1.5rem 3rem;
+    background: rgba(0,0,0,0.5);
+}
+
+/* TNT Style Table */
+.tnt-table-container {
+    background: #fff;
+    color: #000;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    padding-right: 40px; /* Space for the vertical zones */
+}
+
+.tnt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+}
+
+.tnt-table thead {
+    background: #0d1e3d;
+    color: #fff;
+}
+
+.tnt-table th {
+    padding: 12px 10px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.tnt-table td {
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-bottom: 1px solid #eee;
+}
+
+.tnt-table .pos {
+    width: 50px;
+    text-align: center;
+    border-left: 5px solid transparent;
+}
+
+.tnt-table .team-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tnt-table .team-logo-small {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* PTS Column Bold */
+.tnt-table .pts-cell {
+    background: #f7f7f7;
+    text-align: center;
+    font-weight: 900;
+    font-size: 1rem;
+    width: 60px;
+}
+
+.tnt-table .stats-cell {
+    text-align: center;
+    color: #555;
+    width: 50px;
+}
+
+/* Zone Borders */
+.tnt-table tr[data-zone="libertadores"] .pos { border-left-color: #00a859; }
+.tnt-table tr[data-zone="pre-libertadores"] .pos { border-left-color: #00f2ff; }
+.tnt-table tr[data-zone="sul-americana"] .pos { border-left-color: #0000cd; }
+.tnt-table tr[data-zone="rebaixados"] .pos { border-left-color: #ff0000; }
+
+/* Side Labels (Vertical) */
+.tnt-zones-container {
+    position: absolute;
+    right: 0;
+    top: 38px; /* Below header */
+    bottom: 0;
+    width: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.tnt-zone-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    font-size: 0.6rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.tnt-zone-label.lib { background: #00a859; height: 20%; }
+.tnt-zone-label.pre { background: #00f2ff; color: #000; height: 10%; }
+.tnt-zone-label.sul { background: #0000cd; height: 30%; }
+.tnt-zone-label.reb { background: #ff0000; height: 20%; margin-top: auto; }
+
+/* Icons in Tactical View */
+.event-mini-icon {
+    font-size: 0.6rem;
+    margin-left: 2px;
+}
+.icon-goal { color: var(--gold); }
+.icon-card { color: #ffcc00; }
+
+/* Scrollbar TNT */
+.tnt-table-container::-webkit-scrollbar { width: 6px; }
+.tnt-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
 
 .close-modal {
     color: var(--text-secondary);

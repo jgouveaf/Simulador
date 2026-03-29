@@ -428,34 +428,27 @@ input[type=range]::-webkit-slider-thumb {
     font-size: 0.8rem;
 }
 
-/* Modal Styles Restored */
 .modal {
     display: none;
     position: fixed;
-    z-index: 2000; /* Higher than anything else */
+    z-index: 9999;
     left: 0;
     top: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0,0,0,0.85);
-    backdrop-filter: blur(5px);
+    border: none;
+    background-color: rgba(0,0,0,0.95);
+    backdrop-filter: blur(10px);
 }
 
-/* Tactical Modal Fullscreen Base */
-#match-tactical-modal .modal-content {
+.modal-content {
     background-color: #050b15;
     margin: 0;
     padding: 0;
-    width: 100vw;
-    height: 100vh;
-    max-width: 100vw;
-    max-height: 100vh;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    animation: zoomInFast 0.25s cubic-bezier(0, 0, 0.2, 1);
 }
 
 .sim-blur-active {

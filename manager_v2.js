@@ -1156,78 +1156,112 @@ class BrasileiraoSimulator {
     }
 
     renderFormation() {
-        const pitch = document.getElementById('pitch-formation-display');
+        const pitch = document.getElementById('pitch-tactical-board');
+        if (!pitch) return;
         pitch.innerHTML = '';
         
         const team = this.career.team;
+        if (!team) return;
+        
         const formation = team.formation || '4-3-3';
         const titulares = team.roster.filter(p => p.status === 'Titular');
         
-        // Ativar botão da formação atual
+        // Ativar botões de formação
         document.querySelectorAll('.btn-formation').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.formation === formation);
             btn.onclick = () => {
                 team.formation = btn.dataset.formation;
                 this.renderFormation();
+                this.renderCareerSquad();
             };
         });
 
-        const positions = this.getFormationCoordinates(formation);
+        const coords = this.getFormationCoordinates(formation);
+        
         titulares.forEach((p, i) => {
-            const coord = positions[i] || { x: 50, y: 50 };
-            const div = document.createElement('div');
-            div.className = 'pitch-player';
-            div.style.left = `${coord.x}%`;
-            div.style.top = `${coord.y}%`;
-            div.innerHTML = `
-                <span class="pos-label">${p.pos}</span>
-                <span class="name-label">${p.name.split(' ').pop()}</span>
-                <span style="font-size: 0.65rem; color: var(--gold);">${p.strength}</span>
+            const pos = coords[i] || { x: 50, y: 50 };
+            const marker = document.createElement('div');
+            marker.className = 'tactical-player';
+            if (this.selectedInTactics && this.selectedInTactics.id === p.id) marker.classList.add('selected');
+            
+            marker.style.left = `${pos.x}%`;
+            marker.style.top = `${pos.y}%`;
+            marker.style.transform = 'translate(-50%, -50%)';
+            
+            marker.innerHTML = `
+                <div class="player-circle">${p.strength}</div>
+                <div class="player-name-tag">${p.name.split(' ').pop()}</div>
+                <div style="font-size: 0.5rem; font-weight: 800; color: var(--fifa-cyan); text-transform: uppercase;">${pos.pos || p.pos}</div>
             `;
-            pitch.appendChild(div);
+
+            marker.onclick = (e) => {
+                e.stopPropagation();
+                this.handleTacticalSwap(p);
+            };
+
+            pitch.appendChild(marker);
         });
+
+        // Add empty "drop spots" logic? No, let's stick to player-to-player swap
     }
 
-    getFormationCoordinates(formation) {
-        // Base coordinates [0-100] for a 1.2 aspect pitch
-        const base = {
-            'GOL': { x: 50, y: 90 },
-            'ZAG_L': { x: 35, y: 75 },
-            'ZAG_R': { x: 65, y: 75 },
-            'LD': { x: 85, y: 65 },
-            'LE': { x: 15, y: 65 },
-            'VOL': { x: 50, y: 60 },
-            'MEI_L': { x: 30, y: 45 },
-            'MEI_R': { x: 70, y: 45 },
-            'MC': { x: 50, y: 40 },
-            'ATA_L': { x: 25, y: 25 },
-            'ATA_R': { x: 75, y: 25 },
-            'ATA_C': { x: 50, y: 15 }
-        };
-
-        if (formation === '4-3-3') {
-            return [
-                {x: 50, y: 90}, // GOL
-                {x: 15, y: 72}, {x: 35, y: 75}, {x: 65, y: 75}, {x: 85, y: 72}, // Defesa
-                {x: 50, y: 55}, {x: 30, y: 42}, {x: 70, y: 42}, // Meio
-                {x: 20, y: 20}, {x: 80, y: 20}, {x: 50, y: 15}  // Ataque
-            ];
-        } else if (formation === '4-4-2') {
-            return [
-                {x: 50, y: 90},
-                {x: 10, y: 72}, {x: 35, y: 75}, {x: 65, y: 75}, {x: 90, y: 72},
-                {x: 15, y: 45}, {x: 40, y: 48}, {x: 60, y: 48}, {x: 85, y: 45},
-                {x: 40, y: 20}, {x: 60, y: 20}
-            ];
-        } else if (formation === '3-5-2') {
-            return [
-                {x: 50, y: 90},
-                {x: 25, y: 75}, {x: 50, y: 78}, {x: 75, y: 75},
-                {x: 10, y: 45}, {x: 35, y: 48}, {x: 50, y: 55}, {x: 65, y: 48}, {x: 90, y: 45},
-                {x: 40, y: 20}, {x: 60, y: 20}
-            ];
+    handleTacticalSwap(player) {
+        if (!this.selectedInTactics) {
+            this.selectedInTactics = player;
+        } else {
+            if (this.selectedInTactics.id !== player.id) {
+                const team = this.career.team;
+                const idx1 = team.roster.findIndex(p => p.id === this.selectedInTactics.id);
+                const idx2 = team.roster.findIndex(p => p.id === player.id);
+                
+                // Swap in the actual roster array to change their order in the starter group
+                const temp = team.roster[idx1];
+                team.roster[idx1] = team.roster[idx2];
+                team.roster[idx2] = temp;
+                
+                // Position logic: they essentially swap positions in the formation coordinates
+                this.renderCareerSquad();
+            }
+            this.selectedInTactics = null;
         }
-        return Array(11).fill({x: 50, y: 50});
+        this.renderFormation();
+    }
+
+    getFormationCoordinates(f) {
+        const map = {
+            '4-4-2': [
+                {x:50, y:88, pos:'GK'},
+                {x:20, y:68, pos:'LD'}, {x:40, y:72, pos:'ZAG'}, {x:60, y:72, pos:'ZAG'}, {x:80, y:68, pos:'LE'},
+                {x:20, y:45, pos:'MD'}, {x:40, y:45, pos:'MC'}, {x:60, y:45, pos:'MC'}, {x:80, y:45, pos:'ME'},
+                {x:40, y:18, pos:'ATA'}, {x:60, y:18, pos:'ST'}
+            ],
+            '4-3-3': [
+                {x:50, y:88, pos:'GK'},
+                {x:20, y:68, pos:'LD'}, {x:40, y:72, pos:'ZAG'}, {x:60, y:72, pos:'ZAG'}, {x:80, y:68, pos:'LE'},
+                {x:30, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:70, y:45, pos:'MC'},
+                {x:20, y:18, pos:'PE'}, {x:50, y:12, pos:'ATA'}, {x:80, y:18, pos:'PD'}
+            ],
+            '3-5-2': [
+                {x:50, y:88, pos:'GK'},
+                {x:25, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:75, y:72, pos:'ZAG'},
+                {x:12, y:45, pos:'ALA'}, {x:35, y:48, pos:'VOL'}, {x:50, y:52, pos:'MC'}, {x:65, y:48, pos:'VOL'}, {x:88, y:45, pos:'ALA'},
+                {x:40, y:18, pos:'ATA'}, {x:60, y:18, pos:'ST'}
+            ],
+            '5-3-2': [
+                {x:50, y:88, pos:'GK'},
+                {x:12, y:68, pos:'LD'}, {x:32, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:68, y:72, pos:'ZAG'}, {x:88, y:68, pos:'LE'},
+                {x:30, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:70, y:45, pos:'MC'},
+                {x:40, y:18, pos:'ATA'}, {x:60, y:18, pos:'ST'}
+            ],
+            '4-2-3-1': [
+                {x:50, y:88, pos:'GK'},
+                {x:20, y:68, pos:'LD'}, {x:40, y:72, pos:'ZAG'}, {x:60, y:72, pos:'ZAG'}, {x:80, y:68, pos:'LE'},
+                {x:40, y:48, pos:'VOL'}, {x:60, y:48, pos:'VOL'},
+                {x:20, y:28, pos:'MD'}, {x:50, y:32, pos:'MEI'}, {x:80, y:28, pos:'ME'},
+                {x:50, y:12, pos:'ST'}
+            ]
+        };
+        return map[f] || map['4-3-3'];
     }
 
     renderInstructions() {

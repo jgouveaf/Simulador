@@ -872,3 +872,63 @@ input[type=range]::-webkit-slider-thumb {
     0% { opacity: 0; transform: translateX(20px); }
     100% { opacity: 1; transform: translateX(0); }
 }
+
+/* Tactical Pitch & Squad Management */
+.tactical-player {
+    position: absolute;
+    width: 60px;
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+}
+
+.tactical-player:hover {
+    transform: scale(1.1);
+    z-index: 100;
+}
+
+.player-circle {
+    width: 40px;
+    height: 40px;
+    background: #fff;
+    border-radius: 50%;
+    border: 3px solid var(--fifa-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #000;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    pointer-events: none;
+}
+
+.tactical-player.selected .player-circle {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px var(--gold);
+    background: var(--gold);
+    color: #000;
+}
+
+.player-name-tag {
+    margin-top: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 1px 2px #000;
+}
+
+.formation-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+}

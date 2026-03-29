@@ -1042,7 +1042,7 @@ class BrasileiraoSimulator {
         const teams = this.allTeamsRaw.filter(t => t.serie === this.selectionSerie);
         const team = teams[this.selectionIndex];
         const stats = this.calculateDetailedStats(team);
-        const starHTML = this.getStarRatingHTML(team.strength);
+        const starHTML = this.getStarRatingHTML(team);
 
         grid.innerHTML = `
             <div class="team-picker-container">
@@ -1075,8 +1075,6 @@ class BrasileiraoSimulator {
                                 <strong>${stats.def}</strong>
                             </div>
                         </div>
-                        
-                        <div class="overall-badge-big">GERAL: ${team.strength}</div>
                     </div>
                     
                     <button class="nav-arrow" onclick="simulator.navigateTeamSelection(1)">❯</button>
@@ -1099,15 +1097,22 @@ class BrasileiraoSimulator {
         this.renderTeamSelection();
     }
 
-    getStarRatingHTML(ovr) {
+    getStarRatingHTML(team) {
+        const ovr = team.strength;
         let stars = 0;
-        if (ovr >= 84) stars = 5;
-        else if (ovr === 83) stars = 4.5;
-        else if (ovr >= 80) stars = 4;
-        else if (ovr >= 77) stars = 3.5;
-        else if (ovr >= 74) stars = 3;
-        else if (ovr >= 70) stars = 2.5;
-        else stars = 2;
+
+        // Exception for Santos
+        if (team.id == 17 || team.name === 'Santos') {
+            stars = 4;
+        } else {
+            if (ovr >= 84) stars = 5;
+            else if (ovr === 83) stars = 4.5;
+            else if (ovr >= 80) stars = 4;
+            else if (ovr >= 77) stars = 3.5;
+            else if (ovr >= 74) stars = 3;
+            else if (ovr >= 70) stars = 2.5;
+            else stars = 2;
+        }
 
         let html = '';
         for (let i = 1; i <= 5; i++) {
@@ -1133,10 +1138,10 @@ class BrasileiraoSimulator {
     }
 
     selectTeam(teamId) {
-        const team = this.allTeamsRaw.find(t => t.id === teamId);
+        const team = this.allTeamsRaw.find(t => t.id == teamId);
         this.currentSerie = team.serie;
         this.career.active = true;
-        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === teamId);
+        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id == teamId);
         
         document.getElementById('user-team-name').textContent = team.name;
         document.getElementById('user-team-logo').style.backgroundColor = team.color;

@@ -225,7 +225,7 @@ class BrasileiraoSimulator {
         return { atk: avgAtk, def: avgDef };
     }
 
-    simulateMatch(match, leagueTeams) {
+    simulateMatch(match, leagueTeams, updateStats = true) {
         if (match.homeScore !== null) return;
 
         const homeTeam = leagueTeams.find(t => t.id === match.home);
@@ -269,10 +269,10 @@ class BrasileiraoSimulator {
              if (hScore < aScore) { hScore = aScore; } // Force at least a draw for the upset
         }
 
-        match.homeScore = Math.min(hScore, 8); // Rare to see 9+ in real life
+        match.homeScore = Math.min(hScore, 8);
         match.awayScore = Math.min(aScore, 8);
-
-        this.updateLeagueStandings(match, leagueTeams);
+ 
+        if (updateStats) this.updateLeagueStandings(match, leagueTeams);
     }
 
     poissonRandom(mean) {
@@ -349,6 +349,9 @@ class BrasileiraoSimulator {
                     this.updateStats();
                     this.displayCalendar();
                     if (this.career.active) this.updateCareerDashboard();
+                    
+                    // Return to career hub after simulation
+                    this.openScreen('career-hub');
                 });
             } else {
                 console.error("Teams not found for visual sim!");
@@ -433,7 +436,7 @@ class BrasileiraoSimulator {
         // Pre-simulate the match result to know when goals happen
         // We pass [home, away] to ensure simulateMatch finds them regardless of league status
         const tempMatch = { ...match, homeScore: null, awayScore: null };
-        this.simulateMatch(tempMatch, [home, away]);
+        this.simulateMatch(tempMatch, [home, away], false);
         
         // Distribution of goals over time
         const goalEvents = [];
@@ -511,19 +514,25 @@ class BrasileiraoSimulator {
         }, 150); // Speed of sim
 
         // Skip button
-        document.getElementById('btn-sim-skip').onclick = () => {
-            clearInterval(simInterval);
-            match.homeScore = tempMatch.homeScore;
-            match.awayScore = tempMatch.awayScore;
-            match.simulated = true;
-            
-            if (!match.isFriendly) {
-                const lg = this.leagues[this.currentSerie];
-                if (lg) this.updateLeagueStandings(match, lg.teams);
-            }
-            
-            callback();
-        };
+        const skipBtn = document.getElementById('btn-sim-skip');
+        if (skipBtn) {
+            skipBtn.onclick = (e) => {
+                e.preventDefault();
+                console.log("Simulação pular!");
+                clearInterval(simInterval);
+                
+                match.homeScore = tempMatch.homeScore;
+                match.awayScore = tempMatch.awayScore;
+                match.simulated = true;
+                
+                if (!match.isFriendly) {
+                    const lg = this.leagues[this.currentSerie];
+                    if (lg) this.updateLeagueStandings(match, lg.teams);
+                }
+                
+                callback();
+            };
+        }
 
         // Mentality Logic
         document.querySelectorAll('.btn-mentality').forEach(btn => {

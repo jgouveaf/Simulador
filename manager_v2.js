@@ -36,6 +36,7 @@ class BrasileiraoSimulator {
         this.selectionIndex = 0;
         this.selectionSerie = 'A';
         this.isSimulating = false; // Guard to prevent overlapping simulations
+        this.simGeneration = 0;    // Unique ID for the current active simulation
         console.log('Brasileirao Manager V2.2 Loaded - FIFA Carousel & Santos Exception Active');
 
         this.init();
@@ -428,6 +429,10 @@ class BrasileiraoSimulator {
     }
 
     startVisualSimulation(match, home, away, callback) {
+        // INCREMENT GENERATION TO KILL PREVIOUS ZOMBIE INTERVALS
+        this.simGeneration++;
+        const currentGen = this.simGeneration;
+        
         if (this.simInterval) {
             clearInterval(this.simInterval);
             this.simInterval = null;
@@ -452,6 +457,9 @@ class BrasileiraoSimulator {
         ticker.innerHTML = '<div class="sys-msg">Partida prestes a começar...</div>';
         
         const addMsg = (min, text, type = '') => {
+            // ONLY ADD MESSAGE IF WE ARE IN THE CURRENT GENERATION
+            if (this.simGeneration !== currentGen) return;
+            
             const entry = document.createElement('div');
             entry.className = `event-entry ${type}`;
             entry.innerHTML = `
@@ -480,8 +488,8 @@ class BrasileiraoSimulator {
         this.simCallback = callback;
 
         const runSimTick = () => {
-            // Safety exit: If match is already simulated, kill this specific interval immediately
-            if (match.simulated) {
+            // HARD EXIT: Kill interval if it belongs to an older match or if match is finished
+            if (this.simGeneration !== currentGen || match.simulated) {
                 if (localIntervalId) clearInterval(localIntervalId);
                 return;
             }
@@ -489,7 +497,8 @@ class BrasileiraoSimulator {
             if (this.isPaused) return;
 
             simMinute++;
-            document.getElementById('sim-time-value').textContent = `${simMinute.toString().padStart(2, '0')}:00`;
+            const timeEl = document.getElementById('sim-time-value');
+            if (timeEl) timeEl.textContent = `${simMinute.toString().padStart(2, '0')}:00`;
             
             if (simMinute === 1) addMsg(1, "Apita o árbitro! Começa a partida.", "sys-msg");
             
@@ -520,7 +529,10 @@ class BrasileiraoSimulator {
             goalsNow.forEach(g => {
                 if (g.team === home.name) homeScore++;
                 else awayScore++;
-                document.getElementById('sim-score-value').textContent = `${homeScore} - ${awayScore}`;
+                
+                const scoreEl = document.getElementById('sim-score-value');
+                if (scoreEl) scoreEl.textContent = `${homeScore} - ${awayScore}`;
+                
                 addMsg(simMinute, `<strong>GOOOOOL DO ${g.team.toUpperCase()}!!</strong>`, "goal");
             });
 
@@ -579,11 +591,12 @@ class BrasileiraoSimulator {
         if (skipBtn) {
             skipBtn.onclick = (e) => {
                 e.preventDefault();
-                if (match.simulated) return;
+                // Ensure the skip ONLY works for the current generation
+                if (this.simGeneration !== currentGen || match.simulated) return;
                 match.simulated = true;
                 
-                console.log("Simulação pular!");
-                clearInterval(this.simInterval);
+                console.log("Skipping simulation for generation:", currentGen);
+                if (localIntervalId) clearInterval(localIntervalId);
                 this.simInterval = null;
                 
                 match.homeScore = tempMatch.homeScore;

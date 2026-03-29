@@ -92,6 +92,13 @@ class BrasileiraoSimulator {
             btn.addEventListener('click', () => this.openScreen('main-menu'));
         });
 
+        // Ensure Táctica button in simulation screen works
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'btn-sim-tactic-opener' || e.target.closest('#btn-sim-tactic-opener')) {
+                this.openTacticalModal();
+            }
+        });
+
         // Keyboard Shortcuts (D-Pad style)
         window.addEventListener('keydown', (e) => {
             if (document.getElementById('match-simulation-screen').classList.contains('active')) {
@@ -724,6 +731,7 @@ class BrasileiraoSimulator {
     }
 
     renderSimTactics() {
+        const match = this.currentSimMatch;
         // Find user team
         let team = null;
         if (!this.currentSimHome) return; 
@@ -1211,17 +1219,18 @@ class BrasileiraoSimulator {
         const ovr = team.strength;
         let stars = 0;
 
-        // Exception for Santos (id: 17) and Corinthians (id: 5)
-        if (team.id == 17 || team.name === 'Santos' || team.id == 5 || team.name === 'Corinthians') {
+        // Exception for User Requested Ratings
+        if (team.name === 'Flamengo' || team.id == 5) {
+            stars = 5;
+        } else if (team.name === 'Cruzeiro' || team.id == 19) {
             stars = 4.5;
         } else {
-            if (ovr >= 84) stars = 5;
-            else if (ovr === 83) stars = 4.5;
-            else if (ovr >= 80) stars = 4;
+            if (ovr >= 92) stars = 5;
+            else if (ovr >= 88) stars = 4.5;
+            else if (ovr >= 83) stars = 4;
             else if (ovr >= 77) stars = 3.5;
-            else if (ovr >= 74) stars = 3;
-            else if (ovr >= 70) stars = 2.5;
-            else stars = 2;
+            else if (ovr >= 73) stars = 3;
+            else stars = 2.5;
         }
 
         let html = '';
@@ -1261,7 +1270,7 @@ class BrasileiraoSimulator {
         } else {
             logoEl.innerHTML = '';
         }
-        document.getElementById('user-team-overall').textContent = team.strength;
+        document.getElementById('user-team-overall').innerHTML = this.getStarRatingHTML(team);
         
         this.openScreen('career-hub');
         this.switchTab('central');
@@ -1284,7 +1293,7 @@ class BrasileiraoSimulator {
 
         document.getElementById('money-display').textContent = `R$ ${this.career.budget.toLocaleString('pt-BR')}`;
         document.getElementById('budget-info').textContent = `R$ ${(this.career.budget / 1000000).toFixed(0)}M`;
-        document.getElementById('user-team-overall').textContent = this.career.team.strength;
+        document.getElementById('user-team-overall').innerHTML = this.getStarRatingHTML(this.career.team);
         
         this.renderMiniStandings();
     }

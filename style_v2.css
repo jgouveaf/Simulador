@@ -1228,3 +1228,23 @@ input[type=range]::-webkit-slider-thumb {
     transform: translateY(-5px);
     box-shadow: 0 15px 30px rgba(0,242,255,0.4);
 }
+
+/* Sim Simulation Styles */
+.sim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    background: rgba(0,0,0,0.4);
+}
+
+.rating i {
+    font-size: 0.8rem;
+    margin-right: 1px;
+}
+
+#user-team-overall {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}

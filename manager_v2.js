@@ -389,6 +389,8 @@ class BrasileiraoSimulator {
     }
 
     startVisualSimulation(match, home, away, callback) {
+        this.currentSimHome = home;
+        this.currentSimAway = away;
         this.openScreen('match-simulation');
         
         // Setup UI
@@ -609,20 +611,38 @@ class BrasileiraoSimulator {
     }
 
     renderMatchTactics() {
-        if (!this.career.active || !this.career.team) return;
-        const container = document.getElementById('match-squad-list');
-        container.innerHTML = '';
+        // Find which team to manage. If career, it's the player's team. If friendly, let's show home team as default user team.
+        let teamToManage = null;
+        if (this.career.active && this.career.team) {
+            if (this.currentSimHome.id === this.career.team.id) teamToManage = this.currentSimHome;
+            else if (this.currentSimAway.id === this.career.team.id) teamToManage = this.currentSimAway;
+        }
         
-        const team = this.career.team;
-        team.roster.sort((a,b) => (a.status === 'Titular' ? -1 : 1)).forEach(p => {
+        // If still no team (friendly mode), default to the home team
+        if (!teamToManage) teamToManage = this.currentSimHome;
+
+        const container = document.getElementById('match-squad-list');
+        container.innerHTML = `<h3 style="margin-bottom: 10px; color: var(--fifa-cyan);">${teamToManage.name.toUpperCase()}</h3>`;
+        
+        teamToManage.roster.sort((a,b) => {
+            if (a.status === 'Titular' && b.status !== 'Titular') return -1;
+            if (a.status !== 'Titular' && b.status === 'Titular') return 1;
+            return 0;
+        }).forEach(p => {
             const div = document.createElement('div');
             div.className = 'squad-slot interactive';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.padding = '8px';
+            div.style.marginBottom = '5px';
             div.style.borderLeft = p.status === 'Titular' ? '4px solid var(--fifa-cyan)' : '4px solid gray';
+            if (this.tempSelected && this.tempSelected.id === p.id) div.style.backgroundColor = 'rgba(0, 242, 255, 0.2)';
+            
             div.innerHTML = `
                 <span><strong>${p.pos}</strong> ${p.name} ${this.isQueued(p.id) ? '⏳' : ''}</span>
                 <span class="player-strength">${p.strength}</span>
             `;
-            div.onclick = () => this.handleTacticalClick(p);
+            div.onclick = () => this.handleTacticalClick(p, teamToManage);
             container.appendChild(div);
         });
     }
@@ -631,7 +651,7 @@ class BrasileiraoSimulator {
         return this.queuedSubs.some(s => s.in.id === pid || s.out.id === pid);
     }
 
-    handleTacticalClick(player) {
+    handleTacticalClick(player, teamToManage) {
         if (!this.tempSelected) {
             this.tempSelected = player;
             this.renderMatchTactics();
@@ -643,6 +663,7 @@ class BrasileiraoSimulator {
             }
             
             const sub = { 
+                team: teamToManage,
                 out: this.tempSelected.status === 'Titular' ? this.tempSelected : player, 
                 in: this.tempSelected.status === 'Titular' ? player : this.tempSelected 
             };
@@ -661,23 +682,19 @@ class BrasileiraoSimulator {
     }
 
     processQueuedSubs(home, away, addMsg, min) {
-        // Only process subs for the user's team in career mode
-        const userTeam = this.career.team;
-        if (!userTeam) return;
-
         this.queuedSubs.forEach(sub => {
-            const pOut = userTeam.roster.find(p => p.id === sub.out.id);
-            const pIn = userTeam.roster.find(p => p.id === sub.in.id);
+            const team = sub.team;
+            const pOut = team.roster.find(p => p.id === sub.out.id);
+            const pIn = team.roster.find(p => p.id === sub.in.id);
             
             if (pOut && pIn) {
                 pOut.status = 'Reserva';
                 pIn.status = 'Titular';
-                addMsg(min, `SUBSTITUIÇÃO no ${userTeam.name.toUpperCase()}: Sai ${pOut.name}, entra ${pIn.name}.`);
+                addMsg(min, `SUBSTITUIÇÃO no ${team.name.toUpperCase()}: Sai ${pOut.name}, entra ${pIn.name}.`);
             }
         });
         
         this.queuedSubs = [];
-        // Update the sidebar lists
         this.renderSimPlayerLists(home, away);
     }
 

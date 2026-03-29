@@ -118,6 +118,34 @@ class BrasileiraoSimulator {
                 this.closeModal();
             }
         };
+
+        // DOM Ready check for additional listeners
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.bindDynamicListeners());
+        } else {
+            this.bindDynamicListeners();
+        }
+    }
+
+    bindDynamicListeners() {
+        document.getElementById('btn-sim-tactic-opener')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openTacticalModal();
+        });
+        
+        document.getElementById('btn-start-career')?.addEventListener('click', () => this.startTeamSelection());
+        document.getElementById('btn-start-friendly')?.addEventListener('click', () => this.openScreen('friendly-setup'));
+        document.getElementById('btn-career-simulate')?.addEventListener('click', () => this.simulateRound());
+        document.getElementById('btn-tab-standings')?.addEventListener('click', () => this.switchTab('standings'));
+        document.getElementById('btn-play-friendly')?.addEventListener('click', () => this.playFriendly());
+        document.getElementById('btn-close-modal')?.addEventListener('click', () => this.closeModal());
+        
+        document.querySelectorAll('.btn-back-main').forEach(btn => {
+            btn.addEventListener('click', () => this.openScreen('main-menu'));
+        });
+
+        // Tactic modal close
+        document.querySelector('.close-tactical')?.addEventListener('click', () => this.closeTacticalModal());
     }
 
     openScreen(screenId) {
@@ -440,10 +468,28 @@ class BrasileiraoSimulator {
             
             if (simMinute === 1) addMsg(1, "Apita o árbitro! Começa a partida.", "sys-msg");
             
-            // Process queued subs (the "ball went out" logic)
+            // Process queued subs
             if (this.queuedSubs.length > 0 && Math.random() < 0.3) {
                 this.processQueuedSubs(home, away, addMsg, simMinute);
             }
+
+            // Half-time Pause Logic
+            if (simMinute === 45) {
+                this.pauseSim();
+                addMsg(45, "Intervalo de jogo!", "sys-msg");
+                const btn = document.getElementById('btn-next-half');
+                if (btn) {
+                    btn.style.display = 'block';
+                    btn.onclick = () => {
+                        btn.style.display = 'none';
+                        this.unpauseSim();
+                        addMsg(45, "Começa o segundo tempo!", "sys-msg");
+                    };
+                }
+            }
+
+            // Only proceed if not paused during the tick (half-time check)
+            if (this.isPaused) return;
 
             const goalsNow = goalEvents.filter(g => g.min === simMinute);
             goalsNow.forEach(g => {
@@ -468,18 +514,6 @@ class BrasileiraoSimulator {
                 }
             }
 
-            if (simMinute === 45) {
-                this.pauseSim();
-                addMsg(45, "Intervalo de jogo!", "sys-msg");
-                const btn = document.getElementById('btn-next-half');
-                btn.style.display = 'block';
-                btn.onclick = () => {
-                    btn.style.display = 'none';
-                    this.unpauseSim();
-                    addMsg(45, "Começa o segundo tempo!", "sys-msg");
-                };
-            }
-
             if (simMinute >= 90) {
                 clearInterval(this.simInterval);
                 addMsg(90, "Fim de jogo!", "sys-msg");
@@ -495,7 +529,7 @@ class BrasileiraoSimulator {
             }
         };
 
-        this.simInterval = setInterval(runSimTick, 400); // Slower pace
+        this.simInterval = setInterval(runSimTick, 450); 
 
         // Sidebar lists
         const renderSimPlayers = (team, container) => {

@@ -35,6 +35,7 @@ class BrasileiraoSimulator {
         this.tempSelected = null;
         this.selectionIndex = 0;
         this.selectionSerie = 'A';
+        console.log('Brasileirao Manager V2.2 Loaded - FIFA Carousel & Santos Exception Active');
 
         this.init();
     }

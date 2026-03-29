@@ -932,3 +932,171 @@ input[type=range]::-webkit-slider-thumb {
     grid-template-columns: 1.2fr 0.8fr;
     gap: 1.5rem;
 }
+
+/* FIFA Selection Carousel */
+.team-picker-container {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    background: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.serie-selector {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.serie-selector button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: 0.3s;
+    letter-spacing: 1px;
+}
+
+.serie-selector button.active {
+    color: var(--fifa-cyan);
+    border-color: var(--fifa-cyan);
+}
+
+.picker-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+}
+
+.nav-arrow {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-arrow:hover {
+    background: var(--fifa-cyan);
+    border-color: var(--fifa-cyan);
+    color: #000;
+    transform: scale(1.15) rotate(5deg);
+}
+
+.team-showcase {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+.team-logo-big {
+    width: 140px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.team-logo-big:hover {
+    transform: perspective(600px) rotateY(10deg);
+}
+
+.team-name-selection {
+    font-size: 2.5rem;
+    font-weight: 950;
+    margin-bottom: 0.8rem;
+    letter-spacing: -1.5px;
+    color: #fff;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.stars-container {
+    margin-bottom: 2rem;
+    font-size: 1.4rem;
+    display: flex;
+    gap: 6px;
+}
+
+.team-stats-selection {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem;
+    width: 100%;
+    padding: 2rem 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-box small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.stat-box strong {
+    font-size: 2rem;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+}
+
+.overall-badge-big {
+    margin-top: 2rem;
+    background: var(--gold);
+    color: #000;
+    padding: 0.5rem 2rem;
+    border-radius: 6px;
+    font-weight: 950;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(255, 184, 0, 0.3);
+}
+
+.btn-fifa-select {
+    width: 100%;
+    padding: 1.4rem;
+    background: var(--fifa-cyan);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-weight: 950;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 1.5rem;
+}
+
+.btn-fifa-select:hover {
+    background: #fff;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,242,255,0.4);
+}

@@ -33,6 +33,8 @@ class BrasileiraoSimulator {
         this.currentSimMatch = null;
         this.simCallback = null;
         this.tempSelected = null;
+        this.selectionIndex = 0;
+        this.selectionSerie = 'A';
 
         this.init();
     }
@@ -133,7 +135,7 @@ class BrasileiraoSimulator {
             this.openTacticalModal();
         });
         
-        document.getElementById('btn-start-career')?.addEventListener('click', () => this.startTeamSelection());
+        document.getElementById('btn-start-career')?.addEventListener('click', () => this.startTeamSelection('A'));
         document.getElementById('btn-start-friendly')?.addEventListener('click', () => this.openScreen('friendly-setup'));
         document.getElementById('btn-career-simulate')?.addEventListener('click', () => this.simulateRound());
         document.getElementById('btn-tab-standings')?.addEventListener('click', () => this.switchTab('standings'));
@@ -1028,24 +1030,106 @@ class BrasileiraoSimulator {
 
     // --- CAREER MODE LOGIC ---
 
-    startTeamSelection() {
-        const grid = document.getElementById('selection-grid');
-        grid.innerHTML = '';
-        
-        this.allTeamsRaw.sort((a,b) => b.strength - a.strength).forEach(team => {
-            const card = document.createElement('div');
-            card.className = 'player-card interactive';
-            card.onclick = () => this.selectTeam(team.id);
-            card.innerHTML = `
-                <div style="font-size: 0.8rem; color: var(--fifa-cyan);">${team.serie === 'A' ? 'SÉRIE A' : 'SÉRIE B'}</div>
-                <div style="font-size: 1.2rem; font-weight: 800; margin: 10px 0;">${team.name}</div>
-                <div class="rating">${team.strength}</div>
-                <div style="font-size: 0.7rem; margin-top: 10px; color: var(--text-secondary);">Orçamento: R$ 50M</div>
-            `;
-            grid.appendChild(card);
-        });
-        
+    startTeamSelection(serie = 'A') {
+        this.selectionSerie = serie;
+        this.selectionIndex = 0;
         this.openScreen('team-selection');
+        this.renderTeamSelection();
+    }
+
+    renderTeamSelection() {
+        const grid = document.getElementById('selection-grid');
+        const teams = this.allTeamsRaw.filter(t => t.serie === this.selectionSerie);
+        const team = teams[this.selectionIndex];
+        const stats = this.calculateDetailedStats(team);
+        const starHTML = this.getStarRatingHTML(team.strength);
+
+        grid.innerHTML = `
+            <div class="team-picker-container">
+                <div class="serie-selector">
+                    <button class="${this.selectionSerie === 'A' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('A')">SÉRIE A</button>
+                    <button class="${this.selectionSerie === 'B' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('B')">SÉRIE B</button>
+                </div>
+                
+                <div class="picker-main">
+                    <button class="nav-arrow" onclick="simulator.navigateTeamSelection(-1)">❮</button>
+                    
+                    <div class="team-showcase">
+                        <div class="team-logo-big" style="background-color: ${team.color}; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);">
+                            <span style="font-size: 3rem; font-weight: 900; color: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">${team.name.substring(0,2)}</span>
+                        </div>
+                        <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
+                        <div class="stars-container">${starHTML}</div>
+                        
+                        <div class="team-stats-selection">
+                            <div class="stat-box">
+                                <small>ATT</small>
+                                <strong>${stats.att}</strong>
+                            </div>
+                            <div class="stat-box">
+                                <small>MID</small>
+                                <strong>${stats.mid}</strong>
+                            </div>
+                            <div class="stat-box">
+                                <small>DEF</small>
+                                <strong>${stats.def}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="overall-badge-big">GERAL: ${team.strength}</div>
+                    </div>
+                    
+                    <button class="nav-arrow" onclick="simulator.navigateTeamSelection(1)">❯</button>
+                </div>
+                
+                <button class="btn-fifa-select" onclick="simulator.selectTeam('${team.id}')">ESCOLHER TIME</button>
+            </div>
+        `;
+    }
+
+    changeSelectionSerie(s) {
+        this.selectionSerie = s;
+        this.selectionIndex = 0;
+        this.renderTeamSelection();
+    }
+
+    navigateTeamSelection(dir) {
+        const teams = this.allTeamsRaw.filter(t => t.serie === this.selectionSerie);
+        this.selectionIndex = (this.selectionIndex + dir + teams.length) % teams.length;
+        this.renderTeamSelection();
+    }
+
+    getStarRatingHTML(ovr) {
+        let stars = 0;
+        if (ovr >= 84) stars = 5;
+        else if (ovr === 83) stars = 4.5;
+        else if (ovr >= 80) stars = 4;
+        else if (ovr >= 77) stars = 3.5;
+        else if (ovr >= 74) stars = 3;
+        else if (ovr >= 70) stars = 2.5;
+        else stars = 2;
+
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= Math.floor(stars)) html += '<i class="fas fa-star" style="color:var(--gold);"></i>';
+            else if (i === Math.ceil(stars) && stars % 1 !== 0) html += '<i class="fas fa-star-half-alt" style="color:var(--gold);"></i>';
+            else html += '<i class="far fa-star" style="color:gray;"></i>';
+        }
+        return html;
+    }
+
+    calculateDetailedStats(team) {
+        const query = (positions) => {
+            const list = team.roster.filter(p => p.status === 'Titular' && positions.includes(p.pos));
+            if (list.length === 0) return team.strength || 70;
+            return Math.round(list.reduce((acc, p) => acc + p.strength, 0) / list.length);
+        };
+        
+        return {
+            att: query(['PE', 'PD', 'ATA', 'CA', 'ST']),
+            mid: query(['VOL', 'MC', 'MEI', 'MD', 'ME']),
+            def: query(['GK', 'GOL', 'ZAG', 'LD', 'LE', 'ALA'])
+        };
     }
 
     selectTeam(teamId) {

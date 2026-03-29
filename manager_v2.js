@@ -138,12 +138,19 @@ class BrasileiraoSimulator {
             }
         };
 
-        // DOM Ready check for additional listeners
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.bindDynamicListeners());
-        } else {
-            this.bindDynamicListeners();
-        }
+        // Mentality Logic
+        document.querySelectorAll('.btn-mentality').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-mentality').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (this.currentSimMatch) {
+                    this.currentSimMatch.currentMentality = btn.dataset.mentality;
+                }
+            });
+        });
+
+        // Skip button
+        document.getElementById('btn-sim-skip')?.addEventListener('click', () => this.skipSimulation());
     }
 
     bindDynamicListeners() {
@@ -406,6 +413,11 @@ class BrasileiraoSimulator {
                     lg.currentRound++;
                     lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
                     
+                    // Avança 7 dias (uma semana) a cada rodada
+                    for (let i = 0; i < 7; i++) {
+                        this.advanceDay();
+                    }
+                    
                     this.updateTable();
                     this.displayRound();
                     this.updateStats();
@@ -432,6 +444,11 @@ class BrasileiraoSimulator {
             roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
             lg.currentRound++;
             lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+            
+            // Avança 7 dias (uma semana) a cada rodada
+            for (let i = 0; i < 7; i++) {
+                this.advanceDay();
+            }
             
             this.updateTable();
             this.displayRound();
@@ -504,6 +521,7 @@ class BrasileiraoSimulator {
 
         const tempMatch = { ...match, homeScore: null, awayScore: null };
         this.simulateMatch(tempMatch, [home, away], false);
+        match.tempRes = { homeScore: tempMatch.homeScore, awayScore: tempMatch.awayScore };
         
         const goalEvents = [];
         for(let i=0; i<tempMatch.homeScore; i++) goalEvents.push({ team: home.name, min: Math.floor(Math.random() * 88) + 1 });
@@ -630,69 +648,28 @@ class BrasileiraoSimulator {
         };
         renderSimPlayers(home, document.getElementById('sim-home-players'));
         renderSimPlayers(away, document.getElementById('sim-away-players'));
+    }
 
-        // Skip button
-        const skipBtn = document.getElementById('btn-sim-skip');
-        if (skipBtn) {
-            skipBtn.onclick = (e) => {
-                e.preventDefault();
-                // Ensure the skip ONLY works for the current generation
-                if (this.simGeneration !== currentGen || match.simulated) return;
-                match.simulated = true;
-                
-                console.log("Skipping simulation for generation:", currentGen);
-                if (localIntervalId) clearInterval(localIntervalId);
-                this.simInterval = null;
-                
-                match.homeScore = tempMatch.homeScore;
-                match.awayScore = tempMatch.awayScore;
-                
-                if (!match.isFriendly) {
-                    const lg = this.leagues[this.currentSerie];
-                    if (lg) this.updateLeagueStandings(match, lg.teams);
-                }
-                
-                callback();
-            };
+    skipSimulation() {
+        if (!this.career.active || !this.currentSimMatch || this.currentSimMatch.simulated) return;
+        
+        // Finalize match immediately
+        this.currentSimMatch.simulated = true;
+        if (this.simInterval) {
+            clearInterval(this.simInterval);
+            this.simInterval = null;
         }
 
-        // Mentality Logic
-        document.querySelectorAll('.btn-mentality').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.btn-mentality').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                match.currentMentality = btn.dataset.mentality;
-                console.log("Mentality changed to:", match.currentMentality);
-                // In a real sim, this would nudge the mean score calculation live
-            };
-        });
+        // Just use the pre-calculated results from startVisualSimulation
+        this.currentSimMatch.homeScore = this.currentSimMatch.tempRes?.homeScore || 0;
+        this.currentSimMatch.awayScore = this.currentSimMatch.tempRes?.awayScore || 0;
 
-        // Quick Tactics
-        document.querySelectorAll('.btn-quick-t').forEach(btn => {
-            btn.onclick = () => {
-                btn.classList.toggle('active-t');
-                btn.style.borderColor = btn.classList.contains('active-t') ? 'var(--fifa-pink)' : 'var(--border)';
-            };
-        });
+        if (!this.currentSimMatch.isFriendly) {
+            const lg = this.leagues[this.currentSerie];
+            if (lg) this.updateLeagueStandings(this.currentSimMatch, lg.teams);
+        }
 
-        // Sim Nav Logic (Stats / Notes)
-        const btnStats = document.getElementById('btn-sim-stats');
-        const btnNotes = document.getElementById('btn-sim-notes');
-        
-        btnStats?.addEventListener('click', () => {
-            btnStats.classList.add('active');
-            btnNotes?.classList.remove('active');
-            document.getElementById('sim-events-ticker').style.display = 'block';
-            const notesPanel = document.getElementById('sim-notes-panel');
-            if (notesPanel) notesPanel.style.display = 'none';
-        });
-
-        btnNotes?.addEventListener('click', () => {
-            btnNotes.classList.add('active');
-            btnStats?.classList.remove('active');
-            document.getElementById('sim-events-ticker').style.display = 'none';
-            this.renderSimNotes();
-        });
+        if (this.simCallback) this.simCallback();
     }
 
     handleMatchShortcuts(e) {
@@ -2042,7 +2019,7 @@ class BrasileiraoSimulator {
     calculatePlayerValue(p) {
         // FIFA Formula: V = (1.15^O * 10.000) * I
         const base = Math.pow(1.15, p.strength) * 10000;
-        return Math.floor(base * (p.importance || 1.0));
+        return Math.floor((base * (p.importance || 1.0)) / 10);
     }
 
     generateSeasonCalendar() {
@@ -2066,6 +2043,10 @@ class BrasileiraoSimulator {
         if (this.career.isWindowOpen && d % 3 === 0) {
             this.handleMarketIA();
         }
+
+        // Update UI
+        const dayDisplay = document.getElementById('career-day-display');
+        if (dayDisplay) dayDisplay.innerText = `Dia ${this.career.currentDay}`;
 
         this.updateTable();
         this.renderMarket();

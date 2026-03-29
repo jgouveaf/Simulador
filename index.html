@@ -289,10 +289,24 @@
                     </aside>
                 </div>
                 <footer class="sim-footer">
+                    <div class="sim-controls">
+                        <button id="btn-sim-skip" class="secondary" onclick="simulator.skipSimulation()">Pular Simulação</button>
+                    </div>
                     <nav class="sim-nav-tabs">
                         <div class="sim-nav-item active">ESTATÍSTICAS</div>
-                        <div class="sim-nav-item" onclick="simulator.openTacticalModal()">TÁTICA</div>
+                        <div class="sim-nav-item" id="btn-sim-tactic-opener">TÁTICA</div>
                     </nav>
+
+                    <!-- CONTROLES RÁPIDOS (D-PAD) -->
+                    <div class="sim-quick-controls">
+                        <div class="mentality-control">
+                            <button class="btn-mentality" data-mentality="ultra-def">U. DEF</button>
+                            <button class="btn-mentality" data-mentality="def">DEF</button>
+                            <button class="btn-mentality active" data-mentality="bal">BAL</button>
+                            <button class="btn-mentality" data-mentality="atk">ATK</button>
+                            <button class="btn-mentality" data-mentality="ultra-atk">U. ATK</button>
+                        </div>
+                    </div>
                 </footer>
             </div>
         </section>

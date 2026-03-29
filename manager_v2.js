@@ -758,28 +758,6 @@ class BrasileiraoSimulator {
         }
         if (!team) team = this.currentSimHome;
 
-        // INJECT FORMATION BUTTONS IN MODAL HEADER (if not there)
-        const modalHeader = document.querySelector('#match-tactical-modal .fifa-header');
-        if (modalHeader && !modalHeader.querySelector('.sim-formation-controls')) {
-            const div = document.createElement('div');
-            div.className = 'sim-formation-controls';
-            div.style.display = 'flex';
-            div.style.gap = '5px';
-            div.style.marginLeft = '20px';
-            ['4-3-3', '4-4-2', '3-5-2', '5-3-2', '4-2-3-1'].forEach(f => {
-                const b = document.createElement('button');
-                b.className = 'badge';
-                b.style.fontSize = '0.6rem';
-                b.textContent = f;
-                b.onclick = () => {
-                    team.formation = f;
-                    this.renderSimTactics();
-                };
-                div.appendChild(b);
-            });
-            modalHeader.appendChild(div);
-        }
-
         const pitch = document.getElementById('sim-tactical-board');
         const list = document.getElementById('sim-reserva-list');
         if (!pitch || !list) return;

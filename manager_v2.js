@@ -456,6 +456,7 @@ class BrasileiraoSimulator {
         // Match State for this session
         match.usedSubs = 0;
         match.subLimit = 5;
+        this.queuedSubs = [];
 
         const ticker = document.getElementById('sim-events-ticker');
         ticker.innerHTML = '<div class="sys-msg">Partida prestes a começar...</div>';
@@ -1942,6 +1943,53 @@ class BrasileiraoSimulator {
 
     closeModal() {
         document.getElementById('team-modal').style.display = 'none';
+    }
+
+    isQueued(playerId) {
+        if (!this.queuedSubs) return false;
+        return this.queuedSubs.some(s => s.in.id === playerId || s.out.id === playerId);
+    }
+
+    renderSimNotes() {
+        const center = document.querySelector('.sim-pitch-area');
+        let panel = document.getElementById('sim-notes-panel');
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'sim-notes-panel';
+            panel.style.padding = '20px';
+            panel.style.overflowY = 'auto';
+            panel.style.height = '100%';
+            panel.style.background = 'rgba(0,0,0,0.4)';
+            center.appendChild(panel);
+        }
+        panel.style.display = 'block';
+        
+        const home = this.currentSimHome;
+        const away = this.currentSimAway;
+        if (!home || !away) return;
+        
+        const renderGroup = (team, color) => {
+            return team.roster.filter(p => p.status === 'Titular').map(p => `
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.85rem;"><strong>${p.pos}</strong> ${p.name}</span>
+                    <span class="rating" style="background: ${color}; font-size: 0.8rem;">${p.strength}</span>
+                </div>
+            `).join('');
+        };
+
+        panel.innerHTML = `
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 10px;">AVALIAÇÕES DA PARTIDA</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div>
+                   <h3 style="color: var(--fifa-cyan); text-align: center; margin-bottom: 1rem;">${home.name}</h3>
+                   ${renderGroup(home, 'var(--fifa-cyan)')}
+                </div>
+                <div>
+                   <h3 style="color: var(--fifa-pink); text-align: center; margin-bottom: 1rem;">${away.name}</h3>
+                   ${renderGroup(away, 'var(--fifa-pink)')}
+                </div>
+            </div>
+        `;
     }
 }
 

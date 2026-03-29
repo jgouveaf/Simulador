@@ -1,4 +1,4 @@
-﻿const teams = [
+const teams = [
     {
         "id": 1,
         "name": "Palmeiras",
@@ -42,7 +42,7 @@
         "logo": "https://static.wixstatic.com/media/29c778_c20261abd59145aa9597cb6d9f70dd55~mv2.png",
         "short": "FLA",
         "color": "#C40000",
-        "strength": 96,
+        "strength": 98,
         "serie": "A",
         "roster": [
             { "pos": "GOL", "name": "Agustín Rossi", "strength": 85, "status": "Titular" },
@@ -79,7 +79,7 @@
         "logo": "https://static.wixstatic.com/media/29c778_04537f762310493aaf6bddc5a4c6ed60~mv2.png",
         "short": "CRU",
         "color": "#0000CD",
-        "strength": 84,
+        "strength": 91,
         "serie": "A",
         "roster": [
             { "pos": "GOL", "name": "Cássio", "strength": 84, "status": "Titular" },

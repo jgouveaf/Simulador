@@ -856,6 +856,7 @@ class BrasileiraoSimulator {
         
         document.getElementById('user-team-name').textContent = team.name;
         document.getElementById('user-team-logo').style.backgroundColor = team.color;
+        document.getElementById('user-team-overall').textContent = team.strength;
         
         this.openScreen('career-hub');
         this.switchTab('central');
@@ -878,6 +879,7 @@ class BrasileiraoSimulator {
 
         document.getElementById('money-display').textContent = `R$ ${this.career.budget.toLocaleString('pt-BR')}`;
         document.getElementById('budget-info').textContent = `R$ ${(this.career.budget / 1000000).toFixed(0)}M`;
+        document.getElementById('user-team-overall').textContent = this.career.team.strength;
         
         this.renderMiniStandings();
     }
@@ -907,6 +909,8 @@ class BrasileiraoSimulator {
         titContainer.innerHTML = '';
         resContainer.innerHTML = '';
         notContainer.innerHTML = '';
+        
+        document.getElementById('squad-overall-display').textContent = t.strength;
         
         // Atribuir status padrão se não houver
         if (t.roster.filter(p => p.status === 'Titular').length === 0) {
@@ -974,6 +978,9 @@ class BrasileiraoSimulator {
         // Se p1 é titular e p2 é não relacionado por exemplo:
         this.selectedPlayerToSwap.status = p2Status;
         player.status = p1Status;
+
+        // Recalculate strength after swap
+        this.career.team.strength = this.calculateTeamOverall(this.career.team);
 
         this.selectedPlayerToSwap = null;
         this.renderCareerSquad();
@@ -1445,8 +1452,11 @@ class BrasileiraoSimulator {
 
     calculateTeamOverall(team) {
         if (!team.roster || team.roster.length === 0) return 70;
-        const sum = team.roster.reduce((acc, p) => acc + p.strength, 0);
-        return Math.round(sum / team.roster.length);
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        if (titulares.length === 0) return team.strength || 70;
+        
+        const sum = titulares.reduce((acc, p) => acc + p.strength, 0);
+        return Math.round(sum / 11); // Average of 11 starters
     }
 
     closeModal() {

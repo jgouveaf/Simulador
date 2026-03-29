@@ -16,6 +16,15 @@ class BrasileiraoSimulator {
             manager: 'João Gouvêa'
         };
 
+        // Initialize unique IDs and calculate dynamic strengths
+        let playerCounter = 1;
+        this.allTeamsRaw.forEach(team => {
+            team.roster.forEach(p => {
+                if (!p.id) p.id = playerCounter++;
+            });
+            team.strength = this.calculateTeamStrength(team);
+        });
+
         this.init();
     }
 
@@ -32,7 +41,8 @@ class BrasileiraoSimulator {
                 goalsFor: 0,
                 goalsAgainst: 0,
                 goalDiff: 0,
-                percentage: 0
+                percentage: 0,
+                strength: this.calculateTeamStrength(team)
             }));
 
         const rounds = this.generateRounds(teams);
@@ -169,6 +179,17 @@ class BrasileiraoSimulator {
         const avgAtk = atkPlayers.reduce((sum, p) => sum + p.strength, 0) / (atkPlayers.length || 1);
 
         return { atk: avgAtk, def: avgDef };
+    }
+
+    calculateTeamStrength(team) {
+        if (!team.roster || team.roster.length === 0) return team.strength || 70;
+        
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        if (titulares.length === 0) return team.strength || 70;
+        
+        // Sum the strengths of the 11 starters and divide by 11 as requested
+        const totalStrength = titulares.reduce((sum, p) => sum + p.strength, 0);
+        return Math.round(totalStrength / 11);
     }
 
     simulateMatch(match, leagueTeams) {
@@ -655,6 +676,7 @@ class BrasileiraoSimulator {
         
         player.status = 'Reserva';
         this.career.team.roster.push(player);
+        this.career.team.strength = this.calculateTeamStrength(this.career.team);
         this.career.budget -= price;
         
         alert(`${player.name} contratado com sucesso!`);

@@ -55,7 +55,10 @@
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <div id="user-team-logo" style="width: 40px; height: 40px; border-radius: 50%;"></div>
                     <div>
-                        <h2 id="user-team-name" style="margin: 0;">Nome do Time</h2>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <h2 id="user-team-name" style="margin: 0;">Nome do Time</h2>
+                            <span class="rating" id="user-team-overall" style="padding: 2px 8px; font-size: 0.9rem;">--</span>
+                        </div>
                         <p style="font-size: 0.8rem; color: var(--text-secondary);">Treinador: João Gouvêa</p>
                     </div>
                 </div>
@@ -116,7 +119,7 @@
                 <div id="subtab-roster" class="sub-tab-content active">
                     <div class="squad-management">
                         <div class="card">
-                            <h3>Titulares (Starting XI) <span class="badge">11</span></h3>
+                            <h3>Titulares (Starting XI) <span class="badge">11</span> <span style="float: right; color: var(--gold); font-weight: 800;">GER: <span id="squad-overall-display">--</span></span></h3>
                             <div id="career-titulares" class="player-drop-zone" style="margin-top: 1rem;"></div>
                         </div>
                         <div class="card">

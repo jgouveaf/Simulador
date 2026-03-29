@@ -780,8 +780,10 @@ class BrasileiraoSimulator {
             marker.style.top = `${pos.y}%`;
             marker.style.transform = 'translate(-50%, -50%) scale(0.85)';
 
-            const pGoals = (match.events || []).filter(e => e.type === 'goal' && e.player.id === p.id).length;
-            const hasCard = (match.events || []).some(e => e.type === 'warning' && e.player.id === p.id);
+            // DEFINE EVENTS SAFETY
+            const evts = (match && match.events) ? match.events : [];
+            const pGoals = evts.filter(e => e.type === 'goal' && e.player && e.player.id === p.id).length;
+            const hasCard = evts.some(e => e.type === 'warning' && e.player && e.player.id === p.id);
 
             const rating = p.currentRating || 6.0;
             let ratingClass = "rating-yellow";
@@ -1216,22 +1218,22 @@ class BrasileiraoSimulator {
     }
 
     getStarRatingHTML(team) {
-        const ovr = team.strength;
-        let stars = 0;
+        // Calculate average of 11 starters
+        const starters = team.roster.filter(p => p.status === 'Titular');
+        const avg = starters.length > 0 
+            ? starters.reduce((acc, p) => acc + p.strength, 0) / starters.length 
+            : (team.strength || 70);
 
-        // Exception for User Requested Ratings
-        if (team.name === 'Flamengo' || team.id == 5) {
-            stars = 5;
-        } else if (team.name === 'Cruzeiro' || team.id == 19) {
-            stars = 4.5;
-        } else {
-            if (ovr >= 92) stars = 5;
-            else if (ovr >= 88) stars = 4.5;
-            else if (ovr >= 83) stars = 4;
-            else if (ovr >= 77) stars = 3.5;
-            else if (ovr >= 73) stars = 3;
-            else stars = 2.5;
-        }
+        let stars = 1;
+        if (avg >= 83) stars = 5;
+        else if (avg >= 81) stars = 4.5;
+        else if (avg >= 79) stars = 4;
+        else if (avg >= 76) stars = 3.5;
+        else if (avg >= 73) stars = 3;
+        else if (avg >= 68) stars = 2.5;
+        else if (avg >= 63) stars = 2;
+        else if (avg >= 55) stars = 1.5;
+        else stars = 1;
 
         let html = '';
         for (let i = 1; i <= 5; i++) {

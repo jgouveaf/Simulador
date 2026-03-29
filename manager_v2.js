@@ -780,6 +780,9 @@ class BrasileiraoSimulator {
             marker.style.top = `${pos.y}%`;
             marker.style.transform = 'translate(-50%, -50%) scale(0.85)';
 
+            const pGoals = (match.events || []).filter(e => e.type === 'goal' && e.player.id === p.id).length;
+            const hasCard = (match.events || []).some(e => e.type === 'warning' && e.player.id === p.id);
+
             const rating = p.currentRating || 6.0;
             let ratingClass = "rating-yellow";
             if (rating >= 7.5) ratingClass = "rating-green";

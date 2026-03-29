@@ -448,6 +448,9 @@ class BrasileiraoSimulator {
         this.currentSimAway = away;
         this.openScreen('match-simulation');
         
+        // Initialize ratings
+        [home, away].forEach(t => t.roster.forEach(p => p.currentRating = 6.0));
+        
         // Setup UI
         document.getElementById('sim-home-name').textContent = home.name.toUpperCase();
         document.getElementById('sim-away-name').textContent = away.name.toUpperCase();
@@ -547,13 +550,22 @@ class BrasileiraoSimulator {
                 }
             }
 
-            if (this.isPaused) return;
+            // Random Performance Updates (Passes/Tackles/Actions)
+            if (this.isPaused) return; // Guard
+            if (Math.random() < 0.2) {
+                const team = Math.random() < 0.5 ? home : away;
+                const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
+                const change = Math.random() < 0.65 ? 0.1 : -0.1;
+                p.currentRating = Math.max(3, Math.min(10, p.currentRating + change));
+            }
 
             const goalsNow = goalEvents.filter(g => g.min === simMinute);
             goalsNow.forEach(g => {
                 const team = (g.team === home.name) ? home : away;
                 const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
                 
+                p.currentRating = Math.min(10, p.currentRating + 1.25); // Goal significant boost
+
                 if (g.team === home.name) homeScore++;
                 else awayScore++;
                 
@@ -712,12 +724,12 @@ class BrasileiraoSimulator {
     }
 
     openTacticalModal() {
-        // Guard: only open if we are inside an active visual simulation
-        if (!this.currentSimHome || !this.currentSimAway) {
-            console.warn('openTacticalModal: no active simulation, ignoring.');
-            return;
-        }
+        if (!this.currentSimHome) return;
         this.pauseSim();
+        
+        // Add Blur Effect to simulation container
+        document.querySelector('.simulation-container')?.classList.add('sim-blur-active');
+        
         this.renderSimTactics();
         const modal = document.getElementById('match-tactical-modal');
         if (modal) modal.style.display = 'block';
@@ -726,6 +738,10 @@ class BrasileiraoSimulator {
     closeTacticalModal() {
         const modal = document.getElementById('match-tactical-modal');
         if (modal) modal.style.display = 'none';
+        
+        // Remove Blur Effect
+        document.querySelector('.simulation-container')?.classList.remove('sim-blur-active');
+        
         this.selectedInSimMatch = null;
         if (this.currentSimHome) this.unpauseSim();
     }
@@ -786,12 +802,15 @@ class BrasileiraoSimulator {
             marker.style.top = `${pos.y}%`;
             marker.style.transform = 'translate(-50%, -50%) scale(0.85)';
 
-            const pGoals = (match.events || []).filter(e => e.type === 'goal' && e.player.id === p.id).length;
-            const hasCard = (match.events || []).some(e => e.type === 'warning' && e.player.id === p.id);
+            const rating = p.currentRating || 6.0;
+            let ratingClass = "rating-yellow";
+            if (rating >= 7.5) ratingClass = "rating-green";
+            else if (rating <= 6.0) ratingClass = "rating-red";
 
             marker.innerHTML = `
                 <div class="player-circle">${p.strength}</div>
                 <div class="player-name-tag">
+                    <span class="rating-badge ${ratingClass}">${rating.toFixed(1)}</span>
                     ${p.name.split(' ').pop()} ${this.isQueued(p.id) ? '⏳' : ''}
                     ${pGoals > 0 ? `<span class="event-mini-icon icon-goal">⚽${pGoals > 1 ? pGoals : ''}</span>` : ''}
                     ${hasCard ? `<span class="event-mini-icon icon-card">🟨</span>` : ''}

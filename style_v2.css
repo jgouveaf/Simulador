@@ -446,6 +446,51 @@ input[type=range]::-webkit-slider-thumb {
     animation: zoomInFast 0.25s cubic-bezier(0, 0, 0.2, 1);
 }
 
+.sim-blur-active {
+    filter: blur(10px) brightness(0.5);
+    pointer-events: none;
+    transition: filter 0.3s ease;
+}
+
+.rating-badge {
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: #000;
+    margin-right: 4px;
+}
+
+.rating-green { background: #00FF00 !important; }
+.rating-yellow { background: #FFFF00 !important; }
+.rating-red { background: #FF0000 !important; }
+
+.btn-tactical-fixed {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    background: var(--fifa-cyan);
+    color: #000;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(0, 242, 255, 0.7); }
+    100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); }
+}
+
 @keyframes zoomInFast {
     from { opacity: 0; transform: scale(1.05); filter: blur(10px); }
     to { opacity: 1; transform: scale(1); filter: blur(0); }

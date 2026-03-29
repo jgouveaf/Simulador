@@ -9,6 +9,8 @@ class BrasileiraoSimulator {
         this.allTeamsRaw.forEach(team => {
             team.roster.forEach(p => {
                 if (!p.id) p.id = playerCounter++;
+                p.importance = this.assignRandomImportance();
+                p.marketValue = this.calculatePlayerValue(p);
             });
             team.strength = this.calculateTeamOverall(team);
         });
@@ -23,7 +25,11 @@ class BrasileiraoSimulator {
             active: false,
             team: null,
             budget: 50000000,
-            manager: 'João Gouvêa'
+            manager: 'João Gouvêa',
+            currentDay: 1,
+            isWindowOpen: true, // Started on day 1 (Window 1-30)
+            negotiations: {}, // track attempts by player id
+            calendar: this.generateSeasonCalendar()
         };
 
         // UI & Sim State
@@ -74,6 +80,7 @@ class BrasileiraoSimulator {
         this.displayRound();
         this.updateStats();
         this.displayCalendar();
+        this.renderMarket();
         this.setupFriendlySelects();
         
         // Force initial screen to be main menu
@@ -2024,6 +2031,189 @@ class BrasileiraoSimulator {
                 </div>
             </div>
         `;
+    }
+
+    // --- MERCADO & CALENDÁRIO ---
+    assignRandomImportance() {
+        const options = [1.5, 1.2, 1.0, 0.8];
+        return options[Math.floor(Math.random() * options.length)];
+    }
+
+    calculatePlayerValue(p) {
+        // FIFA Formula: V = (1.15^O * 10.000) * I
+        const base = Math.pow(1.15, p.strength) * 10000;
+        return Math.floor(base * (p.importance || 1.0));
+    }
+
+    generateSeasonCalendar() {
+        // Base 365 dias
+        const calendar = [];
+        for (let i = 1; i <= 365; i++) {
+            calendar.push({ day: i, match: null });
+        }
+        return calendar;
+    }
+
+    advanceDay() {
+        this.career.currentDay++;
+        if (this.career.currentDay > 365) this.career.currentDay = 1;
+
+        // Janelas: 1-30 e 180-210
+        const d = this.career.currentDay;
+        this.career.isWindowOpen = (d >= 1 && d <= 30) || (d >= 180 && d <= 210);
+
+        // A cada 3 dias na janela, IA negocia
+        if (this.career.isWindowOpen && d % 3 === 0) {
+            this.handleMarketIA();
+        }
+
+        this.updateTable();
+        this.renderMarket();
+        this.updateStats();
+    }
+
+    handleMarketIA() {
+        const series = ['A', 'B'];
+        const s = series[Math.floor(Math.random() * 2)];
+        const league = this.leagues[s];
+        if (league.teams.length < 2) return;
+
+        const buyer = league.teams[Math.floor(Math.random() * league.teams.length)];
+        const seller = league.teams[Math.floor(Math.random() * league.teams.length)];
+        if (buyer.id === seller.id || buyer.id === this.career.team?.id) return;
+
+        const target = seller.roster[Math.floor(Math.random() * seller.roster.length)];
+        if (!target) return;
+
+        if (target.marketValue <= 50000000) { // Orçamento IA fixo p/ simulação
+            const posCount = buyer.roster.filter(p => p.pos === target.pos).length;
+            if (posCount < 2) {
+                this.executeTransfer(target, seller, buyer);
+            }
+        }
+    }
+
+    executeTransfer(player, fromTeam, toTeam) {
+        fromTeam.roster = fromTeam.roster.filter(p => p.id !== player.id);
+        const newPlayer = { ...player, currentClub: toTeam.name };
+        toTeam.roster.push(newPlayer);
+        fromTeam.strength = this.calculateTeamOverall(fromTeam);
+        toTeam.strength = this.calculateTeamOverall(toTeam);
+    }
+
+    handlePlayerOffer(playerId, offer) {
+        if (!this.career.isWindowOpen) {
+            alert('A janela de transferências está fechada!');
+            return;
+        }
+        const player = this.findPlayerById(playerId);
+        const owner = this.findTeamByPlayerId(playerId);
+        if (!player || !owner) return;
+
+        this.career.negotiations[playerId] = (this.career.negotiations[playerId] || 0) + 1;
+        if (this.career.negotiations[playerId] > 3) {
+            alert(`Negociação encerrada pelo ${owner.name}.`);
+            return;
+        }
+
+        const minAccept = player.marketValue * (player.importance || 1.0);
+        if (offer >= minAccept) {
+            if (this.career.budget >= offer) {
+                this.career.budget -= offer;
+                this.executeTransfer(player, owner, this.career.team);
+                alert('CONTRATAÇÃO REALIZADA!');
+            } else alert('Sem verba!');
+        } else if (offer >= player.marketValue * 0.8) {
+            const counter = Math.floor(player.marketValue * 1.1);
+            alert(`CONTRAPROPOSTA: O ${owner.name} quer ${this.formatMoney(counter)}.`);
+        } else alert('PROPOSTA IRRISÓRIA! Recusada.');
+
+        this.renderMarket();
+        this.updateStats();
+    }
+
+    findPlayerById(id) {
+        for (const s of ['A', 'B']) {
+            for (const t of this.leagues[s].teams) {
+                const p = t.roster.find(px => px.id == id);
+                if (p) return p;
+            }
+        }
+        return null;
+    }
+
+    findTeamByPlayerId(id) {
+        for (const s of ['A', 'B']) {
+            for (const t of this.leagues[s].teams) {
+                if (t.roster.some(px => px.id == id)) return t;
+            }
+        }
+        return null;
+    }
+
+    renderMarket() {
+        const container = document.getElementById('market-players-list');
+        if (!container) return;
+
+        const nameF = document.getElementById('market-search-name')?.value.toLowerCase() || '';
+        const posF = document.getElementById('market-filter-pos')?.value || 'ALL';
+
+        let all = [];
+        for (const s of ['A', 'B']) {
+            this.leagues[s].teams.forEach(t => {
+                if (t.id !== this.career.team?.id) {
+                    t.roster.forEach(p => all.push({ ...p, teamName: t.name }));
+                }
+            });
+        }
+
+        const minP = parseInt(document.getElementById('market-filter-min')?.value) || 0;
+        const maxP = parseInt(document.getElementById('market-filter-max')?.value) || 9999999999;
+
+        const filtered = all.filter(p => {
+            const mN = p.name.toLowerCase().includes(nameF);
+            const mP = posF === 'ALL' || p.pos === posF;
+            const mVal = p.marketValue >= minP && p.marketValue <= maxP;
+            return mN && mP && mVal;
+        }).slice(0, 40);
+
+        container.innerHTML = `
+            <div class="market-status-bar">
+                Dia: ${this.career.currentDay}/365 | Janela: ${this.career.isWindowOpen ? '✅ ABERTA' : '🔒 FECHADA'}
+                <button onclick="simulator.advanceDay()" class="badge" style="background:var(--fifa-cyan); border:none; margin-left:20px; cursor:pointer;">AVANÇAR DIA</button>
+            </div>
+            <table class="market-list-table">
+                <thead>
+                    <tr><th>NOME</th><th>POS</th><th>OVR</th><th>CLUBE</th><th>VALOR</th><th>AÇÃO</th></tr>
+                </thead>
+                <tbody>
+                    ${filtered.map(p => `
+                        <tr>
+                            <td>${p.name}</td>
+                            <td><span class="badge">${p.pos}</span></td>
+                            <td><span class="ovr-chip">${p.strength}</span></td>
+                            <td>${p.teamName}</td>
+                            <td>${this.formatMoney(p.marketValue)}</td>
+                            <td><button class="btn-buy" onclick="simulator.initiateNegotiation(${p.id})" ${!this.career.isWindowOpen ? 'disabled' : ''}>Contratar</button></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    initiateNegotiation(id) {
+        const p = this.findPlayerById(id);
+        if (!p) return;
+        const offerStr = prompt(`Oferta por ${p.name}? (Valor estimado: ${this.formatMoney(p.marketValue)})`);
+        if (offerStr) {
+            const offer = parseInt(offerStr.replace(/\D/g, ''));
+            if (!isNaN(offer)) this.handlePlayerOffer(id, offer);
+        }
+    }
+
+    formatMoney(v) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
     }
 }
 

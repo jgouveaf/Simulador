@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style_v2.css">
 </head>
-<body>    <div id="app" class="container">
+<body>
+    <div id="app" class="container">
         <!-- TELA 1: MENU PRINCIPAL (FIFA STYLE) -->
         <section id="main-menu-screen" class="screen active">
             <header class="fifa-header">
@@ -116,7 +117,6 @@
                     <div class="tab sub-tab" data-subtab="roles">Funções</div>
                 </nav>
 
-                <!-- 1. ABA ELENCO (ROSTER/MOVE) -->
                 <div id="subtab-roster" class="sub-tab-content active">
                     <div class="squad-management">
                         <div class="card">
@@ -129,9 +129,7 @@
                                 <p style="font-size: 0.7rem; color: var(--text-secondary);">Relacionados para o jogo</p>
                             </div>
                             <div id="career-reservas" class="player-drop-zone" style="margin-top: 1rem;"></div>
-                            
                             <hr style="margin: 1.5rem 0; opacity: 0.1;">
-                            
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <h3>Não Relacionados (Reserves)</h3>
                                 <p style="font-size: 0.7rem; color: var(--text-secondary);">Fora do banco</p>
@@ -141,13 +139,10 @@
                     </div>
                 </div>
 
-                <!-- 2. ABA FORMAÇÃO -->
                 <div id="subtab-formation" class="sub-tab-content" style="display: none;">
                     <div class="formation-grid">
                         <div class="card formation-preview" style="padding: 0; min-height: 500px; display: flex;">
-                            <div class="soccer-pitch" id="pitch-tactical-board" style="width: 100%; height: 500px; position: relative;">
-                                <!-- Titulares renderizados aqui -->
-                            </div>
+                            <div class="soccer-pitch" id="pitch-tactical-board" style="width: 100%; height: 500px; position: relative;"></div>
                         </div>
                         <div class="card formation-selector">
                             <h3 style="margin-bottom: 1.5rem;">Escolher Esquema</h3>
@@ -158,28 +153,20 @@
                                 <button class="btn-formation" data-formation="5-3-2">5-3-2</button>
                                 <button class="btn-formation" data-formation="4-2-3-1">4-2-3-1</button>
                             </div>
-                            <div style="margin-top: 2rem;">
-                                <p style="font-size: 0.8rem; color: var(--text-secondary);">Dica: Ao mudar a formação, reajuste as posições manualmente na aba Elenco.</p>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. ABA INSTRUÇÕES -->
                 <div id="subtab-instructions" class="sub-tab-content" style="display: none;">
                     <div class="card">
                         <h3>Instruções Individuais</h3>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Selecione um jogador no campo para dar comandos específicos.</p>
                         <div class="instructions-layout">
                             <div class="pitch-mini" id="pitch-mini-instructions"></div>
-                            <div class="instruction-panel" id="instruction-panel-details">
-                                <p style="text-align: center; color: var(--text-secondary);">Selecione um jogador no campinho ao lado.</p>
-                            </div>
+                            <div class="instruction-panel" id="instruction-panel-details"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 4. ABA TÁTICAS -->
                 <div id="subtab-tactics" class="sub-tab-content" style="display: none;">
                     <div class="tactics-grid">
                         <div class="card">
@@ -204,35 +191,39 @@
                                     <option value="fast">Contra-ataque Rápido</option>
                                 </select>
                             </div>
-                            <div class="tactic-item">
-                                <label>Amplitude</label>
-                                <input type="range" min="1" max="10" value="5" id="tactics-atk-width">
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 5. ABA FUNÇÕES -->
                 <div id="subtab-roles" class="sub-tab-content" style="display: none;">
                     <div class="card">
-                        <h3 style="margin-bottom: 1.5rem;">Funções do Time</h3>
-                        <div class="roles-grid" id="roles-config">
-                            <!-- Roles injected via JS -->
-                        </div>
+                        <h3>Funções do Time</h3>
+                        <div class="roles-grid" id="roles-config"></div>
                     </div>
                 </div>
             </div>
 
             <div id="tab-transfers" class="tab-content" style="display: none;">
-                <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
-                    <input type="text" id="player-search" placeholder="Search a player..." style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; flex: 1;">
-                   <select id="transfer-serie-filter" style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px;">
-                       <option value="A">Série A</option>
-                       <option value="B">Série B</option>
-                   </select>
+                <div class="market-controls" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                    <input type="text" id="market-search-name" placeholder="Buscar jogador..." style="background: var(--bg-card); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; flex: 1;" onkeyup="simulator.renderMarket()">
+                    <select id="market-filter-pos" style="background: var(--bg-card); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px;" onchange="simulator.renderMarket()">
+                        <option value="ALL">Todas as Posições</option>
+                        <option value="GOL">GOL</option>
+                        <option value="LD">LD</option>
+                        <option value="LE">LE</option>
+                        <option value="ZAG">ZAG</option>
+                        <option value="VOL">VOL</option>
+                        <option value="MC">MC</option>
+                        <option value="MEI">MEI</option>
+                        <option value="ATA">ATA</option>
+                        <option value="PD">PD</option>
+                        <option value="PE">PE</option>
+                    </select>
+                    <input type="number" id="market-filter-min" placeholder="Mín (R$)" style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 130px;" onkeyup="simulator.renderMarket()">
+                    <input type="number" id="market-filter-max" placeholder="Máx (R$)" style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 130px;" onkeyup="simulator.renderMarket()">
                 </div>
-                <div class="market-grid" id="market-display">
-                    <!-- Mercado aqui -->
+                <div id="market-players-list">
+                    <!-- Mercado Table Injected Here -->
                 </div>
             </div>
 
@@ -251,26 +242,26 @@
                         </thead>
                         <tbody id="standings-body"></tbody>
                     </table>
-                    <div class="tnt-zones-container">
-                        <div class="tnt-zone-label lib">LIBERTADORES</div>
-                        <div class="tnt-zone-label pre">PRÉ-LIB</div>
-                        <div class="tnt-zone-label sul">SUL-AMERICANA</div>
-                        <div class="tnt-zone-label reb">REBAIXADOS</div>
-                    </div>
                 </div>
             </div>
 
             <div id="tab-fixtures" class="tab-content" style="display: none;">
-                <div class="card" id="career-calendar">
-                    <!-- Cloned from calendar -->
+                <div class="card" style="text-align: center; padding: 2.5rem;">
+                    <h2 id="career-day-display" style="font-size: 3rem; color: var(--gold); margin-bottom: 1rem;">Dia 1</h2>
+                    <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem;">Temporada 2026 - Brasileirão</p>
+                    <div id="career-daily-event" style="margin-bottom: 3rem; padding: 2rem; background: rgba(0,0,0,0.2); border-radius: 12px; border-left: 5px solid var(--fifa-cyan);">
+                        Carregando agenda...
+                    </div>
+                    <button onclick="simulator.advanceDay()" class="badge" style="background: var(--fifa-cyan); border: none; padding: 1.5rem 4rem; font-size: 1.2rem; font-weight: 800; cursor: pointer; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,242,255,0.3);">
+                        PRÓXIMO DIA
+                    </button>
                 </div>
             </div>
         </section>
 
-        <!-- TELA 4: SIMULAÇÃO DE PARTIDA (ESTILO FIFA) -->
+        <!-- TELA 4: SIMULAÇÃO DE PARTIDA -->
         <section id="match-simulation-screen" class="screen">
             <div class="simulation-container">
-                <!-- Header: Scoreboard -->
                 <header class="sim-header">
                     <div class="sim-team home">
                         <div class="sim-team-logo" id="sim-home-logo"></div>
@@ -279,7 +270,7 @@
                     <div class="sim-score-board">
                         <div class="sim-score" id="sim-score-value">0 - 0</div>
                         <div class="sim-time" id="sim-time-value">00:00</div>
-                        <button id="btn-next-half" class="badge" style="display: none; cursor: pointer; border: none; padding: 8px 20px; background: var(--gold); color: #000; font-weight: 800; border-radius: 4px; margin-top: 10px;">IR PARA O 2º TEMPO</button>
+                        <button id="btn-next-half" class="badge" style="display: none; cursor: pointer;">IR PARA O 2º TEMPO</button>
                     </div>
                     <div class="sim-team away">
                         <h2 id="sim-away-name">VISITANTE</h2>
@@ -287,59 +278,21 @@
                     </div>
                 </header>
                 <div class="sim-main-content">
-                    <!-- Left Sidebar: Home Roster -->
                     <aside class="sim-sidebar left">
-                        <div class="sim-tabs-side">
-                            <span class="active">TITULARES</span>
-                        </div>
-                        <div class="sim-player-list" id="sim-home-players">
-                            <!-- Injected players -->
-                        </div>
+                        <div class="sim-player-list" id="sim-home-players"></div>
                     </aside>
-
-                    <!-- Center: Visual Events Feed (GE Style) -->
-                    <main class="sim-pitch-area" style="background: rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column;">
-                        <div id="sim-events-ticker" class="events-feed">
-                            <div class="event-entry sys-msg">Início da partida!</div>
-                        </div>
+                    <main class="sim-pitch-area">
+                        <div id="sim-events-ticker" class="events-feed"></div>
                     </main>
-
-                    <!-- Right Sidebar: Away Roster -->
                     <aside class="sim-sidebar right">
-                        <div class="sim-tabs-side">
-                            <span class="active">TITULARES</span>
-                        </div>
-                        <div class="sim-player-list" id="sim-away-players">
-                            <!-- Injected players -->
-                        </div>
+                        <div class="sim-player-list" id="sim-away-players"></div>
                     </aside>
                 </div>
-
-                <!-- Footer: Controls -->
                 <footer class="sim-footer">
-                    <div class="sim-controls">
-                        <button id="btn-sim-skip" class="secondary">Pular Simulação</button>
-                    </div>
                     <nav class="sim-nav-tabs">
                         <div class="sim-nav-item active">ESTATÍSTICAS</div>
-                        <div class="sim-nav-item">NOTAS</div>
                         <div class="sim-nav-item" onclick="simulator.openTacticalModal()">TÁTICA</div>
                     </nav>
-
-                    <!-- CONTROLES RÁPIDOS (D-PAD) -->
-                    <div class="sim-quick-controls">
-                        <div class="mentality-control">
-                            <button class="btn-mentality" data-mentality="ultra-def">U. DEF</button>
-                            <button class="btn-mentality" data-mentality="def">DEF</button>
-                            <button class="btn-mentality active" data-mentality="bal">BAL</button>
-                            <button class="btn-mentality" data-mentality="atk">ATK</button>
-                            <button class="btn-mentality" data-mentality="ultra-atk">U. ATK</button>
-                        </div>
-                        <div class="quick-tactics">
-                            <button class="btn-quick-t" title="Pressão Total">🔥 PRESS</button>
-                            <button class="btn-quick-t" title="Subir Laterais">↗️ LATS</button>
-                        </div>
-                    </div>
                 </footer>
             </div>
         </section>
@@ -348,72 +301,42 @@
         <section id="friendly-setup-screen" class="screen">
             <header class="fifa-header">
                 <h2>Selecione os Times</h2>
-                <button class="secondary btn-back-main" style="width: auto; margin: 0;">Voltar</button>
+                <button class="secondary btn-back-main">Voltar</button>
             </header>
             <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
-                <div style="display: flex; gap: 2rem; align-items: center; justify-content: center; margin-bottom: 2rem;">
-                    <div>
-                        <p>Mandante</p>
-                        <select id="friendly-home" style="width: 200px; padding: 10px;"></select>
-                    </div>
-                    <h2 style="color: var(--fifa-cyan);">VS</h2>
-                    <div>
-                        <p>Visitante</p>
-                        <select id="friendly-away" style="width: 200px; padding: 10px;"></select>
-                    </div>
+                <div style="display: flex; gap: 2rem; justify-content: center;">
+                    <select id="friendly-home"></select>
+                    <h2>VS</h2>
+                    <select id="friendly-away"></select>
                 </div>
-                <button id="btn-play-friendly">Simular Amistoso</button>
-                <div id="friendly-result" style="margin-top: 2rem; font-size: 2rem; font-weight: 800;"></div>
+                <button id="btn-play-friendly" style="margin-top: 2rem;">Simular Amistoso</button>
             </div>
         </section>
     </div>
 
-    <!-- Modal para Detalhes do Time -->
+    <!-- Modais -->
     <div id="team-modal" class="modal">
         <div class="modal-content card">
             <span class="close-modal" id="btn-close-modal">&times;</span>
-            <div id="modal-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;"></div>
+            <div id="modal-header"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                <div id="titulares-list">
-                    <h3 style="color: var(--gold); margin-bottom: 1rem;">Titulares</h3>
-                </div>
-                <div id="reservas-list">
-                    <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">Reservas</h3>
-                </div>
+                <div id="titulares-list"><h3>Titulares</h3></div>
+                <div id="reservas-list"><h3>Reservas</h3></div>
             </div>
         </div>
     </div>
 
-    <!-- Match Tactical Modal (Overlay) -->
     <div id="match-tactical-modal" class="modal">
         <div class="modal-content">
-            <header class="fifa-header" style="padding: 1rem 2rem; border-bottom: 2px solid rgba(255,255,255,0.05);">
+            <header class="fifa-header">
                 <h2>ESTRATÉGIA DE JOGO</h2>
-                <span class="close-modal close-tactical" onclick="simulator.closeTacticalModal()">&times;</span>
+                <span class="close-modal" onclick="simulator.closeTacticalModal()">&times;</span>
             </header>
-            
             <div class="match-tactical-layout">
-                <!-- Left: Interactive Pitch -->
-                <div class="tactical-board-full">
-                    <div class="soccer-pitch" id="sim-tactical-board">
-                        <!-- Titulares aqui -->
-                    </div>
-                </div>
-                
-                <!-- Right: Squad List for Subs -->
+                <div class="tactical-board-full"><div class="soccer-pitch" id="sim-tactical-board"></div></div>
                 <div class="tactical-squad-sidebar">
-                    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--gold); border-bottom: 1px solid rgba(255,193,7,0.2); padding-bottom: 0.5rem;">BANCO DE RESERVAS</h3>
-                    <div id="sim-reserva-list" class="squad-management">
-                        <!-- Reservas aqui -->
-                    </div>
-                    
-                    <div style="background: rgba(0,242,255,0.05); padding: 1rem; border-radius: 8px; margin-top: 2rem; font-size: 0.7rem; border-left: 3px solid var(--fifa-cyan);">
-                        <p style="color: var(--text-secondary); line-height: 1.5;">
-                            <strong>FIFA PRO TIP:</strong><br>
-                            - Arraste ou clique para substituir.<br>
-                            - Notas coloridas mostram o cansaço/ritmo.
-                        </p>
-                    </div>
+                    <h3>BANCO DE RESERVAS</h3>
+                    <div id="sim-reserva-list" class="squad-management"></div>
                 </div>
             </div>
         </div>

@@ -1337,3 +1337,111 @@ input[type=range]::-webkit-slider-thumb {
     align-items: center;
     gap: 3px;
 }
+
+/* --- MERCADO & CALENDÁRIO STYLES --- */
+.market-controls {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1.5rem;
+    border-radius: 15px;
+    border: 1px solid var(--border);
+}
+
+.market-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.market-list-table th {
+    text-align: left;
+    padding: 1.5rem 1rem;
+    color: var(--gold);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    border-bottom: 2px solid var(--border);
+    letter-spacing: 1px;
+}
+
+.market-list-table td {
+    padding: 1.2rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+.market-list-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ovr-chip {
+    background: var(--bg-card);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-weight: 900;
+    color: var(--fifa-cyan);
+    border: 1px solid var(--border);
+    display: inline-block;
+    min-width: 35px;
+    text-align: center;
+}
+
+.market-status-bar {
+    background: rgba(0, 242, 255, 0.05);
+    padding: 1.2rem 2.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 5px solid var(--fifa-cyan);
+    font-weight: 800;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.btn-buy {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    font-weight: 900;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-buy:hover:not(:disabled) {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+}
+
+.btn-buy:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.market-scrollable {
+    max-height: calc(100vh - 350px);
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.market-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.market-scrollable::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+}

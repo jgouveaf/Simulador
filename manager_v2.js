@@ -35,6 +35,7 @@ class BrasileiraoSimulator {
         this.tempSelected = null;
         this.selectionIndex = 0;
         this.selectionSerie = 'A';
+        this.isSimulating = false; // Guard to prevent overlapping simulations
         console.log('Brasileirao Manager V2.2 Loaded - FIFA Carousel & Santos Exception Active');
 
         this.init();
@@ -131,22 +132,6 @@ class BrasileiraoSimulator {
     }
 
     bindDynamicListeners() {
-        document.getElementById('btn-sim-tactic-opener')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.openTacticalModal();
-        });
-        
-        document.getElementById('btn-start-career')?.addEventListener('click', () => this.startTeamSelection('A'));
-        document.getElementById('btn-start-friendly')?.addEventListener('click', () => this.openScreen('friendly-setup'));
-        document.getElementById('btn-career-simulate')?.addEventListener('click', () => this.simulateRound());
-        document.getElementById('btn-tab-standings')?.addEventListener('click', () => this.switchTab('standings'));
-        document.getElementById('btn-play-friendly')?.addEventListener('click', () => this.playFriendly());
-        document.getElementById('btn-close-modal')?.addEventListener('click', () => this.closeModal());
-        
-        document.querySelectorAll('.btn-back-main').forEach(btn => {
-            btn.addEventListener('click', () => this.openScreen('main-menu'));
-        });
-
         // Tactic modal close
         document.querySelector('.close-tactical')?.addEventListener('click', () => this.closeTacticalModal());
     }
@@ -352,13 +337,25 @@ class BrasileiraoSimulator {
     }
 
     simulateRound() {
+        if (this.isSimulating) {
+            console.log("Already simulating! Ignoring call.");
+            return;
+        }
+        
+        const card = document.getElementById('btn-career-simulate');
+        if (card) {
+            card.style.pointerEvents = 'none';
+            card.style.opacity = '0.5';
+        }
+
         console.log("Simulating Round...");
         const lg = this.leagues[this.currentSerie];
         if (!lg || lg.currentRound >= lg.rounds.length) {
             console.log("Round finished or league error.");
             return;
         }
-
+        
+        this.isSimulating = true;
         const roundMatches = lg.rounds[lg.currentRound].matches;
         
         // Find user match
@@ -375,7 +372,17 @@ class BrasileiraoSimulator {
             
             if (home && away) {
                 console.log("Starting visual sim:", home.name, "vs", away.name);
+                let completed = false;
                 this.startVisualSimulation(userMatch, home, away, () => {
+                    if (completed) return;
+                    completed = true;
+                    
+                    if (card) {
+                        card.style.pointerEvents = 'auto';
+                        card.style.opacity = '1';
+                    }
+                    
+                    this.isSimulating = false;
                     console.log("Visual sim completed. Simulating others.");
                     roundMatches.forEach(m => {
                         if (m !== userMatch) this.simulateMatch(m, lg.teams);
@@ -416,10 +423,15 @@ class BrasileiraoSimulator {
             this.updateStats();
             this.displayCalendar();
             if (this.career.active) this.updateCareerDashboard();
+            this.isSimulating = false;
         }
     }
 
     startVisualSimulation(match, home, away, callback) {
+        if (this.simInterval) {
+            clearInterval(this.simInterval);
+            this.simInterval = null;
+        }
         this.currentSimHome = home;
         this.currentSimAway = away;
         this.openScreen('match-simulation');
@@ -468,6 +480,12 @@ class BrasileiraoSimulator {
         this.simCallback = callback;
 
         const runSimTick = () => {
+            // Safety exit: If match is already simulated, kill this specific interval immediately
+            if (match.simulated) {
+                if (localIntervalId) clearInterval(localIntervalId);
+                return;
+            }
+
             if (this.isPaused) return;
 
             simMinute++;
@@ -524,7 +542,7 @@ class BrasileiraoSimulator {
             // Final do Jogo
             if (simMinute >= 90 && !match.simulated) {
                 match.simulated = true; 
-                clearInterval(this.simInterval);
+                if (localIntervalId) clearInterval(localIntervalId);
                 this.simInterval = null;
                 
                 addMsg(90, "Fim de jogo!", "sys-msg");
@@ -539,7 +557,8 @@ class BrasileiraoSimulator {
             }
         };
 
-        this.simInterval = setInterval(runSimTick, 450); 
+        const localIntervalId = setInterval(runSimTick, 450);
+        this.simInterval = localIntervalId; 
 
         // Sidebar lists
         const renderSimPlayers = (team, container) => {
@@ -1738,9 +1757,30 @@ class BrasileiraoSimulator {
         
         if (!homeTeam || !awayTeam) return;
 
+        if (this.isSimulating) {
+            console.log("Friendly simulation already in progress.");
+            return;
+        }
+        this.isSimulating = true;
+        
+        const btn = document.getElementById('btn-play-friendly');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        }
+
         const match = { home: hId, away: aId, homeScore: null, awayScore: null, isFriendly: true };
         
+        let completed = false;
         this.startVisualSimulation(match, homeTeam, awayTeam, () => {
+            if (completed) return;
+            completed = true;
+            
+            this.isSimulating = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
             this.openScreen('friendly-setup');
             document.getElementById('friendly-result').innerHTML = `
                 ${homeTeam.name} <span style="color: var(--fifa-cyan)">${match.homeScore}</span> X 

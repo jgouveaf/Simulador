@@ -453,6 +453,10 @@ class BrasileiraoSimulator {
         document.getElementById('sim-score-value').textContent = "0 - 0";
         document.getElementById('sim-time-value').textContent = "00:00";
         
+        // Match State for this session
+        match.usedSubs = 0;
+        match.subLimit = 5;
+
         const ticker = document.getElementById('sim-events-ticker');
         ticker.innerHTML = '<div class="sys-msg">Partida prestes a começar...</div>';
         
@@ -629,6 +633,25 @@ class BrasileiraoSimulator {
                 btn.style.borderColor = btn.classList.contains('active-t') ? 'var(--fifa-pink)' : 'var(--border)';
             };
         });
+
+        // Sim Nav Logic (Stats / Notes)
+        const btnStats = document.getElementById('btn-sim-stats');
+        const btnNotes = document.getElementById('btn-sim-notes');
+        
+        btnStats?.addEventListener('click', () => {
+            btnStats.classList.add('active');
+            btnNotes?.classList.remove('active');
+            document.getElementById('sim-events-ticker').style.display = 'block';
+            const notesPanel = document.getElementById('sim-notes-panel');
+            if (notesPanel) notesPanel.style.display = 'none';
+        });
+
+        btnNotes?.addEventListener('click', () => {
+            btnNotes.classList.add('active');
+            btnStats?.classList.remove('active');
+            document.getElementById('sim-events-ticker').style.display = 'none';
+            this.renderSimNotes();
+        });
     }
 
     handleMatchShortcuts(e) {
@@ -641,18 +664,6 @@ class BrasileiraoSimulator {
             document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex - 1]}"]`).click();
         } else if (e.key === 'ArrowRight' && currentIndex < mentalities.length - 1) {
             document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex + 1]}"]`).click();
-        }
-
-        if (e.key.toLowerCase() === 'e') {
-            const screen = document.getElementById('match-simulation-screen');
-            if (screen && screen.classList.contains('active')) {
-                const modal = document.getElementById('match-tactical-modal');
-                if (modal.style.display === 'block') {
-                    this.closeTacticalModal();
-                } else {
-                    this.openTacticalModal();
-                }
-            }
         }
     }
 
@@ -700,12 +711,35 @@ class BrasileiraoSimulator {
     renderSimTactics() {
         // Find user team
         let team = null;
-        if (!this.currentSimHome) return; // Guard: no active sim
+        if (!this.currentSimHome) return; 
+
         if (this.career.active && this.career.team) {
             if (this.currentSimHome.id === this.career.team.id) team = this.currentSimHome;
             else if (this.currentSimAway && this.currentSimAway.id === this.career.team.id) team = this.currentSimAway;
         }
         if (!team) team = this.currentSimHome;
+
+        // INJECT FORMATION BUTTONS IN MODAL HEADER (if not there)
+        const modalHeader = document.querySelector('#match-tactical-modal .fifa-header');
+        if (modalHeader && !modalHeader.querySelector('.sim-formation-controls')) {
+            const div = document.createElement('div');
+            div.className = 'sim-formation-controls';
+            div.style.display = 'flex';
+            div.style.gap = '5px';
+            div.style.marginLeft = '20px';
+            ['4-3-3', '4-4-2', '3-5-2', '5-3-2', '4-2-3-1'].forEach(f => {
+                const b = document.createElement('button');
+                b.className = 'badge';
+                b.style.fontSize = '0.6rem';
+                b.textContent = f;
+                b.onclick = () => {
+                    team.formation = f;
+                    this.renderSimTactics();
+                };
+                div.appendChild(b);
+            });
+            modalHeader.appendChild(div);
+        }
 
         const pitch = document.getElementById('sim-tactical-board');
         const list = document.getElementById('sim-reserva-list');
@@ -775,7 +809,13 @@ class BrasileiraoSimulator {
                     };
                     
                     if (sub.out.status === 'Titular' && sub.in.status === 'Reserva') {
-                        this.queuedSubs.push(sub);
+                        // CHECK SUB LIMIT
+                        const match = this.currentSimMatch;
+                        if (match.usedSubs + this.queuedSubs.length < match.subLimit) {
+                            this.queuedSubs.push(sub);
+                        } else {
+                            alert(`Limite de ${match.subLimit} substituições atingido!`);
+                        }
                     } else {
                         alert("Selecione um TITULAR (no campo) e um RESERVA (na lista) para substituir.");
                     }
@@ -802,6 +842,7 @@ class BrasileiraoSimulator {
             if (pOut && pIn) {
                 pOut.status = 'Reserva';
                 pIn.status = 'Titular';
+                this.currentSimMatch.usedSubs++;
                 addMsg(min, `SUBSTITUIÇÃO no ${team.name.toUpperCase()}: Sai ${pOut.name}, entra ${pIn.name}.`);
             }
         });
@@ -1800,6 +1841,51 @@ class BrasileiraoSimulator {
                 <span style="color: var(--fifa-cyan)">${match.awayScore}</span> ${awayTeam.name}
             `;
         });
+    }
+
+    renderSimNotes() {
+        const center = document.querySelector('.sim-pitch-area');
+        let panel = document.getElementById('sim-notes-panel');
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'sim-notes-panel';
+            panel.style.padding = '20px';
+            panel.style.overflowY = 'auto';
+            panel.style.height = '100%';
+            panel.style.background = 'rgba(0,0,0,0.4)';
+            center.appendChild(panel);
+        }
+        panel.style.display = 'block';
+        
+        const home = this.currentSimHome;
+        const away = this.currentSimAway;
+        
+        const renderGroup = (team, color) => {
+            return team.roster.filter(p => p.status === 'Titular').map(p => `
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.85rem;"><strong>${p.pos}</strong> ${p.name}</span>
+                    <span class="rating" style="background: ${color}; font-size: 0.8rem;">${p.strength}</span>
+                </div>
+            `).join('');
+        };
+
+        panel.innerHTML = `
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 10px;">AVALIAÇÕES DA PARTIDA</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div>
+                   <h3 style="color: var(--fifa-cyan); text-align: center; margin-bottom: 1rem;">${home.name}</h3>
+                   ${renderGroup(home, 'var(--fifa-cyan)')}
+                </div>
+                <div>
+                   <h3 style="color: var(--fifa-pink); text-align: center; margin-bottom: 1rem;">${away.name}</h3>
+                   ${renderGroup(away, 'var(--fifa-pink)')}
+                </div>
+            </div>
+        `;
+    }
+
+    isQueued(playerId) {
+        return this.queuedSubs.some(s => s.in.id === playerId || s.out.id === playerId);
     }
 
     showTeamDetails(teamId) {

@@ -1425,238 +1425,441 @@ const teams = [
     {
         "id": 101,
         "name": "Amazonas",
-        "logo": "https://static.wixstatic.com/media/29c778_d320e562d11e4840ac99987247002c02~mv2.png",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Amazonas_FC_logo.svg/1200px-Amazonas_FC_logo.svg.png",
         "short": "AMA",
         "color": "#FFD700",
-        "strength": 76,
+        "strength": 72,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "João Lopes", "strength": 77, "status": "Titular" },
-            { "pos": "ZAG", "name": "Ivo", "strength": 76, "status": "Titular" },
-            { "pos": "MEI", "name": "Diego Torres", "strength": 78, "status": "Titular" },
-            { "pos": "MEI", "name": "Jhonny Lucas", "strength": 77, "status": "Titular" },
-            { "pos": "ATA", "name": "Marcelo Cirino", "strength": 80, "status": "Titular" },
-            { "pos": "ATA", "name": "Ezequiel", "strength": 78, "status": "Titular" }
+            { "pos": "GOL", "name": "João Lopes", "strength": 73, "status": "Titular" },
+            { "pos": "LD", "name": "Ezequiel", "strength": 72, "status": "Titular" },
+            { "pos": "ZAG", "name": "Ivo", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Alisson", "strength": 70, "status": "Titular" },
+            { "pos": "LE", "name": "Renan", "strength": 71, "status": "Titular" },
+            { "pos": "VOL", "name": "Jhonny Lucas", "strength": 74, "status": "Titular" },
+            { "pos": "MC", "name": "Diego Torres", "strength": 73, "status": "Titular" },
+            { "pos": "MEI", "name": "Rafael", "strength": 71, "status": "Titular" },
+            { "pos": "PE", "name": "Sassá", "strength": 75, "status": "Titular" },
+            { "pos": "PD", "name": "Wellington", "strength": 71, "status": "Titular" },
+            { "pos": "CA", "name": "Marcelo Cirino", "strength": 74, "status": "Titular" }
         ]
     },
     {
         "id": 102,
         "name": "Anápolis",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/a/a2/Anapolis_FC_GO.png",
         "short": "ANA",
         "color": "#FF0000",
-        "strength": 72,
+        "strength": 68,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Wellerson", "strength": 73, "status": "Titular" },
-            { "pos": "ZAG", "name": "André", "strength": 72, "status": "Titular" }
+            { "pos": "GOL", "name": "Wellerson", "strength": 69, "status": "Titular" },
+            { "pos": "LD", "name": "Fábio", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "André", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Matheus", "strength": 67, "status": "Titular" },
+            { "pos": "LE", "name": "Léo", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "Renan", "strength": 69, "status": "Titular" },
+            { "pos": "MC", "name": "Igor", "strength": 68, "status": "Titular" },
+            { "pos": "MEI", "name": "Lucas", "strength": 67, "status": "Titular" },
+            { "pos": "PE", "name": "Vitinho", "strength": 68, "status": "Titular" },
+            { "pos": "PD", "name": "Gleydson", "strength": 67, "status": "Titular" },
+            { "pos": "CA", "name": "Marcão", "strength": 68, "status": "Titular" }
         ]
     },
     {
         "id": 103,
         "name": "Barra",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/4/46/Barra_Futebol_Clube_logo.png",
         "short": "BAR",
         "color": "#0000FF",
-        "strength": 72,
+        "strength": 67,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Ewerton", "strength": 74, "status": "Titular" },
-            { "pos": "VOL", "name": "Natan", "strength": 73, "status": "Titular" }
+            { "pos": "GOL", "name": "Ewerton", "strength": 69, "status": "Titular" },
+            { "pos": "LD", "name": "Muriel", "strength": 67, "status": "Titular" },
+            { "pos": "ZAG", "name": "Eduardo", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Wesley", "strength": 67, "status": "Titular" },
+            { "pos": "LE", "name": "DG", "strength": 66, "status": "Titular" },
+            { "pos": "VOL", "name": "Natan", "strength": 68, "status": "Titular" },
+            { "pos": "MC", "name": "Thiago", "strength": 67, "status": "Titular" },
+            { "pos": "MEI", "name": "Marcos", "strength": 67, "status": "Titular" },
+            { "pos": "PE", "name": "Marcelinho", "strength": 68, "status": "Titular" },
+            { "pos": "PD", "name": "Alex", "strength": 66, "status": "Titular" },
+            { "pos": "CA", "name": "Diego", "strength": 67, "status": "Titular" }
         ]
     },
     {
         "id": 104,
         "name": "Botafogo-PB",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Escudo_do_Botafogo_Futebol_Clube_%28Jo%C3%A3o_Pessoa%29.svg/1200px-Escudo_do_Botafogo_Futebol_Clube_%28Jo%C3%A3o_Pessoa%29.svg.png",
         "short": "BPB",
         "color": "#000000",
-        "strength": 73,
+        "strength": 69,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Dalton", "strength": 75, "status": "Titular" },
-            { "pos": "ATA", "name": "Pipico", "strength": 76, "status": "Titular" }
+            { "pos": "GOL", "name": "Dalton", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Lenílson", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Wendel", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Sousa", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "Rafael", "strength": 69, "status": "Titular" },
+            { "pos": "VOL", "name": "Júlio", "strength": 69, "status": "Titular" },
+            { "pos": "MC", "name": "Rodrigo", "strength": 68, "status": "Titular" },
+            { "pos": "MEI", "name": "Bismarck", "strength": 70, "status": "Titular" },
+            { "pos": "PE", "name": "Dico", "strength": 69, "status": "Titular" },
+            { "pos": "PD", "name": "Jean", "strength": 68, "status": "Titular" },
+            { "pos": "CA", "name": "Pipico", "strength": 72, "status": "Titular" }
         ]
     },
     {
         "id": 105,
         "name": "Brusque",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/2/23/Brusque_FC_logo.png",
         "short": "BRU",
         "color": "#FFD700",
-        "strength": 76,
+        "strength": 71,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 77, "status": "Titular" },
-            { "pos": "ZAG", "name": "Wallace", "strength": 76, "status": "Titular" }
+            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 74, "status": "Titular" },
+            { "pos": "LD", "name": "Mateus", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Wallace", "strength": 73, "status": "Titular" },
+            { "pos": "ZAG", "name": "Éverton", "strength": 70, "status": "Titular" },
+            { "pos": "LE", "name": "Alex", "strength": 70, "status": "Titular" },
+            { "pos": "VOL", "name": "Rodolfo", "strength": 71, "status": "Titular" },
+            { "pos": "MC", "name": "Serrato", "strength": 71, "status": "Titular" },
+            { "pos": "MEI", "name": "Jhemerson", "strength": 70, "status": "Titular" },
+            { "pos": "PE", "name": "Dentinho", "strength": 72, "status": "Titular" },
+            { "pos": "PD", "name": "Diego", "strength": 70, "status": "Titular" },
+            { "pos": "CA", "name": "Guilherme", "strength": 71, "status": "Titular" }
         ]
     },
     {
         "id": 106,
         "name": "Caxias",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/S.E.R._Caxias_do_Sul.svg/1200px-S.E.R._Caxias_do_Sul.svg.png",
         "short": "CAX",
         "color": "#800020",
-        "strength": 73,
+        "strength": 68,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Thiago Coelho", "strength": 74, "status": "Titular" },
-            { "pos": "CA", "name": "Álvaro", "strength": 75, "status": "Titular" }
+            { "pos": "GOL", "name": "Thiago Coelho", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Marcelo", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Léo", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Alisson", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "Jonathan", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "Geovane", "strength": 69, "status": "Titular" },
+            { "pos": "MC", "name": "Elyeser", "strength": 67, "status": "Titular" },
+            { "pos": "MEI", "name": "Tomas", "strength": 68, "status": "Titular" },
+            { "pos": "PE", "name": "Vitor", "strength": 68, "status": "Titular" },
+            { "pos": "PD", "name": "Robinho", "strength": 67, "status": "Titular" },
+            { "pos": "CA", "name": "Álvaro", "strength": 70, "status": "Titular" }
         ]
     },
     {
         "id": 107,
         "name": "Confiança",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/thumb/d/d7/Associa%C3%A7%C3%A3o_Desportiva_Confian%C3%A7a.svg/1200px-Associa%C3%A7%C3%A3o_Desportiva_Confian%C3%A7a.svg.png",
         "short": "CON",
         "color": "#0000FF",
-        "strength": 72,
+        "strength": 68,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Jeferson", "strength": 73, "status": "Titular" }
+            { "pos": "GOL", "name": "Jeferson", "strength": 70, "status": "Titular" },
+            { "pos": "LD", "name": "Samuel", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Raphael", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Adalberto", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "Felippe", "strength": 67, "status": "Titular" },
+            { "pos": "VOL", "name": "Fábio", "strength": 68, "status": "Titular" },
+            { "pos": "MC", "name": "Lucas", "strength": 67, "status": "Titular" },
+            { "pos": "MEI", "name": "Ítalo", "strength": 68, "status": "Titular" },
+            { "pos": "PE", "name": "Willians", "strength": 69, "status": "Titular" },
+            { "pos": "PD", "name": "Negueba", "strength": 67, "status": "Titular" },
+            { "pos": "CA", "name": "Ricardo", "strength": 68, "status": "Titular" }
         ]
     },
     {
         "id": 108,
         "name": "Ferroviária",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Ferroviaria_de_Araraquara_logo.svg/1200px-Ferroviaria_de_Araraquara_logo.svg.png",
         "short": "FER",
         "color": "#800000",
-        "strength": 75,
+        "strength": 70,
         "serie": "C",
         "roster": [
-            { "pos": "MEI", "name": "Fernando Canesin", "strength": 77, "status": "Titular" }
+            { "pos": "GOL", "name": "Saulo", "strength": 72, "status": "Titular" },
+            { "pos": "LD", "name": "Lucas", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Jackson", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Maycon", "strength": 69, "status": "Titular" },
+            { "pos": "LE", "name": "João", "strength": 69, "status": "Titular" },
+            { "pos": "VOL", "name": "Pablo", "strength": 70, "status": "Titular" },
+            { "pos": "MC", "name": "Ricardinho", "strength": 69, "status": "Titular" },
+            { "pos": "MEI", "name": "Fernando Canesin", "strength": 73, "status": "Titular" },
+            { "pos": "PE", "name": "Vitor", "strength": 70, "status": "Titular" },
+            { "pos": "PD", "name": "Gerson", "strength": 68, "status": "Titular" },
+            { "pos": "CA", "name": "Carlão", "strength": 70, "status": "Titular" }
         ]
     },
     {
         "id": 109,
         "name": "Figueirense",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Figueirense_Futebol_Clube.svg/1200px-Figueirense_Futebol_Clube.svg.png",
         "short": "FIG",
         "color": "#000000",
-        "strength": 74,
+        "strength": 69,
         "serie": "C",
         "roster": [
-            { "pos": "ZAG", "name": "Genilson", "strength": 75, "status": "Titular" }
+            { "pos": "GOL", "name": "Thiago", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Léo", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Genilson", "strength": 72, "status": "Titular" },
+            { "pos": "ZAG", "name": "Thomás", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "Samuel", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "Gledson", "strength": 69, "status": "Titular" },
+            { "pos": "MC", "name": "Léo Arthur", "strength": 70, "status": "Titular" },
+            { "pos": "MEI", "name": "Camilo", "strength": 71, "status": "Titular" },
+            { "pos": "PE", "name": "Jhon", "strength": 68, "status": "Titular" },
+            { "pos": "PD", "name": "Guilherme", "strength": 67, "status": "Titular" },
+            { "pos": "CA", "name": "Renan", "strength": 68, "status": "Titular" }
         ]
     },
     {
         "id": 110,
         "name": "Floresta",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/thumb/a/ad/Floresta_Esporte_Clube.png/200px-Floresta_Esporte_Clube.png",
         "short": "FLO",
         "color": "#006400",
-        "strength": 71,
+        "strength": 67,
         "serie": "C",
         "roster": [
-            { "pos": "ATA", "name": "Lohan", "strength": 72, "status": "Titular" }
+            { "pos": "GOL", "name": "Luiz", "strength": 68, "status": "Titular" },
+            { "pos": "LD", "name": "Elias", "strength": 67, "status": "Titular" },
+            { "pos": "ZAG", "name": "Marlon", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Lucas", "strength": 66, "status": "Titular" },
+            { "pos": "LE", "name": "Davi", "strength": 67, "status": "Titular" },
+            { "pos": "VOL", "name": "Jô", "strength": 68, "status": "Titular" },
+            { "pos": "MC", "name": "Romarinho", "strength": 67, "status": "Titular" },
+            { "pos": "MEI", "name": "Esquerdinha", "strength": 68, "status": "Titular" },
+            { "pos": "PE", "name": "Vitinho", "strength": 66, "status": "Titular" },
+            { "pos": "PD", "name": "Bismark", "strength": 67, "status": "Titular" },
+            { "pos": "CA", "name": "Lohan", "strength": 69, "status": "Titular" }
         ]
     },
     {
         "id": 111,
         "name": "Guarani",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Guarani_Futebol_Clube_logo.svg/1200px-Guarani_Futebol_Clube_logo.svg.png",
         "short": "GUA",
         "color": "#006400",
-        "strength": 77,
+        "strength": 72,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Pegorari", "strength": 78, "status": "Titular" },
-            { "pos": "MEI", "name": "Luan Dias", "strength": 80, "status": "Titular" }
+            { "pos": "GOL", "name": "Pegorari", "strength": 75, "status": "Titular" },
+            { "pos": "LD", "name": "Diogo", "strength": 72, "status": "Titular" },
+            { "pos": "ZAG", "name": "Lucão", "strength": 73, "status": "Titular" },
+            { "pos": "ZAG", "name": "Douglas", "strength": 71, "status": "Titular" },
+            { "pos": "LE", "name": "Jefferson", "strength": 71, "status": "Titular" },
+            { "pos": "VOL", "name": "Matheus", "strength": 72, "status": "Titular" },
+            { "pos": "MC", "name": "Camacho", "strength": 72, "status": "Titular" },
+            { "pos": "MEI", "name": "Luan Dias", "strength": 75, "status": "Titular" },
+            { "pos": "PE", "name": "João", "strength": 71, "status": "Titular" },
+            { "pos": "PD", "name": "Heitor", "strength": 70, "status": "Titular" },
+            { "pos": "CA", "name": "Marlon", "strength": 72, "status": "Titular" }
         ]
     },
     {
         "id": 112,
         "name": "Itabaiana",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/thumb/1/1c/AO_Itabaiana.svg/1200px-AO_Itabaiana.svg.png",
         "short": "ITA",
         "color": "#FF0000",
-        "strength": 71,
+        "strength": 66,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Jefferson", "strength": 72, "status": "Titular" }
+            { "pos": "GOL", "name": "Jefferson", "strength": 68, "status": "Titular" },
+            { "pos": "LD", "name": "Chiquinho", "strength": 66, "status": "Titular" },
+            { "pos": "ZAG", "name": "Hugo", "strength": 67, "status": "Titular" },
+            { "pos": "ZAG", "name": "Thiago", "strength": 66, "status": "Titular" },
+            { "pos": "LE", "name": "Kauã", "strength": 65, "status": "Titular" },
+            { "pos": "VOL", "name": "Duda", "strength": 67, "status": "Titular" },
+            { "pos": "MC", "name": "Téssio", "strength": 66, "status": "Titular" },
+            { "pos": "MEI", "name": "Bruninho", "strength": 67, "status": "Titular" },
+            { "pos": "PE", "name": "Tiago", "strength": 66, "status": "Titular" },
+            { "pos": "PD", "name": "Marcelo", "strength": 65, "status": "Titular" },
+            { "pos": "CA", "name": "Cleiton", "strength": 66, "status": "Titular" }
         ]
     },
     {
         "id": 113,
         "name": "Inter de Limeira",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Associa%C3%A7%C3%A3o_Atl%C3%A9tica_Internacional_%28Limeira%29.svg/1200px-Associa%C3%A7%C3%A3o_Atl%C3%A9tica_Internacional_%28Limeira%29.svg.png",
         "short": "INL",
         "color": "#000000",
-        "strength": 73,
+        "strength": 68,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Saulo", "strength": 75, "status": "Titular" },
-            { "pos": "ATA", "name": "Neto Berola", "strength": 74, "status": "Titular" }
+            { "pos": "GOL", "name": "Zé Carlos", "strength": 70, "status": "Titular" },
+            { "pos": "LD", "name": "Felipe", "strength": 68, "status": "Titular" },
+            { "pos": "ZAG", "name": "Diego", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Maurício", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "César", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "Lucas", "strength": 69, "status": "Titular" },
+            { "pos": "MC", "name": "Gustavo", "strength": 68, "status": "Titular" },
+            { "pos": "MEI", "name": "Fernando", "strength": 69, "status": "Titular" },
+            { "pos": "PE", "name": "Andrew", "strength": 68, "status": "Titular" },
+            { "pos": "PD", "name": "Marlon", "strength": 67, "status": "Titular" },
+            { "pos": "CA", "name": "Neto Berola", "strength": 71, "status": "Titular" }
         ]
     },
     {
         "id": 114,
         "name": "Ituano",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Escudo_do_Ituano_Futebol_Clube.svg/1200px-Escudo_do_Ituano_Futebol_Clube.svg.png",
         "short": "ITU",
         "color": "#FF0000",
-        "strength": 75,
+        "strength": 70,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Jefferson Paulino", "strength": 76, "status": "Titular" },
-            { "pos": "CA", "name": "Bruno Mezenga", "strength": 77, "status": "Titular" }
+            { "pos": "GOL", "name": "Jefferson Paulino", "strength": 73, "status": "Titular" },
+            { "pos": "LD", "name": "Pacheco", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Claudinho", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Marcel", "strength": 69, "status": "Titular" },
+            { "pos": "LE", "name": "Kauan", "strength": 69, "status": "Titular" },
+            { "pos": "VOL", "name": "Rodrigo", "strength": 70, "status": "Titular" },
+            { "pos": "MC", "name": "Eduardo", "strength": 69, "status": "Titular" },
+            { "pos": "MEI", "name": "Yann", "strength": 70, "status": "Titular" },
+            { "pos": "PE", "name": "José", "strength": 69, "status": "Titular" },
+            { "pos": "PD", "name": "Vini", "strength": 68, "status": "Titular" },
+            { "pos": "CA", "name": "Bruno Mezenga", "strength": 73, "status": "Titular" }
         ]
     },
     {
         "id": 115,
         "name": "Maranhão",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/thumb/d/d0/Maranh%C3%A3o_Atl%C3%A9tico_Clube_logo.png/1200px-Maranh%C3%A3o_Atl%C3%A9tico_Clube_logo.png",
         "short": "MAC",
         "color": "#0000FF",
-        "strength": 70,
+        "strength": 66,
         "serie": "C",
         "roster": [
-            { "pos": "MEI", "name": "Adeílson", "strength": 71, "status": "Titular" }
+            { "pos": "GOL", "name": "Moisés", "strength": 68, "status": "Titular" },
+            { "pos": "LD", "name": "Franklin", "strength": 66, "status": "Titular" },
+            { "pos": "ZAG", "name": "Leone", "strength": 67, "status": "Titular" },
+            { "pos": "ZAG", "name": "Maicon", "strength": 66, "status": "Titular" },
+            { "pos": "LE", "name": "André", "strength": 66, "status": "Titular" },
+            { "pos": "VOL", "name": "Vander", "strength": 67, "status": "Titular" },
+            { "pos": "MC", "name": "Ronald", "strength": 66, "status": "Titular" },
+            { "pos": "MEI", "name": "Adeílson", "strength": 68, "status": "Titular" },
+            { "pos": "PE", "name": "Felipe", "strength": 65, "status": "Titular" },
+            { "pos": "PD", "name": "Clessione", "strength": 66, "status": "Titular" },
+            { "pos": "CA", "name": "Edrean", "strength": 67, "status": "Titular" }
         ]
     },
     {
         "id": 116,
         "name": "Maringá",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Maring%C3%A1_Futebol_Clube_logo.svg/1200px-Maring%C3%A1_Futebol_Clube_logo.svg.png",
         "short": "MAR",
         "color": "#FFD700",
-        "strength": 74,
+        "strength": 69,
         "serie": "C",
         "roster": [
-            { "pos": "MEI", "name": "Iago Santana", "strength": 75, "status": "Titular" }
+            { "pos": "GOL", "name": "Dheimison", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Marcos", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Vilar", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Tito", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "Caíque", "strength": 69, "status": "Titular" },
+            { "pos": "VOL", "name": "João", "strength": 70, "status": "Titular" },
+            { "pos": "MC", "name": "Serginho", "strength": 69, "status": "Titular" },
+            { "pos": "MEI", "name": "Iago Santana", "strength": 71, "status": "Titular" },
+            { "pos": "PE", "name": "Edison", "strength": 69, "status": "Titular" },
+            { "pos": "PD", "name": "Lucas", "strength": 68, "status": "Titular" },
+            { "pos": "CA", "name": "Júlio", "strength": 70, "status": "Titular" }
         ]
     },
     {
         "id": 117,
         "name": "Paysandu",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Paysandu_Sport_Club_logo.svg/1200px-Paysandu_Sport_Club_logo.svg.png",
         "short": "PAY",
         "color": "#00BFFF",
-        "strength": 76,
+        "strength": 72,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 77, "status": "Titular" },
-            { "pos": "CA", "name": "Nicolas", "strength": 79, "status": "Titular" }
+            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 74, "status": "Titular" },
+            { "pos": "LD", "name": "Edílson", "strength": 72, "status": "Titular" },
+            { "pos": "ZAG", "name": "Wanderson", "strength": 73, "status": "Titular" },
+            { "pos": "ZAG", "name": "Carlão", "strength": 71, "status": "Titular" },
+            { "pos": "LE", "name": "Kevyn", "strength": 71, "status": "Titular" },
+            { "pos": "VOL", "name": "João Vieira", "strength": 73, "status": "Titular" },
+            { "pos": "MC", "name": "Netinho", "strength": 72, "status": "Titular" },
+            { "pos": "MEI", "name": "Robinho", "strength": 74, "status": "Titular" },
+            { "pos": "PE", "name": "Vinícius", "strength": 72, "status": "Titular" },
+            { "pos": "PD", "name": "Edinho", "strength": 71, "status": "Titular" },
+            { "pos": "CA", "name": "Nicolas", "strength": 76, "status": "Titular" }
         ]
     },
     {
         "id": 118,
         "name": "Santa Cruz",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Santa_Cruz_Futebol_Clube_%28logo%29.svg/1200px-Santa_Cruz_Futebol_Clube_%28logo%29.svg.png",
         "short": "SCZ",
         "color": "#FF0000",
-        "strength": 75,
+        "strength": 71,
         "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Gabriel Souza", "strength": 74, "status": "Titular" },
-            { "pos": "MEI", "name": "Régis", "strength": 79, "status": "Titular" },
-            { "pos": "ATA", "name": "Eron", "strength": 77, "status": "Titular" }
+            { "pos": "GOL", "name": "Gabriel Souza", "strength": 72, "status": "Titular" },
+            { "pos": "LD", "name": "Carlos", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Gualberto", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Ítalo", "strength": 70, "status": "Titular" },
+            { "pos": "LE", "name": "João", "strength": 70, "status": "Titular" },
+            { "pos": "VOL", "name": "Daniel", "strength": 71, "status": "Titular" },
+            { "pos": "MC", "name": "Fabrício", "strength": 70, "status": "Titular" },
+            { "pos": "MEI", "name": "Régis", "strength": 74, "status": "Titular" },
+            { "pos": "PE", "name": "Matheus", "strength": 71, "status": "Titular" },
+            { "pos": "PD", "name": "Lucas", "strength": 70, "status": "Titular" },
+            { "pos": "CA", "name": "Eron", "strength": 73, "status": "Titular" }
         ]
     },
     {
         "id": 119,
         "name": "Volta Redonda",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/thumb/6/6f/Volta_Redonda_Futebol_Clube.svg/1200px-Volta_Redonda_Futebol_Clube.svg.png",
         "short": "VRE",
         "color": "#FFD700",
-        "strength": 75,
+        "strength": 70,
         "serie": "C",
         "roster": [
-            { "pos": "ATA", "name": "MV", "strength": 76, "status": "Titular" }
+            { "pos": "GOL", "name": "Jean", "strength": 72, "status": "Titular" },
+            { "pos": "LD", "name": "Wellington", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Bruno", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Michel", "strength": 69, "status": "Titular" },
+            { "pos": "LE", "name": "Sánchez", "strength": 69, "status": "Titular" },
+            { "pos": "VOL", "name": "Danrley", "strength": 70, "status": "Titular" },
+            { "pos": "MC", "name": "Robinho", "strength": 69, "status": "Titular" },
+            { "pos": "MEI", "name": "Marcos", "strength": 70, "status": "Titular" },
+            { "pos": "PE", "name": "Vinícius", "strength": 70, "status": "Titular" },
+            { "pos": "PD", "name": "Berdinazzi", "strength": 68, "status": "Titular" },
+            { "pos": "CA", "name": "MV", "strength": 72, "status": "Titular" }
         ]
     },
     {
         "id": 120,
         "name": "Ypiranga",
+        "logo": "https://upload.wikimedia.org/wikipedia/pt/thumb/9/90/Ypiranga_Futebol_Clube.svg/1200px-Ypiranga_Futebol_Clube.svg.png",
         "short": "YPI",
         "color": "#FFD700",
-        "strength": 73,
+        "strength": 69,
         "serie": "C",
         "roster": [
-            { "pos": "MEI", "name": "Alisson Taddei", "strength": 74, "status": "Titular" }
+            { "pos": "GOL", "name": "Alexander", "strength": 71, "status": "Titular" },
+            { "pos": "LD", "name": "Gedeílson", "strength": 69, "status": "Titular" },
+            { "pos": "ZAG", "name": "Heitor", "strength": 70, "status": "Titular" },
+            { "pos": "ZAG", "name": "Fernando", "strength": 68, "status": "Titular" },
+            { "pos": "LE", "name": "William", "strength": 68, "status": "Titular" },
+            { "pos": "VOL", "name": "Loran", "strength": 69, "status": "Titular" },
+            { "pos": "MC", "name": "Lucas", "strength": 68, "status": "Titular" },
+            { "pos": "MEI", "name": "Alisson Taddei", "strength": 71, "status": "Titular" },
+            { "pos": "PE", "name": "Jhonatan", "strength": 69, "status": "Titular" },
+            { "pos": "PD", "name": "Reifit", "strength": 68, "status": "Titular" },
+            { "pos": "CA", "name": "Edson", "strength": 70, "status": "Titular" }
         ]
     }
 ];

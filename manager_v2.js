@@ -552,7 +552,9 @@ class BrasileiraoSimulator {
                 <div class="event-text">${text}</div>
             `;
             ticker.appendChild(entry);
-            ticker.scrollTop = ticker.scrollHeight;
+            requestAnimationFrame(() => {
+                ticker.scrollTop = ticker.scrollHeight;
+            });
         };
               const attackPhrases = ["{team} ataca com perigo!", "{team} troca passes no campo ofensivo.", "Chance clara para o {team}!", "Pressão total do {team}!", "Cruzamento na área do {team}!", "{team} tenta o chute de longe!"];
         const genericPhrases = ["Jogo disputado no meio de campo.", "Muita marcação de ambos os lados.", "Posse de bola equilibrada.", "Partida truncada até agora.", "Torcida canta alto no estádio!"];

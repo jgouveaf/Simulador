@@ -299,56 +299,66 @@ class BrasileiraoSimulator {
         const homeStats = this.getTeamStats(homeTeam);
         const awayStats = this.getTeamStats(awayTeam);
 
-        // REALISTIC PARAMETERS
-        const homeAdvantage = 1.15; // Mandatory for realism (15% advantage)
-        const targetMatchMean = 2.37; // User requested balance
+        // MODELO ELO/PROBABILIDADE (Recomendado pelo Usuário/Gemini)
+        const hs = homeTeam.strength;
+        const as = awayTeam.strength;
 
-        // A small amount of random "game-day" mood variation (+-10%)
+        // Fatores de Ajuste
+        const C = 3; // Fator casa em OVR (Overall) associado
+        const S = 10; // Fator de Escala
+
+        // 1. Diferença Ajustada
+        const D = hs + C - as;
+
+        // 2. Expectativa do Mandante (E_A)
+        const E_A = 1 / (1 + Math.pow(10, -(D / S)));
+
+        // 3. Probabilidade de Empate (P_E)
+        const P_E = 0.26 * Math.exp(-Math.pow(D / (2 * S), 2));
+
+        // 4. Probabilidades Finais (Vitória Home/Away)
+        const P_V = E_A * (1 - P_E);
+
+        // 5. Determinar Resultado (Win/Draw/Loss)
+        const r = Math.random();
+        let desiredOutcome = '';
+        if (r < P_V) desiredOutcome = 'HOME_WIN';
+        else if (r < P_V + P_E) desiredOutcome = 'DRAW';
+        else desiredOutcome = 'AWAY_WIN';
+
+        // 6. Gerar Placar (Poisson) atrelado ao Resultado Sorteado
         const gameVibe = 0.9 + Math.random() * 0.2;
-
-        // Formula: Score is a function of (Attack Ratio / Defense Power)
-        // Using a power of 3.4 makes the strength gaps very impactful, like top teams dominating.
-        const hRatio = Math.pow((homeStats.atk * homeAdvantage) / awayStats.def, 3.4);
-        const aRatio = Math.pow(awayStats.atk / homeStats.def, 3.4);
-        const totalRatio = hRatio + aRatio;
-
-        let hMean = (hRatio / totalRatio) * targetMatchMean * gameVibe;
-        let aMean = (aRatio / totalRatio) * targetMatchMean * gameVibe;
-
-        // DIXON-COLES Style Adjustment for low scores
-        let hScore = this.poissonRandom(hMean);
-        let aScore = this.poissonRandom(aMean);
-
-        // EXTRA ANTI-ZEBRA SHIELD
-        const gap = homeTeam.strength - awayTeam.strength;
+        const targetMatchMean = 2.37;
         
-        if (gap >= 6) {
-            // Home is much stronger
-            if (aScore > hScore && Math.random() < 0.85) {
-                // 85% chance to flip an unexpected loss into a win
-                let temp = hScore; hScore = aScore; aScore = temp;
-                if (gap >= 9 && Math.random() < 0.8) aScore = Math.max(0, aScore - 1);
-            } else if (aScore === hScore && Math.random() < 0.75) {
-                hScore++; // 75% chance to turn draw into win
-            }
-        } else if (gap <= -6) {
-            // Away is much stronger
-            if (hScore > aScore && Math.random() < 0.85) {
-                let temp = hScore; hScore = aScore; aScore = temp;
-                if (gap <= -9 && Math.random() < 0.8) hScore = Math.max(0, hScore - 1);
-            } else if (hScore === aScore && Math.random() < 0.75) {
-                aScore++;
-            }
+        let hMean = ((hs * 1.05) / as) * (targetMatchMean / 2) * gameVibe;
+        let aMean = (as / (hs * 1.05)) * (targetMatchMean / 2) * gameVibe;
+
+        let hScore = -1, aScore = -1;
+        let attempts = 0;
+
+        while (attempts < 150) {
+            hScore = this.poissonRandom(hMean);
+            aScore = this.poissonRandom(aMean);
+
+            // Cortar goleadas extremas
+            if (hScore > 8 || aScore > 8) { attempts++; continue; }
+
+            if (desiredOutcome === 'HOME_WIN' && hScore > aScore) break;
+            if (desiredOutcome === 'DRAW' && hScore === aScore) break;
+            if (desiredOutcome === 'AWAY_WIN' && aScore > hScore) break;
+            
+            attempts++;
         }
 
-        // Upset (Zebra) pocket for Underdog playing AT HOME
-        // A tiny 4% chance for a weaker Home team to pull off a miracle draw
-        if (homeTeam.strength <= awayTeam.strength - 7 && Math.random() < 0.04) {
-             if (hScore < aScore) { hScore = aScore; } 
+        // Caso de failsafe
+        if (attempts >= 150) {
+            if (desiredOutcome === 'HOME_WIN') { hScore = 1; aScore = 0; }
+            else if (desiredOutcome === 'DRAW') { hScore = 1; aScore = 1; }
+            else { hScore = 0; aScore = 1; }
         }
 
-        match.homeScore = Math.min(hScore, 8);
-        match.awayScore = Math.min(aScore, 8);
+        match.homeScore = hScore;
+        match.awayScore = aScore;
  
         match.scorers = [];
         const assignScorers = (team, score) => {

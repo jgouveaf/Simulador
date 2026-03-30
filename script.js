@@ -6,14 +6,16 @@ class BrasileiraoSimulator {
         this.currentSerie = 'A';
         this.leagues = {
             'A': this.initLeague('A'),
-            'B': this.initLeague('B')
+            'B': this.initLeague('B'),
+            'C': this.initLeague('C')
         };
         
         this.career = {
             active: false,
             team: null,
             budget: 50000000,
-            manager: 'João Gouvêa'
+            manager: 'João Gouvêa',
+            year: 2026
         };
 
         // Initialize unique IDs and calculate dynamic strengths
@@ -155,7 +157,8 @@ class BrasileiraoSimulator {
     }
 
     generateRoundDate(roundIndex) {
-        const start = new Date(2026, 3, 18); // April 18, 2026
+        const year = this.career.year || 2026;
+        const start = new Date(year, 3, 18); // April 18
         const date = new Date(start);
         date.setDate(start.getDate() + (roundIndex * 7));
         return date;
@@ -276,6 +279,24 @@ class BrasileiraoSimulator {
         away.goalDiff = away.goalsFor - away.goalsAgainst;
         home.percentage = home.played > 0 ? ((home.points / (home.played * 3)) * 100).toFixed(1) : 0;
         away.percentage = away.played > 0 ? ((away.points / (away.played * 3)) * 100).toFixed(1) : 0;
+
+        // Reward for the player's team
+        if (this.career.active) {
+            if (match.home === this.career.team?.id || match.away === this.career.team?.id) {
+                const isHome = match.home === this.career.team.id;
+                const userScore = isHome ? match.homeScore : match.awayScore;
+                const oppScore = isHome ? match.awayScore : match.homeScore;
+
+                if (userScore > oppScore) {
+                    this.career.budget += 1500000; // Reward R$ 1.5M for win
+                    console.log("Vitória! Bônus de R$ 1.5M adicionado.");
+                } else if (userScore === oppScore) {
+                    this.career.budget += 500000; // Reward R$ 500k for draw
+                    console.log("Empate. Bônus de R$ 500k adicionado.");
+                }
+                this.updateCareerDashboard();
+            }
+        }
     }
 
     simulateRound() {
@@ -293,6 +314,9 @@ class BrasileiraoSimulator {
 
         if (this.career.active) {
             this.updateCareerDashboard();
+            if (lg.currentRound === 38) {
+                setTimeout(() => this.finishSeason(), 2000);
+            }
         }
     }
 
@@ -311,6 +335,46 @@ class BrasileiraoSimulator {
         this.displayRound();
         this.updateStats();
         this.displayCalendar();
+    }
+
+    finishSeason() {
+        const lg = this.leagues[this.currentSerie];
+        const sortedTeams = [...lg.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.won !== a.won) return b.won - a.won;
+            if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+            return b.goalsFor - a.goalsFor;
+        });
+
+        const playerPos = sortedTeams.findIndex(t => t.id === this.career.team.id) + 1;
+        let reward = 0;
+
+        // Rewards based on position
+        if (playerPos === 1) reward = 20000000; // Champion: 20M
+        else if (playerPos <= 4) reward = 10000000; // G4: 10M
+        else if (playerPos <= 10) reward = 5000000; // Top 10: 5M
+        else reward = 2000000; // Participation: 2M
+
+        this.career.budget += reward;
+        this.career.year++;
+
+        alert(`Fim da Temporada ${this.career.year - 1}!\nSua posição: ${playerPos}º\nPrêmio: R$ ${reward.toLocaleString('pt-BR')}\nIniciando temporada ${this.career.year}...`);
+
+        // Reset all leagues for the new year
+        this.leagues = {
+            'A': this.initLeague('A'),
+            'B': this.initLeague('B'),
+            'C': this.initLeague('C')
+        };
+        
+        // Relinking the player's team reference to the new league object
+        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === this.career.team.id);
+
+        this.updateTable();
+        this.displayRound();
+        this.updateStats();
+        this.displayCalendar();
+        this.updateCareerDashboard();
     }
 
     updateTable() {

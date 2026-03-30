@@ -18,7 +18,8 @@ class BrasileiraoSimulator {
         this.currentSerie = 'A';
         this.leagues = {
             'A': this.initLeague('A'),
-            'B': this.initLeague('B')
+            'B': this.initLeague('B'),
+            'C': this.initLeague('C')
         };
         
         this.career = {
@@ -26,9 +27,10 @@ class BrasileiraoSimulator {
             team: null,
             budget: 50000000,
             manager: 'João Gouvêa',
+            year: 2026,
             currentDay: 1,
-            isWindowOpen: true, // Started on day 1 (Window 1-30)
-            negotiations: {}, // track attempts by player id
+            isWindowOpen: true,
+            negotiations: {},
             calendar: this.generateSeasonCalendar()
         };
 
@@ -246,7 +248,8 @@ class BrasileiraoSimulator {
     }
 
     generateRoundDate(roundIndex) {
-        const start = new Date(2026, 3, 18); // April 18, 2026
+        const year = this.career?.year || 2026;
+        const start = new Date(year, 3, 18); // April 18
         const date = new Date(start);
         date.setDate(start.getDate() + (roundIndex * 7));
         return date;
@@ -356,6 +359,22 @@ class BrasileiraoSimulator {
         away.goalDiff = away.goalsFor - away.goalsAgainst;
         home.percentage = home.played > 0 ? ((home.points / (home.played * 3)) * 100).toFixed(1) : 0;
         away.percentage = away.played > 0 ? ((away.points / (away.played * 3)) * 100).toFixed(1) : 0;
+
+        // Rewards for player's team
+        if (this.career.active) {
+            if (match.home === this.career.team?.id || match.away === this.career.team?.id) {
+                const isHome = match.home === this.career.team.id;
+                const userScore = isHome ? match.homeScore : match.awayScore;
+                const oppScore = isHome ? match.awayScore : match.homeScore;
+
+                if (userScore > oppScore) {
+                    this.career.budget += 1500000; // Reward R$ 1.5M for win
+                } else if (userScore === oppScore) {
+                    this.career.budget += 500000; // Reward R$ 500k for draw
+                }
+                this.updateCareerDashboard();
+            }
+        }
     }
 
     simulateRound() {
@@ -454,8 +473,13 @@ class BrasileiraoSimulator {
             this.displayRound();
             this.updateStats();
             this.displayCalendar();
-            if (this.career.active) this.updateCareerDashboard();
+            this.updateCareerDashboard();
             this.isSimulating = false;
+
+            // Check if season is finished
+            if (lg.currentRound === 38) {
+                setTimeout(() => this.finishSeason(), 2500);
+            }
         }
     }
 
@@ -626,7 +650,13 @@ class BrasileiraoSimulator {
                 
                 if (!match.isFriendly) {
                     const lg = this.leagues[this.currentSerie];
-                    if (lg) this.updateLeagueStandings(match, lg.teams);
+                    if (lg) {
+                        this.updateLeagueStandings(match, lg.teams);
+                        // Trigger next season if last round
+                        if (lg.currentRound === 38) {
+                            setTimeout(() => this.finishSeason(), 3000);
+                        }
+                    }
                 }
                 setTimeout(() => callback(), 2000);
             }
@@ -1153,6 +1183,7 @@ class BrasileiraoSimulator {
                 <div class="serie-selector">
                     <button class="${this.selectionSerie === 'A' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('A')">SÉRIE A</button>
                     <button class="${this.selectionSerie === 'B' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('B')">SÉRIE B</button>
+                    <button class="${this.selectionSerie === 'C' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('C')">SÉRIE C</button>
                 </div>
                 
                 <div class="picker-main">
@@ -1243,11 +1274,22 @@ class BrasileiraoSimulator {
     }
 
     selectTeam(teamId) {
-        const team = this.allTeamsRaw.find(t => t.id == teamId);
+        const team = this.leagues[this.selectionSerie].teams.find(t => t.id == teamId);
         this.currentSerie = team.serie;
         this.career.active = true;
-        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id == teamId);
+        this.career.team = team;
         
+        // Dynamic starting budget based on Serie
+        if (team.serie === 'A') {
+            if (team.strength >= 84) this.career.budget = 300000000; // Giants: 300M
+            else if (team.strength >= 78) this.career.budget = 100000000; // Medium: 100M
+            else this.career.budget = 50000000;
+        } else if (team.serie === 'B') {
+            this.career.budget = 15000000; // Serie B: 15M
+        } else {
+            this.career.budget = 5000000; // Serie C: 5M
+        }
+
         document.getElementById('user-team-name').textContent = team.name;
         const logoEl = document.getElementById('user-team-logo');
         logoEl.style.backgroundColor = team.color;
@@ -1640,29 +1682,7 @@ class BrasileiraoSimulator {
         team.roles[roleId] = playerId; 
     }
 
-    renderMarket() {
-        const grid = document.getElementById('market-display');
-        const serie = document.getElementById('transfer-serie-filter').value;
-        grid.innerHTML = '';
-        
-        const otherTeams = this.leagues[serie].teams.filter(t => t.id !== this.career.team.id);
-        
-        otherTeams.forEach(team => {
-            team.roster.forEach(p => {
-                const price = p.strength * 500000 + (Math.random() * 2000000);
-                const card = document.createElement('div');
-                card.className = 'player-card';
-                card.innerHTML = `
-                    <div style="font-size: 0.7rem; color: var(--text-secondary);">${team.name}</div>
-                    <div style="font-weight: 700; margin: 5px 0;">${p.name}</div>
-                    <div class="rating">${p.strength}</div>
-                    <div style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.8rem; margin: 10px 0;">R$ ${(price/1000000).toFixed(1)}M</div>
-                    <button onclick="simulator.buyPlayer(${p.id}, ${team.id}, ${price})" style="padding: 5px; font-size: 0.7rem; margin: 0;">Contratar</button>
-                `;
-                grid.appendChild(card);
-            });
-        });
-    }
+
 
     buyPlayer(playerId, fromTeamId, price) {
         if (this.career.budget < price) {
@@ -2114,7 +2134,7 @@ class BrasileiraoSimulator {
     }
 
     findPlayerById(id) {
-        for (const s of ['A', 'B']) {
+        for (const s of ['A', 'B', 'C']) {
             for (const t of this.leagues[s].teams) {
                 const p = t.roster.find(px => px.id == id);
                 if (p) return p;
@@ -2124,12 +2144,55 @@ class BrasileiraoSimulator {
     }
 
     findTeamByPlayerId(id) {
-        for (const s of ['A', 'B']) {
+        for (const s of ['A', 'B', 'C']) {
             for (const t of this.leagues[s].teams) {
                 if (t.roster.some(px => px.id == id)) return t;
             }
         }
         return null;
+    }
+
+    finishSeason() {
+        const lg = this.leagues[this.currentSerie];
+        const sortedTeams = [...lg.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.won !== a.won) return b.won - a.won;
+            if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+            return b.goalsFor - a.goalsFor;
+        });
+
+        const playerPos = sortedTeams.findIndex(t => t.id === this.career.team.id) + 1;
+        let reward = 0;
+
+        // Rewards based on position
+        if (playerPos === 1) reward = 25000000; // Champion: 25M
+        else if (playerPos <= 4) reward = 15000000; // G4: 15M
+        else if (playerPos <= 10) reward = 8000000; // Top 10: 8M
+        else reward = 3000000; // Participation: 3M
+
+        this.career.budget += reward;
+        const oldYear = this.career.year;
+        this.career.year++;
+        this.career.currentDay = 1;
+
+        alert(`Fim da Temporada ${oldYear}!\nSua posição: ${playerPos}º\nPrêmio de desempenho: R$ ${reward.toLocaleString('pt-BR')}\nIniciando temporada ${this.career.year}...`);
+
+        // Reset all leagues for the new year
+        this.leagues = {
+            'A': this.initLeague('A'),
+            'B': this.initLeague('B'),
+            'C': this.initLeague('C')
+        };
+        
+        // Relink player's team
+        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === this.career.team.id);
+
+        this.updateTable();
+        this.displayRound();
+        this.updateStats();
+        this.displayCalendar();
+        this.updateCareerDashboard();
+        this.openScreen('career-hub');
     }
 
     renderMarket() {
@@ -2140,10 +2203,10 @@ class BrasileiraoSimulator {
         const posF = document.getElementById('market-filter-pos')?.value || 'ALL';
 
         let all = [];
-        for (const s of ['A', 'B']) {
+        for (const s of ['A', 'B', 'C']) {
             this.leagues[s].teams.forEach(t => {
                 if (t.id !== this.career.team?.id) {
-                    t.roster.forEach(p => all.push({ ...p, teamName: t.name }));
+                    t.roster.forEach(p => all.push({ ...p, teamName: t.name, teamId: t.id }));
                 }
             });
         }

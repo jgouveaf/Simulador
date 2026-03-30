@@ -165,6 +165,7 @@ const teams = [
             { "pos": "VOL", "name": "André Carrillo", "strength": 83, "status": "Titular" },
             { "pos": "MEI", "name": "Rodrigo Garro", "strength": 88, "status": "Titular" },
             { "pos": "MEI", "name": "Breno Bidon", "strength": 84, "status": "Titular" },
+            { "pos": "MEI", "name": "Jesse Lingard", "strength": 85, "status": "Titular" },
             { "pos": "ATA", "name": "Memphis Depay", "strength": 90, "status": "Titular" },
             { "pos": "CA", "name": "Yuri Alberto", "strength": 84, "status": "Titular" },
             { "pos": "GOL", "name": "Felipe Longo", "strength": 75, "status": "Reserva" },
@@ -569,6 +570,7 @@ const teams = [
             { "pos": "MEI", "name": "Neymar", "strength": 92, "status": "Titular" },
             { "pos": "ATA", "name": "Gabriel Barbosa", "strength": 88, "status": "Titular" },
             { "pos": "ATA", "name": "Rony", "strength": 85, "status": "Titular" },
+            { "pos": "ATA", "name": "Robinho Jr", "strength": 81, "status": "Titular" },
             { "pos": "CA", "name": "Lautaro Díaz", "strength": 82, "status": "Titular" },
             { "pos": "GOL", "name": "Diogenes", "strength": 74, "status": "Reserva" },
             { "pos": "LD", "name": "Vinicius Lira", "strength": 74, "status": "Reserva" },
@@ -1463,6 +1465,95 @@ const teams = [
             { "pos": "ZAG", "name": "Pedro", "strength": 65, "status": "Não Relacionado" },
             { "pos": "MEI", "name": "Thiago", "strength": 65, "status": "Não Relacionado" }
         ]
+    },
+    {
+        "id": 41, "name": "Volta Redonda", "short": "VRE", "color": "#FFFF00", "strength": 72, "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Jean Drosny", "strength": 75, "status": "Titular" },
+            { "pos": "ZAG", "name": "Lucas Souza", "strength": 72, "status": "Titular" },
+            { "pos": "ATA", "name": "MV", "strength": 74, "status": "Titular" },
+            { "pos": "CA", "name": "Bruno Santos", "strength": 73, "status": "Titular" }
+        ]
+    },
+    {
+        "id": 42, "name": "Ferroviária", "short": "FER", "color": "#800000", "strength": 71, "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Saulo", "strength": 74, "status": "Titular" },
+            { "pos": "ZAG", "name": "Léo Santos", "strength": 71, "status": "Titular" },
+            { "pos": "ATA", "name": "Vitor Barreto", "strength": 72, "status": "Titular" }
+        ]
+    },
+    {
+        "id": 43, "name": "São Bernardo", "short": "SBE", "color": "#FFFF00", "strength": 70, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Alex Alves", "strength": 73, "status": "Titular" }]
+    },
+    {
+        "id": 44, "name": "Botafogo-PB", "short": "BPB", "color": "#000000", "strength": 69, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Dalton", "strength": 72, "status": "Titular" }]
+    },
+    {
+        "id": 45, "name": "Ypiranga", "short": "YPI", "color": "#FFFF00", "strength": 68, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Alexander", "strength": 71, "status": "Titular" }]
+    },
+    {
+        "id": 46, "name": "Náutico", "short": "NAU", "color": "#FF0000", "strength": 68, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Vágner", "strength": 71, "status": "Titular" }]
+    },
+    {
+        "id": 47, "name": "ABC", "short": "ABC", "color": "#000000", "strength": 67, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Pedro Paulo", "strength": 70, "status": "Titular" }]
+    },
+    {
+        "id": 48, "name": "Figueirense", "short": "FIG", "color": "#000000", "strength": 67, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Thiago Gonçalves", "strength": 70, "status": "Titular" }]
+    },
+    {
+        "id": 49, "name": "CSA", "short": "CSA", "color": "#0000FF", "strength": 66, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Yuri Cena", "strength": 69, "status": "Titular" }]
+    },
+    {
+        "id": 50, "name": "Sampaio Corrêa", "short": "SAM", "color": "#008000", "strength": 66, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Rafael Mariano", "strength": 69, "status": "Titular" }]
+    },
+    {
+        "id": 51, "name": "Confiança", "short": "CON", "color": "#0000FF", "strength": 65, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Jeferson", "strength": 68, "status": "Titular" }]
+    },
+    {
+        "id": 52, "name": "Tombense", "short": "TOM", "color": "#FF0000", "strength": 65, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Felipe Garcia", "strength": 68, "status": "Titular" }]
+    },
+    {
+        "id": 53, "name": "Floresta", "short": "FLO", "color": "#008000", "strength": 64, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Luiz", "strength": 67, "status": "Titular" }]
+    },
+    {
+        "id": 54, "name": "Aparecidense", "short": "APA", "color": "#0000FF", "strength": 64, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Pedro Henrique", "strength": 67, "status": "Titular" }]
+    },
+    {
+        "id": 55, "name": "Caxias", "short": "CAX", "color": "#800000", "strength": 63, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Thiago Coelho", "strength": 66, "status": "Titular" }]
+    },
+    {
+        "id": 56, "name": "Ferroviário", "short": "FAC", "color": "#FF0000", "strength": 63, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Douglas Dias", "strength": 66, "status": "Titular" }]
+    },
+    {
+        "id": 57, "name": "São José-RS", "short": "SJO", "color": "#0000FF", "strength": 62, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Fábio Rampi", "strength": 65, "status": "Titular" }]
+    },
+    {
+        "id": 58, "name": "Anápolis", "short": "ANA", "color": "#FF0000", "strength": 62, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Wellerson", "strength": 65, "status": "Titular" }]
+    },
+    {
+        "id": 59, "name": "Retrô", "short": "RET", "color": "#FFD700", "strength": 61, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Darley", "strength": 64, "status": "Titular" }]
+    },
+    {
+        "id": 60, "name": "Itabaiana", "short": "ITA", "color": "#FF0000", "strength": 60, "serie": "C",
+        "roster": [{ "pos": "GOL", "name": "Jefferson", "strength": 63, "status": "Titular" }]
     }
 ];
 

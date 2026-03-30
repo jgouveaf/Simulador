@@ -319,20 +319,32 @@ class BrasileiraoSimulator {
         let hScore = this.poissonRandom(hMean);
         let aScore = this.poissonRandom(aMean);
 
-        // Nudge favorites to prevent random Poisson drops against much weaker teams
+        // EXTRA ANTI-ZEBRA SHIELD
         const gap = homeTeam.strength - awayTeam.strength;
-        if (gap > 5 && aScore >= hScore && Math.random() < 0.6) {
-            hScore++; // Favorite (Home) finds a goal
-            if (gap > 8 && Math.random() < 0.5) aScore = Math.max(0, aScore - 1); // remove away fluke goals
-        } else if (gap < -5 && hScore >= aScore && Math.random() < 0.6) {
-            aScore++; // Favorite (Away) finds a goal
-            if (gap < -8 && Math.random() < 0.5) hScore = Math.max(0, hScore - 1); // remove home fluke goals
+        
+        if (gap >= 6) {
+            // Home is much stronger
+            if (aScore > hScore && Math.random() < 0.85) {
+                // 85% chance to flip an unexpected loss into a win
+                let temp = hScore; hScore = aScore; aScore = temp;
+                if (gap >= 9 && Math.random() < 0.8) aScore = Math.max(0, aScore - 1);
+            } else if (aScore === hScore && Math.random() < 0.75) {
+                hScore++; // 75% chance to turn draw into win
+            }
+        } else if (gap <= -6) {
+            // Away is much stronger
+            if (hScore > aScore && Math.random() < 0.85) {
+                let temp = hScore; hScore = aScore; aScore = temp;
+                if (gap <= -9 && Math.random() < 0.8) hScore = Math.max(0, hScore - 1);
+            } else if (hScore === aScore && Math.random() < 0.75) {
+                aScore++;
+            }
         }
 
-        // Brazilian League typical "Upset" chance
-        // A very small chance (8%) for a much weaker team to snatch a draw at home.
-        if (homeTeam.strength <= awayTeam.strength - 8 && Math.random() < 0.08) {
-             if (hScore < aScore && Math.random() < 0.5) { hScore = aScore; } 
+        // Upset (Zebra) pocket for Underdog playing AT HOME
+        // A tiny 4% chance for a weaker Home team to pull off a miracle draw
+        if (homeTeam.strength <= awayTeam.strength - 7 && Math.random() < 0.04) {
+             if (hScore < aScore) { hScore = aScore; } 
         }
 
         match.homeScore = Math.min(hScore, 8);

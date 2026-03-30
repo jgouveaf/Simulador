@@ -197,8 +197,8 @@ class BrasileiraoSimulator {
             if (t.dataset.tab === tabId) t.classList.add('active');
         });
 
-        if (tabId === 'standings') this.renderCareerStandings();
-        if (tabId === 'fixtures') this.renderCareerFixtures();
+        if (tabId === 'standings') this.updateTable();
+        if (tabId === 'fixtures') this.displayCalendar();
         if (tabId === 'transfers') this.renderMarket();
         if (tabId === 'squad') {
             this.switchSubTab('roster');
@@ -303,9 +303,10 @@ class BrasileiraoSimulator {
         const hs = homeTeam.strength;
         const as = awayTeam.strength;
 
-        // Fatores de Ajuste
-        const C = 3; // Fator casa em OVR (Overall) associado
-        const S = 10; // Fator de Escala
+        // Fatores de Ajuste para OVR (0-100)
+        // O Fator Casa e de Escala precisaram ser escalonados do padrão 40/400.
+        const C = 4; // Fator casa em OVR Equivalente (+4 pontos pro mandante)
+        const S = 30; // Fator de Escala (S=30 suaviza as extremidades mantendo favoritismo justo)
 
         // 1. Diferença Ajustada
         const D = hs + C - as;
@@ -313,8 +314,8 @@ class BrasileiraoSimulator {
         // 2. Expectativa do Mandante (E_A)
         const E_A = 1 / (1 + Math.pow(10, -(D / S)));
 
-        // 3. Probabilidade de Empate (P_E)
-        const P_E = 0.26 * Math.exp(-Math.pow(D / (2 * S), 2));
+        // 3. Probabilidade de Empate (P_E) com teto referencial moderado
+        const P_E = 0.28 * Math.exp(-Math.pow(D / (2 * S), 2));
 
         // 4. Probabilidades Finais (Vitória Home/Away)
         const P_V = E_A * (1 - P_E);
@@ -493,9 +494,7 @@ class BrasileiraoSimulator {
                     lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
                     
                     // Avança 7 dias (uma semana) a cada rodada
-                    for (let i = 0; i < 7; i++) {
-                        this.advanceDay();
-                    }
+                    this.career.currentDay += 7;
                     
                     this.updateTable();
                     this.displayRound();
@@ -505,6 +504,10 @@ class BrasileiraoSimulator {
                     
                     // Return to career hub after simulation
                     this.openScreen('career-hub');
+                    
+                    if (lg.currentRound === 38) {
+                        setTimeout(() => this.finishSeason(), 1000);
+                    }
                 });
             } else {
                 console.error("Teams not found for visual sim!");
@@ -512,11 +515,17 @@ class BrasileiraoSimulator {
                 roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
                 lg.currentRound++;
                 lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+                this.career.currentDay += 7;
+                
                 this.updateTable();
                 this.displayRound();
                 this.updateStats();
                 this.displayCalendar();
                 if (this.career.active) this.updateCareerDashboard();
+                
+                if (lg.currentRound === 38) {
+                    setTimeout(() => this.finishSeason(), 1000);
+                }
             }
         } else {
             console.log("Background simulation only.");
@@ -525,9 +534,7 @@ class BrasileiraoSimulator {
             lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
             
             // Avança 7 dias (uma semana) a cada rodada
-            for (let i = 0; i < 7; i++) {
-                this.advanceDay();
-            }
+            this.career.currentDay += 7;
             
             this.updateTable();
             this.displayRound();
@@ -538,7 +545,7 @@ class BrasileiraoSimulator {
 
             // Check if season is finished
             if (lg.currentRound === 38) {
-                setTimeout(() => this.finishSeason(), 2500);
+                setTimeout(() => this.finishSeason(), 1000);
             }
         }
     }
@@ -989,7 +996,9 @@ class BrasileiraoSimulator {
     }
 
     updateTable() {
-        const lg = this.leagues[this.currentSerie];
+        const drop = document.getElementById('standings-serie-filter');
+        const targetSerie = drop ? drop.value : this.currentSerie;
+        const lg = this.leagues[targetSerie];
         const sortedTeams = [...lg.teams].sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
             if (b.won !== a.won) return b.won - a.won;
@@ -1005,12 +1014,19 @@ class BrasileiraoSimulator {
         sortedTeams.forEach((team, index) => {
             const tr = document.createElement('tr');
             
-            // TNT Zone Logic
+            // Limit zones per division
             let zone = "";
-            if (index < 4) zone = "libertadores";
-            else if (index < 6) zone = "pre-libertadores";
-            else if (index < 12) zone = "sul-americana";
-            else if (index >= 16) zone = "rebaixados";
+            if (targetSerie === 'A') {
+                if (index < 4) zone = "libertadores";
+                else if (index < 6) zone = "pre-libertadores";
+                else if (index < 12) zone = "sul-americana";
+                else if (index >= 16) zone = "rebaixados";
+            } else if (targetSerie === 'B') {
+                if (index < 4) zone = "libertadores"; // Verde para acesso
+                else if (index >= 16) zone = "rebaixados";
+            } else { // Serie C
+                if (index < 4) zone = "libertadores"; // Verde para acesso
+            }
             
             tr.setAttribute('data-zone', zone);
             
@@ -1124,7 +1140,9 @@ class BrasileiraoSimulator {
     }
 
     displayCalendar() {
-        const lg = this.leagues[this.currentSerie];
+        const drop = document.getElementById('calendar-serie-filter');
+        const targetSerie = drop ? drop.value : this.currentSerie;
+        const lg = this.leagues[targetSerie];
         const container = document.getElementById('calendar-container');
         if (!container) return; // Silent return
         container.innerHTML = '';
@@ -1365,6 +1383,13 @@ class BrasileiraoSimulator {
         }
         document.getElementById('user-team-overall').innerHTML = this.getStarRatingHTML(team);
         
+        if (document.getElementById('standings-serie-filter')) {
+            document.getElementById('standings-serie-filter').value = this.currentSerie;
+        }
+        if (document.getElementById('calendar-serie-filter')) {
+            document.getElementById('calendar-serie-filter').value = this.currentSerie;
+        }
+
         this.openScreen('career-hub');
         this.switchTab('central');
     }

@@ -627,7 +627,21 @@ input[type=range]::-webkit-slider-thumb {
 .tnt-table tr[data-zone="libertadores"] .pos { border-left-color: #00a859; }
 .tnt-table tr[data-zone="pre-libertadores"] .pos { border-left-color: #00f2ff; }
 .tnt-table tr[data-zone="sul-americana"] .pos { border-left-color: #0000cd; }
-.tnt-table tr[data-zone="rebaixados"] .pos { border-left-color: #ff0000; }
+
+/* Z4 Vermelho */
+.tnt-table tr[data-zone="rebaixados"] {
+    background-color: #fff0f0;
+}
+.tnt-table tr[data-zone="rebaixados"] td {
+    color: #d10000;
+}
+.tnt-table tr[data-zone="rebaixados"] .pts-cell {
+    background-color: #ffe6e6;
+    color: #c00000;
+}
+.tnt-table tr[data-zone="rebaixados"] .pos { 
+    border-left-color: #ff0000; 
+}
 
 /* Side Labels (Vertical) */
 .tnt-zones-container {

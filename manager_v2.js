@@ -307,31 +307,32 @@ class BrasileiraoSimulator {
         const gameVibe = 0.9 + Math.random() * 0.2;
 
         // Formula: Score is a function of (Attack Ratio / Defense Power)
-        // Using a power of 2.8 makes the strength gaps very impactful, like top teams dominating.
-        // homeMean = (HomeAtk * Factor / AwayDef) * baseline
-        const hRatio = Math.pow((homeStats.atk * homeAdvantage) / awayStats.def, 2.8);
-        const aRatio = Math.pow(awayStats.atk / homeStats.def, 2.8);
+        // Using a power of 3.4 makes the strength gaps very impactful, like top teams dominating.
+        const hRatio = Math.pow((homeStats.atk * homeAdvantage) / awayStats.def, 3.4);
+        const aRatio = Math.pow(awayStats.atk / homeStats.def, 3.4);
         const totalRatio = hRatio + aRatio;
 
         let hMean = (hRatio / totalRatio) * targetMatchMean * gameVibe;
         let aMean = (aRatio / totalRatio) * targetMatchMean * gameVibe;
 
-        // DIXON-COLES Style Adjustment for low scores (0-0, 1-1, 1-0, 0-1)
-        // We slightly inflate the probability of these scores by adjusting the mean or nudging outcomes.
+        // DIXON-COLES Style Adjustment for low scores
         let hScore = this.poissonRandom(hMean);
         let aScore = this.poissonRandom(aMean);
 
-        // Nudge to avoid unrealistic draws between teams with huge strength gaps
-        if (hScore === aScore && Math.random() < 0.45) {
-            const gap = homeTeam.strength - awayTeam.strength;
-            if (gap > 6 && Math.random() < 0.7) hScore++; // Favorite (Home) scores one more
-            else if (gap < -6 && Math.random() < 0.7) aScore++; // Favorite (Away) scores one more
+        // Nudge favorites to prevent random Poisson drops against much weaker teams
+        const gap = homeTeam.strength - awayTeam.strength;
+        if (gap > 5 && aScore >= hScore && Math.random() < 0.6) {
+            hScore++; // Favorite (Home) finds a goal
+            if (gap > 8 && Math.random() < 0.5) aScore = Math.max(0, aScore - 1); // remove away fluke goals
+        } else if (gap < -5 && hScore >= aScore && Math.random() < 0.6) {
+            aScore++; // Favorite (Away) finds a goal
+            if (gap < -8 && Math.random() < 0.5) hScore = Math.max(0, hScore - 1); // remove home fluke goals
         }
 
-        // Brazilian League typical "Upset" chance (Z4 winning against G4 at home)
-        if (homeTeam.strength < awayTeam.strength - 10 && Math.random() < 0.15) {
-             // Home underdog "bus parking" logic: low scores preferred.
-             if (hScore < aScore) { hScore = aScore; } // Force at least a draw for the upset
+        // Brazilian League typical "Upset" chance
+        // A very small chance (8%) for a much weaker team to snatch a draw at home.
+        if (homeTeam.strength <= awayTeam.strength - 8 && Math.random() < 0.08) {
+             if (hScore < aScore && Math.random() < 0.5) { hScore = aScore; } 
         }
 
         match.homeScore = Math.min(hScore, 8);

@@ -7,6 +7,17 @@ class BrasileiraoSimulator {
         // Ensure every player has a unique ID for the transfer market
         let playerCounter = 1;
         this.allTeamsRaw.forEach(team => {
+            // Normalize starters to exactly 11
+            const titulares = team.roster.filter(p => p.status === 'Titular');
+            if (titulares.length > 11) {
+                titulares.sort((a, b) => b.strength - a.strength);
+                titulares.slice(11).forEach(p => p.status = 'Reserva');
+            } else if (titulares.length < 11) {
+                const reserves = team.roster.filter(p => p.status === 'Reserva');
+                reserves.sort((a, b) => b.strength - a.strength);
+                reserves.slice(0, 11 - titulares.length).forEach(p => p.status = 'Titular');
+            }
+
             team.roster.forEach(p => {
                 if (!p.id) p.id = playerCounter++;
                 p.importance = this.assignRandomImportance();
@@ -2096,7 +2107,7 @@ class BrasileiraoSimulator {
 
     executeTransfer(player, fromTeam, toTeam) {
         fromTeam.roster = fromTeam.roster.filter(p => p.id !== player.id);
-        const newPlayer = { ...player, currentClub: toTeam.name };
+        const newPlayer = { ...player, currentClub: toTeam.name, status: 'Reserva' };
         toTeam.roster.push(newPlayer);
         fromTeam.strength = this.calculateTeamOverall(fromTeam);
         toTeam.strength = this.calculateTeamOverall(toTeam);

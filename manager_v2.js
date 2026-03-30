@@ -337,6 +337,20 @@ class BrasileiraoSimulator {
         match.homeScore = Math.min(hScore, 8);
         match.awayScore = Math.min(aScore, 8);
  
+        match.scorers = [];
+        const assignScorers = (team, score) => {
+            const outfielders = team.roster.filter(p => p.status === 'Titular' && p.pos !== 'GOL' && p.pos !== 'GK');
+            const fallback = outfielders.length > 0 ? outfielders : team.roster;
+            for(let i=0; i<score; i++) {
+                if (fallback.length > 0) {
+                    const p = fallback[Math.floor(Math.random() * fallback.length)];
+                    match.scorers.push({ teamId: team.id, playerId: p.id });
+                }
+            }
+        };
+        assignScorers(homeTeam, match.homeScore);
+        assignScorers(awayTeam, match.awayScore);
+
         if (updateStats) this.updateLeagueStandings(match, leagueTeams);
     }
 
@@ -374,6 +388,14 @@ class BrasileiraoSimulator {
         away.goalDiff = away.goalsFor - away.goalsAgainst;
         home.percentage = home.played > 0 ? ((home.points / (home.played * 3)) * 100).toFixed(1) : 0;
         away.percentage = away.played > 0 ? ((away.points / (away.played * 3)) * 100).toFixed(1) : 0;
+
+        if (match.scorers) {
+            match.scorers.forEach(s => {
+                const team = s.teamId === home.id ? home : away;
+                const p = team.roster.find(px => px.id === s.playerId);
+                if (p) p.seasonGoals = (p.seasonGoals || 0) + 1;
+            });
+        }
 
         // Rewards for player's team
         if (this.career.active) {
@@ -563,10 +585,13 @@ class BrasileiraoSimulator {
         const tempMatch = { ...match, homeScore: null, awayScore: null };
         this.simulateMatch(tempMatch, [home, away], false);
         match.tempRes = { homeScore: tempMatch.homeScore, awayScore: tempMatch.awayScore };
+        match.scorers = tempMatch.scorers || [];
         
         const goalEvents = [];
-        for(let i=0; i<tempMatch.homeScore; i++) goalEvents.push({ team: home.name, min: Math.floor(Math.random() * 88) + 1 });
-        for(let i=0; i<tempMatch.awayScore; i++) goalEvents.push({ team: away.name, min: Math.floor(Math.random() * 88) + 1 });
+        match.scorers.forEach(s => {
+            const isHome = s.teamId === home.id;
+            goalEvents.push({ team: isHome ? home.name : away.name, playerId: s.playerId, min: Math.floor(Math.random() * 88) + 1 });
+        });
         
         let simMinute = 0;
         let homeScore = 0;
@@ -628,7 +653,7 @@ class BrasileiraoSimulator {
             const goalsNow = goalEvents.filter(g => g.min === simMinute);
             goalsNow.forEach(g => {
                 const team = (g.team === home.name) ? home : away;
-                const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
+                const p = team.roster.find(px => px.id === g.playerId) || team.roster.filter(p => p.status === 'Titular')[0];
                 
                 p.currentRating = Math.min(10, p.currentRating + 1.25); // Goal significant boost
 
@@ -1341,6 +1366,41 @@ class BrasileiraoSimulator {
         document.getElementById('user-team-overall').innerHTML = this.getStarRatingHTML(this.career.team);
         
         this.renderMiniStandings();
+        this.renderTopScorers();
+    }
+
+    renderTopScorers() {
+        const container = document.getElementById('top-scorers-list');
+        if (!container) return;
+
+        const lg = this.leagues[this.currentSerie];
+        let allPlayers = [];
+        lg.teams.forEach(t => {
+            t.roster.forEach(p => {
+                if (p.seasonGoals && p.seasonGoals > 0) {
+                    allPlayers.push({ ...p, teamLogo: t.logo, teamColor: t.color, teamName: t.name });
+                }
+            });
+        });
+
+        allPlayers.sort((a, b) => b.seasonGoals - a.seasonGoals);
+        const top5 = allPlayers.slice(0, 5);
+
+        if (top5.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; margin-top:1rem; font-size: 0.8rem;">Nenhum gol marcado ainda.</p>';
+            return;
+        }
+
+        container.innerHTML = top5.map((p, index) => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); animationFadeIn">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 0.9rem; font-weight: 800; color: ${index === 0 ? 'var(--gold)' : 'var(--text-secondary)'}; width: 20px; text-align: center;">${index + 1}º</div>
+                    ${p.teamLogo ? `<img src="${p.teamLogo}" style="width:20px; height:20px; object-fit:contain;">` : `<div style="width:20px;height:20px;border-radius:50%;background:${p.teamColor}"></div>`}
+                    <span style="font-size: 0.85rem; font-weight: 600;">${p.name}</span>
+                </div>
+                <div style="font-weight: 800; color: var(--fifa-cyan);">${p.seasonGoals} <i class="fas fa-futbol" style="font-size: 0.7rem;"></i></div>
+            </div>
+        `).join('');
     }
 
     renderMiniStandings() {
@@ -2191,38 +2251,59 @@ class BrasileiraoSimulator {
     }
 
     finishSeason() {
-        const lg = this.leagues[this.currentSerie];
-        const sortedTeams = [...lg.teams].sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.won !== a.won) return b.won - a.won;
-            if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
-            return b.goalsFor - a.goalsFor;
-        });
+        const standings = {};
+        for(const s of ['A', 'B', 'C']) {
+            standings[s] = [...this.leagues[s].teams].sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                if (b.won !== a.won) return b.won - a.won;
+                if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+                return b.goalsFor - a.goalsFor;
+            });
+        }
 
-        const playerPos = sortedTeams.findIndex(t => t.id === this.career.team.id) + 1;
+        const playerPos = standings[this.currentSerie].findIndex(t => t.id === this.career.team.id) + 1;
         let reward = 0;
 
-        // Rewards based on position
-        if (playerPos === 1) reward = 25000000; // Champion: 25M
-        else if (playerPos <= 4) reward = 15000000; // G4: 15M
-        else if (playerPos <= 10) reward = 8000000; // Top 10: 8M
-        else reward = 3000000; // Participation: 3M
+        if (playerPos === 1) reward = 25000000;
+        else if (playerPos <= 4) reward = 15000000;
+        else if (playerPos <= 10) reward = 8000000;
+        else reward = 3000000;
 
         this.career.budget += reward;
         const oldYear = this.career.year;
         this.career.year++;
         this.career.currentDay = 1;
 
+        const relegatedFromA = standings['A'].slice(-4);
+        const promotedToA = standings['B'].slice(0, 4);
+
+        const relegatedFromB = standings['B'].slice(-4);
+        const promotedToB = standings['C'].slice(0, 4);
+
+        relegatedFromA.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'B'; });
+        promotedToA.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'A'; });
+        
+        relegatedFromB.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'C'; });
+        promotedToB.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'B'; });
+
+        this.allTeamsRaw.forEach(t => {
+            t.roster.forEach(p => {
+                p.seasonGoals = 0; 
+                p.currentRating = 6.0;
+            });
+        });
+
+        const newTeamObj = this.allTeamsRaw.find(t => t.id === this.career.team.id);
+        this.currentSerie = newTeamObj.serie;
+
         alert(`Fim da Temporada ${oldYear}!\nSua posição: ${playerPos}º\nPrêmio de desempenho: R$ ${reward.toLocaleString('pt-BR')}\nIniciando temporada ${this.career.year}...`);
 
-        // Reset all leagues for the new year
         this.leagues = {
             'A': this.initLeague('A'),
             'B': this.initLeague('B'),
             'C': this.initLeague('C')
         };
         
-        // Relink player's team
         this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === this.career.team.id);
 
         this.updateTable();

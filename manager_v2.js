@@ -64,19 +64,23 @@ class BrasileiraoSimulator {
     initLeague(serie) {
         const teams = this.allTeamsRaw
             .filter(t => t.serie === serie)
-            .map(team => ({
-                ...team,
-                points: 0,
-                played: 0,
-                won: 0,
-                drawn: 0,
-                lost: 0,
-                goalsFor: 0,
-                goalsAgainst: 0,
-                goalDiff: 0,
-                percentage: 0,
-                strength: this.calculateTeamOverall(team)
-            }));
+            .map(team => {
+                const newTeam = {
+                    ...team,
+                    points: 0,
+                    played: 0,
+                    won: 0,
+                    drawn: 0,
+                    lost: 0,
+                    goalsFor: 0,
+                    goalsAgainst: 0,
+                    goalDiff: 0,
+                    percentage: 0
+                };
+                this.normalizeTeamRoster(newTeam);
+                newTeam.strength = this.calculateTeamOverall(newTeam);
+                return newTeam;
+            });
 
         const rounds = this.generateRounds(teams);
         
@@ -1354,6 +1358,7 @@ class BrasileiraoSimulator {
     renderCareerSquad() {
         const t = this.career.team;
         if (!t) return;
+        this.normalizeTeamRoster(t);
 
         const titContainer = document.getElementById('career-titulares');
         const resContainer = document.getElementById('career-reservas');
@@ -1446,6 +1451,7 @@ class BrasileiraoSimulator {
         
         const team = this.career.team;
         if (!team) return;
+        this.normalizeTeamRoster(team);
         
         const formation = team.formation || '4-3-3';
         const titulares = team.roster.filter(p => p.status === 'Titular');
@@ -1705,11 +1711,12 @@ class BrasileiraoSimulator {
         const playerIndex = fromTeam.roster.findIndex(p => p.id === playerId);
         const player = fromTeam.roster.splice(playerIndex, 1)[0];
         
-        player.status = 'Reserva';
+        player.status = 'Não Relacionado';
         this.career.team.roster.push(player);
         this.career.budget -= price;
         
-        // Dynamic Overall Update
+        // Normalize and Update
+        this.normalizeTeamRoster(this.career.team);
         this.career.team.strength = this.calculateTeamOverall(this.career.team);
         if (fromTeam) fromTeam.strength = this.calculateTeamOverall(fromTeam);
         
@@ -1981,11 +1988,25 @@ class BrasileiraoSimulator {
         modal.style.display = 'block';
     }
 
+    normalizeTeamRoster(team) {
+        if (!team || !team.roster) return;
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        if (titulares.length > 11) {
+            // Keep top 11, move rest to Reserva
+            titulares.sort((a, b) => b.strength - a.strength);
+            titulares.slice(11).forEach(p => p.status = 'Reserva');
+        } else if (titulares.length < 11 && team.roster.length >= 11) {
+            // Promote top reserves to reach 11
+            const reserves = team.roster.filter(p => p.status === 'Reserva');
+            reserves.sort((a, b) => b.strength - a.strength);
+            reserves.slice(0, 11 - titulares.length).forEach(p => p.status = 'Titular');
+        }
+    }
+
     calculateTeamOverall(team) {
         if (!team.roster || team.roster.length === 0) return 70;
+        this.normalizeTeamRoster(team);
         const titulares = team.roster.filter(p => p.status === 'Titular');
-        if (titulares.length === 0) return team.strength || 70;
-        
         const sum = titulares.reduce((acc, p) => acc + p.strength, 0);
         return Math.round(sum / 11); // Average of 11 starters
     }
@@ -2107,8 +2128,12 @@ class BrasileiraoSimulator {
 
     executeTransfer(player, fromTeam, toTeam) {
         fromTeam.roster = fromTeam.roster.filter(p => p.id !== player.id);
-        const newPlayer = { ...player, currentClub: toTeam.name, status: 'Reserva' };
+        const newPlayer = { ...player, currentClub: toTeam.name, status: 'Não Relacionado' };
         toTeam.roster.push(newPlayer);
+        
+        this.normalizeTeamRoster(fromTeam);
+        this.normalizeTeamRoster(toTeam);
+        
         fromTeam.strength = this.calculateTeamOverall(fromTeam);
         toTeam.strength = this.calculateTeamOverall(toTeam);
     }

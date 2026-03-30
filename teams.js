@@ -1321,75 +1321,31 @@ const teams = [
         ]
     },
     {
-        "id": 37,
-        "name": "Brusque",
-        "short": "BRU",
-        "color": "#FFFF00",
-        "strength": 67,
+        "id": 131,
+        "name": "Náutico",
+        "logo": "https://static.wixstatic.com/media/29c778_d44e5d5e277d4493ae17d58469b33096~mv2.png",
+        "short": "NAU",
+        "color": "#FF0000",
+        "strength": 75,
         "serie": "B",
         "roster": [
-            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 70, "status": "Titular" },
-            { "pos": "ZAG", "name": "Wallace", "strength": 69, "status": "Titular" },
-            { "pos": "ZAG", "name": "Alisson Cassiano", "strength": 68, "status": "Titular" },
-            { "pos": "LE", "name": "Raimar", "strength": 69, "status": "Titular" },
-            { "pos": "LD", "name": "Léo Ataíde", "strength": 67, "status": "Titular" },
-            { "pos": "VOL", "name": "Alex Paulino", "strength": 69, "status": "Titular" },
-            { "pos": "MEI", "name": "João Pedro", "strength": 68, "status": "Titular" },
-            { "pos": "MEI", "name": "Diego Jardel", "strength": 69, "status": "Titular" },
-            { "pos": "CA", "name": "Olávio", "strength": 70, "status": "Titular" },
-            { "pos": "CA", "name": "Crislan", "strength": 68, "status": "Titular" },
-            { "pos": "ATA", "name": "Petterson", "strength": 67, "status": "Titular" },
-            { "pos": "GOL", "name": "Lucas Moura", "strength": 66, "status": "Reserva" },
-            { "pos": "ZAG", "name": "Ryan Santos", "strength": 66, "status": "Reserva" },
-            { "pos": "LE", "name": "Roberto", "strength": 65, "status": "Reserva" },
-            { "pos": "VOL", "name": "Gazão", "strength": 66, "status": "Reserva" },
-            { "pos": "MEI", "name": "João Vithor", "strength": 65, "status": "Reserva" },
-            { "pos": "ATA", "name": "Luizão", "strength": 66, "status": "Reserva" },
-            { "pos": "CA", "name": "Álvaro", "strength": 65, "status": "Reserva" },
-            { "pos": "GOL", "name": "Paulo Gianezini", "strength": 64, "status": "Não Relacionado" },
-            { "pos": "ZAG", "name": "Frank Salas", "strength": 64, "status": "Não Relacionado" },
-            { "pos": "ZAG", "name": "Rafael Milhorim", "strength": 63, "status": "Não Relacionado" },
-            { "pos": "ZAG", "name": "João Felix", "strength": 63, "status": "Não Relacionado" },
-            { "pos": "LD", "name": "Pivô", "strength": 62, "status": "Não Relacionado" },
-            { "pos": "ZAG", "name": "Italo Lucas", "strength": 62, "status": "Não Relacionado" },
-            { "pos": "MEI", "name": "João Prado", "strength": 64, "status": "Não Relacionado" },
-            { "pos": "ATA", "name": "Adrianinho", "strength": 63, "status": "Não Relacionado" }
+            { "pos": "GOL", "name": "Vagner", "strength": 76, "status": "Titular" },
+            { "pos": "ZAG", "name": "Robson Reis", "strength": 75, "status": "Titular" },
+            { "pos": "MEI", "name": "Marco Antônio", "strength": 78, "status": "Titular" },
+            { "pos": "ATA", "name": "Paulo Sérgio", "strength": 79, "status": "Titular" }
         ]
     },
     {
-        "id": 38,
-        "name": "Guarani",
-        "short": "GUA",
-        "color": "#006437",
-        "strength": 66,
+        "id": 132,
+        "name": "ABC",
+        "logo": "https://static.wixstatic.com/media/29c778_b0b59c5e277d4493ae17d58469b33096~mv2.png",
+        "short": "ABC",
+        "color": "#000000",
+        "strength": 74,
         "serie": "B",
         "roster": [
-            { "pos": "GOL", "name": "Caíque França", "strength": 69, "status": "Titular" },
-            { "pos": "ZAG", "name": "Rafael Donato", "strength": 68, "status": "Titular" },
-            { "pos": "ZAG", "name": "Maurício Antônio", "strength": 67, "status": "Titular" },
-            { "pos": "LE", "name": "Emerson Barbosa", "strength": 68, "status": "Titular" },
-            { "pos": "LD", "name": "Ynaiã", "strength": 66, "status": "Titular" },
-            { "pos": "VOL", "name": "Nathan Melo", "strength": 68, "status": "Titular" },
-            { "pos": "MEI", "name": "Diego Torres", "strength": 69, "status": "Titular" },
-            { "pos": "MEI", "name": "João Paulo", "strength": 67, "status": "Titular" },
-            { "pos": "MEI", "name": "Isaque", "strength": 68, "status": "Titular" },
-            { "pos": "CA", "name": "César Miño", "strength": 67, "status": "Titular" },
-            { "pos": "ATA", "name": "Jhon Sánchez", "strength": 66, "status": "Titular" },
-            { "pos": "GOL", "name": "Mateus Claus", "strength": 65, "status": "Reserva" },
-            { "pos": "ZAG", "name": "Jonathan Costa", "strength": 65, "status": "Reserva" },
-            { "pos": "ZAG", "name": "Edson", "strength": 64, "status": "Reserva" },
-            { "pos": "LE", "name": "Renan Castro", "strength": 65, "status": "Reserva" },
-            { "pos": "LD", "name": "Yan", "strength": 64, "status": "Reserva" },
-            { "pos": "MEI", "name": "Carlos Eduardo", "strength": 65, "status": "Reserva" },
-            { "pos": "ATA", "name": "Diego Fernández", "strength": 65, "status": "Reserva" },
-            { "pos": "GOL", "name": "Fred Conte", "strength": 63, "status": "Não Relacionado" },
-            { "pos": "ZAG", "name": "Lucas", "strength": 63, "status": "Não Relacionado" },
-            { "pos": "MEI", "name": "Gabriel", "strength": 62, "status": "Não Relacionado" },
-            { "pos": "MEI", "name": "Pedro", "strength": 62, "status": "Não Relacionado" },
-            { "pos": "ATA", "name": "Thiago", "strength": 63, "status": "Não Relacionado" },
-            { "pos": "ATA", "name": "Junior", "strength": 62, "status": "Não Relacionado" },
-            { "pos": "ZAG", "name": "Eduardo", "strength": 61, "status": "Não Relacionado" },
-            { "pos": "ATA", "name": "Vinicius", "strength": 62, "status": "Não Relacionado" }
+            { "pos": "GOL", "name": "Pedro Paulo", "strength": 75, "status": "Titular" },
+            { "pos": "MEI", "name": "Wallyson", "strength": 77, "status": "Titular" }
         ]
     },
     {
@@ -1467,93 +1423,241 @@ const teams = [
         ]
     },
     {
-        "id": 41, "name": "Volta Redonda", "short": "VRE", "color": "#FFFF00", "strength": 72, "serie": "C",
+        "id": 101,
+        "name": "Amazonas",
+        "logo": "https://static.wixstatic.com/media/29c778_d320e562d11e4840ac99987247002c02~mv2.png",
+        "short": "AMA",
+        "color": "#FFD700",
+        "strength": 76,
+        "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Jean Drosny", "strength": 75, "status": "Titular" },
-            { "pos": "ZAG", "name": "Lucas Souza", "strength": 72, "status": "Titular" },
-            { "pos": "ATA", "name": "MV", "strength": 74, "status": "Titular" },
-            { "pos": "CA", "name": "Bruno Santos", "strength": 73, "status": "Titular" }
+            { "pos": "GOL", "name": "João Lopes", "strength": 77, "status": "Titular" },
+            { "pos": "ZAG", "name": "Ivo", "strength": 76, "status": "Titular" },
+            { "pos": "MEI", "name": "Diego Torres", "strength": 78, "status": "Titular" },
+            { "pos": "MEI", "name": "Jhonny Lucas", "strength": 77, "status": "Titular" },
+            { "pos": "ATA", "name": "Marcelo Cirino", "strength": 80, "status": "Titular" },
+            { "pos": "ATA", "name": "Ezequiel", "strength": 78, "status": "Titular" }
         ]
     },
     {
-        "id": 42, "name": "Ferroviária", "short": "FER", "color": "#800000", "strength": 71, "serie": "C",
+        "id": 102,
+        "name": "Anápolis",
+        "short": "ANA",
+        "color": "#FF0000",
+        "strength": 72,
+        "serie": "C",
         "roster": [
-            { "pos": "GOL", "name": "Saulo", "strength": 74, "status": "Titular" },
-            { "pos": "ZAG", "name": "Léo Santos", "strength": 71, "status": "Titular" },
-            { "pos": "ATA", "name": "Vitor Barreto", "strength": 72, "status": "Titular" }
+            { "pos": "GOL", "name": "Wellerson", "strength": 73, "status": "Titular" },
+            { "pos": "ZAG", "name": "André", "strength": 72, "status": "Titular" }
         ]
     },
     {
-        "id": 43, "name": "São Bernardo", "short": "SBE", "color": "#FFFF00", "strength": 70, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Alex Alves", "strength": 73, "status": "Titular" }]
+        "id": 103,
+        "name": "Barra",
+        "short": "BAR",
+        "color": "#0000FF",
+        "strength": 72,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Ewerton", "strength": 74, "status": "Titular" },
+            { "pos": "VOL", "name": "Natan", "strength": 73, "status": "Titular" }
+        ]
     },
     {
-        "id": 44, "name": "Botafogo-PB", "short": "BPB", "color": "#000000", "strength": 69, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Dalton", "strength": 72, "status": "Titular" }]
+        "id": 104,
+        "name": "Botafogo-PB",
+        "short": "BPB",
+        "color": "#000000",
+        "strength": 73,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Dalton", "strength": 75, "status": "Titular" },
+            { "pos": "ATA", "name": "Pipico", "strength": 76, "status": "Titular" }
+        ]
     },
     {
-        "id": 45, "name": "Ypiranga", "short": "YPI", "color": "#FFFF00", "strength": 68, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Alexander", "strength": 71, "status": "Titular" }]
+        "id": 105,
+        "name": "Brusque",
+        "short": "BRU",
+        "color": "#FFD700",
+        "strength": 76,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 77, "status": "Titular" },
+            { "pos": "ZAG", "name": "Wallace", "strength": 76, "status": "Titular" }
+        ]
     },
     {
-        "id": 46, "name": "Náutico", "short": "NAU", "color": "#FF0000", "strength": 68, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Vágner", "strength": 71, "status": "Titular" }]
+        "id": 106,
+        "name": "Caxias",
+        "short": "CAX",
+        "color": "#800020",
+        "strength": 73,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Thiago Coelho", "strength": 74, "status": "Titular" },
+            { "pos": "CA", "name": "Álvaro", "strength": 75, "status": "Titular" }
+        ]
     },
     {
-        "id": 47, "name": "ABC", "short": "ABC", "color": "#000000", "strength": 67, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Pedro Paulo", "strength": 70, "status": "Titular" }]
+        "id": 107,
+        "name": "Confiança",
+        "short": "CON",
+        "color": "#0000FF",
+        "strength": 72,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Jeferson", "strength": 73, "status": "Titular" }
+        ]
     },
     {
-        "id": 48, "name": "Figueirense", "short": "FIG", "color": "#000000", "strength": 67, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Thiago Gonçalves", "strength": 70, "status": "Titular" }]
+        "id": 108,
+        "name": "Ferroviária",
+        "short": "FER",
+        "color": "#800000",
+        "strength": 75,
+        "serie": "C",
+        "roster": [
+            { "pos": "MEI", "name": "Fernando Canesin", "strength": 77, "status": "Titular" }
+        ]
     },
     {
-        "id": 49, "name": "CSA", "short": "CSA", "color": "#0000FF", "strength": 66, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Yuri Cena", "strength": 69, "status": "Titular" }]
+        "id": 109,
+        "name": "Figueirense",
+        "short": "FIG",
+        "color": "#000000",
+        "strength": 74,
+        "serie": "C",
+        "roster": [
+            { "pos": "ZAG", "name": "Genilson", "strength": 75, "status": "Titular" }
+        ]
     },
     {
-        "id": 50, "name": "Sampaio Corrêa", "short": "SAM", "color": "#008000", "strength": 66, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Rafael Mariano", "strength": 69, "status": "Titular" }]
+        "id": 110,
+        "name": "Floresta",
+        "short": "FLO",
+        "color": "#006400",
+        "strength": 71,
+        "serie": "C",
+        "roster": [
+            { "pos": "ATA", "name": "Lohan", "strength": 72, "status": "Titular" }
+        ]
     },
     {
-        "id": 51, "name": "Confiança", "short": "CON", "color": "#0000FF", "strength": 65, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Jeferson", "strength": 68, "status": "Titular" }]
+        "id": 111,
+        "name": "Guarani",
+        "short": "GUA",
+        "color": "#006400",
+        "strength": 77,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Pegorari", "strength": 78, "status": "Titular" },
+            { "pos": "MEI", "name": "Luan Dias", "strength": 80, "status": "Titular" }
+        ]
     },
     {
-        "id": 52, "name": "Tombense", "short": "TOM", "color": "#FF0000", "strength": 65, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Felipe Garcia", "strength": 68, "status": "Titular" }]
+        "id": 112,
+        "name": "Itabaiana",
+        "short": "ITA",
+        "color": "#FF0000",
+        "strength": 71,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Jefferson", "strength": 72, "status": "Titular" }
+        ]
     },
     {
-        "id": 53, "name": "Floresta", "short": "FLO", "color": "#008000", "strength": 64, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Luiz", "strength": 67, "status": "Titular" }]
+        "id": 113,
+        "name": "Inter de Limeira",
+        "short": "INL",
+        "color": "#000000",
+        "strength": 73,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Saulo", "strength": 75, "status": "Titular" },
+            { "pos": "ATA", "name": "Neto Berola", "strength": 74, "status": "Titular" }
+        ]
     },
     {
-        "id": 54, "name": "Aparecidense", "short": "APA", "color": "#0000FF", "strength": 64, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Pedro Henrique", "strength": 67, "status": "Titular" }]
+        "id": 114,
+        "name": "Ituano",
+        "short": "ITU",
+        "color": "#FF0000",
+        "strength": 75,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Jefferson Paulino", "strength": 76, "status": "Titular" },
+            { "pos": "CA", "name": "Bruno Mezenga", "strength": 77, "status": "Titular" }
+        ]
     },
     {
-        "id": 55, "name": "Caxias", "short": "CAX", "color": "#800000", "strength": 63, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Thiago Coelho", "strength": 66, "status": "Titular" }]
+        "id": 115,
+        "name": "Maranhão",
+        "short": "MAC",
+        "color": "#0000FF",
+        "strength": 70,
+        "serie": "C",
+        "roster": [
+            { "pos": "MEI", "name": "Adeílson", "strength": 71, "status": "Titular" }
+        ]
     },
     {
-        "id": 56, "name": "Ferroviário", "short": "FAC", "color": "#FF0000", "strength": 63, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Douglas Dias", "strength": 66, "status": "Titular" }]
+        "id": 116,
+        "name": "Maringá",
+        "short": "MAR",
+        "color": "#FFD700",
+        "strength": 74,
+        "serie": "C",
+        "roster": [
+            { "pos": "MEI", "name": "Iago Santana", "strength": 75, "status": "Titular" }
+        ]
     },
     {
-        "id": 57, "name": "São José-RS", "short": "SJO", "color": "#0000FF", "strength": 62, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Fábio Rampi", "strength": 65, "status": "Titular" }]
+        "id": 117,
+        "name": "Paysandu",
+        "short": "PAY",
+        "color": "#00BFFF",
+        "strength": 76,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Matheus Nogueira", "strength": 77, "status": "Titular" },
+            { "pos": "CA", "name": "Nicolas", "strength": 79, "status": "Titular" }
+        ]
     },
     {
-        "id": 58, "name": "Anápolis", "short": "ANA", "color": "#FF0000", "strength": 62, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Wellerson", "strength": 65, "status": "Titular" }]
+        "id": 118,
+        "name": "Santa Cruz",
+        "short": "SCZ",
+        "color": "#FF0000",
+        "strength": 75,
+        "serie": "C",
+        "roster": [
+            { "pos": "GOL", "name": "Gabriel Souza", "strength": 74, "status": "Titular" },
+            { "pos": "MEI", "name": "Régis", "strength": 79, "status": "Titular" },
+            { "pos": "ATA", "name": "Eron", "strength": 77, "status": "Titular" }
+        ]
     },
     {
-        "id": 59, "name": "Retrô", "short": "RET", "color": "#FFD700", "strength": 61, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Darley", "strength": 64, "status": "Titular" }]
+        "id": 119,
+        "name": "Volta Redonda",
+        "short": "VRE",
+        "color": "#FFD700",
+        "strength": 75,
+        "serie": "C",
+        "roster": [
+            { "pos": "ATA", "name": "MV", "strength": 76, "status": "Titular" }
+        ]
     },
     {
-        "id": 60, "name": "Itabaiana", "short": "ITA", "color": "#FF0000", "strength": 60, "serie": "C",
-        "roster": [{ "pos": "GOL", "name": "Jefferson", "strength": 63, "status": "Titular" }]
+        "id": 120,
+        "name": "Ypiranga",
+        "short": "YPI",
+        "color": "#FFD700",
+        "strength": 73,
+        "serie": "C",
+        "roster": [
+            { "pos": "MEI", "name": "Alisson Taddei", "strength": 74, "status": "Titular" }
+        ]
     }
 ];
 

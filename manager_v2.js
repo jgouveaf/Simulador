@@ -57,7 +57,7 @@ class BrasileiraoSimulator {
         this.isSimulating = false; // Guard to prevent overlapping simulations
         this.simGeneration = 0;    // Unique ID for the current active simulation
         console.log('Brasileirao Manager V2.2 Loaded - FIFA Carousel & Santos Exception Active');
-
+        this.initCopaDoBrasil();
         this.init();
     }
 
@@ -88,7 +88,37 @@ class BrasileiraoSimulator {
             teams,
             rounds,
             currentRound: 0,
+            currentRound: 0,
             status: 'Iniciada'
+        };
+    }
+
+    getAllTeams() {
+        return [...this.leagues.A.teams, ...this.leagues.B.teams, ...this.leagues.C.teams];
+    }
+
+    initCopaDoBrasil() {
+        const allTeams = this.getAllTeams();
+        allTeams.sort((a,b) => b.strength - a.strength);
+        const top32 = allTeams.slice(0, 32);
+        
+        for(let i = top32.length - 1; i > 0; i--){
+            const j = Math.floor(Math.random() * (i + 1));
+            [top32[i], top32[j]] = [top32[j], top32[i]];
+        }
+
+        const bracket = [];
+        for(let i = 0; i < 32; i += 2) {
+            bracket.push({ home: top32[i].id, away: top32[i+1].id, isCopa: true, homeScore: null, awayScore: null, simulated: false });
+        }
+
+        this.copaDoBrasil = {
+            active: true,
+            roundIndex: 0,
+            schedule: [8, 14, 20, 26, 32],
+            stages: ['Fase de 16-avos', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
+            bracket: bracket,
+            champion: null
         };
     }
 
@@ -368,6 +398,10 @@ class BrasileiraoSimulator {
             else { hScore = 0; aScore = 1; }
         }
 
+        if (match.isCopa && hScore === aScore) {
+            if (Math.random() > 0.5) hScore++; else aScore++;
+        }
+
         match.homeScore = hScore;
         match.awayScore = aScore;
  
@@ -466,6 +500,11 @@ class BrasileiraoSimulator {
         const mainLg = this.leagues[this.currentSerie];
         if (!mainLg || mainLg.currentRound >= 38) {
             this.isSimulating = false;
+            return;
+        }
+
+        if (this.copaDoBrasil && this.copaDoBrasil.active && this.copaDoBrasil.roundIndex < 5 && this.copaDoBrasil.schedule[this.copaDoBrasil.roundIndex] === mainLg.currentRound) {
+            this.simulateCopaDoBrasilRound();
             return;
         }
 
@@ -593,6 +632,57 @@ class BrasileiraoSimulator {
                 setTimeout(() => this.finishSeason(), 1000);
             }
         }
+    }
+
+    simulateCopaDoBrasilRound() {
+        const cb = this.copaDoBrasil;
+        let userMatch = null;
+        if (this.career.active && this.career.team) {
+            userMatch = cb.bracket.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+        }
+
+        const resolveBracket = () => {
+            cb.bracket.forEach(m => {
+                if (!m.simulated) {
+                    this.simulateMatch(m, this.getAllTeams(), false);
+                    m.simulated = true;
+                }
+            });
+
+            if (cb.roundIndex < 4) {
+                const nextBracket = [];
+                for (let i = 0; i < cb.bracket.length; i += 2) {
+                    const m1 = cb.bracket[i];
+                    const m2 = cb.bracket[i+1];
+                    const win1 = m1.homeScore > m1.awayScore ? m1.home : m1.away;
+                    const win2 = m2.homeScore > m2.awayScore ? m2.home : m2.away;
+                    nextBracket.push({ home: win1, away: win2, isCopa: true, homeScore: null, awayScore: null, simulated: false });
+                }
+                cb.bracket = nextBracket;
+            } else if (cb.roundIndex === 4) {
+                const finalM = cb.bracket[0];
+                const champId = finalM.homeScore > finalM.awayScore ? finalM.home : finalM.away;
+                cb.champion = this.getAllTeams().find(t => t.id === champId);
+            }
+            cb.roundIndex++;
+            
+            this.updateCareerDashboard();
+            this.isSimulating = false;
+        };
+
+        if (userMatch && !userMatch.simulated) {
+            const home = this.getAllTeams().find(t => t.id === userMatch.home);
+            const away = this.getAllTeams().find(t => t.id === userMatch.away);
+            if (home && away) {
+                let completed = false;
+                this.startVisualSimulation(userMatch, home, away, () => {
+                    if (completed) return;
+                    completed = true;
+                    resolveBracket();
+                    this.openScreen('career-hub');
+                });
+            } else resolveBracket();
+        } else resolveBracket();
     }
 
     startVisualSimulation(match, home, away, callback) {
@@ -1450,19 +1540,35 @@ class BrasileiraoSimulator {
             simBtn.style.opacity = '1';
         }
 
-        if (nextRound) {
+        const nextOpponentNameEl = document.getElementById('next-opponent-name');
+        const matchDetailsEl = document.getElementById('match-details');
+        
+        if (this.copaDoBrasil && this.copaDoBrasil.active && this.copaDoBrasil.roundIndex < 5 && this.copaDoBrasil.schedule[this.copaDoBrasil.roundIndex] === lg.currentRound) {
+            const cbMatch = this.copaDoBrasil.bracket.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+            if (cbMatch) {
+                const opponentId = cbMatch.home === this.career.team.id ? cbMatch.away : cbMatch.home;
+                const opponent = this.getAllTeams().find(t => t.id === opponentId);
+                nextOpponentNameEl.textContent = `vs ${opponent.name}`;
+                nextOpponentNameEl.style.color = '#F3D250';
+            } else {
+                nextOpponentNameEl.textContent = `Sem Jogo (Eliminado)`;
+                nextOpponentNameEl.style.color = '#888';
+            }
+            matchDetailsEl.textContent = `Copa do Brasil - ${this.copaDoBrasil.stages[this.copaDoBrasil.roundIndex]}`;
+        } else if (nextRound) {
+            nextOpponentNameEl.style.color = '#FFF';
             const userMatch = nextRound.matches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
             if (userMatch) {
                 const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
                 const opponent = lg.teams.find(t => t.id === opponentId);
-                
-                document.getElementById('next-opponent-name').textContent = `vs ${opponent.name}`;
+                nextOpponentNameEl.textContent = `vs ${opponent.name}`;
             } else {
-                document.getElementById('next-opponent-name').textContent = `Sem Jogo (Adiado/Adiantado)`;
+                nextOpponentNameEl.textContent = `Sem Jogo (Adiado/Adiantado)`;
             }
-            document.getElementById('match-details').textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
+            matchDetailsEl.textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
         } else {
-            document.getElementById('next-opponent-name').textContent = `Fim da Temporada`;
+            nextOpponentNameEl.style.color = '#FFF';
+            nextOpponentNameEl.textContent = `Fim da Temporada`;
         }
 
         document.getElementById('money-display').textContent = `R$ ${this.career.budget.toLocaleString('pt-BR')}`;

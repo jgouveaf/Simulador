@@ -1327,12 +1327,19 @@ const teams = [
         "short": "NAU",
         "color": "#FF0000",
         "strength": 75,
-        "serie": "B",
+        "serie": "C",
         "roster": [
             { "pos": "GOL", "name": "Vagner", "strength": 76, "status": "Titular" },
+            { "pos": "LD", "name": "Arnaldo", "strength": 72, "status": "Titular" },
             { "pos": "ZAG", "name": "Robson Reis", "strength": 75, "status": "Titular" },
+            { "pos": "ZAG", "name": "Guilherme Matos", "strength": 71, "status": "Titular" },
+            { "pos": "LE", "name": "Diego Matos", "strength": 72, "status": "Titular" },
+            { "pos": "VOL", "name": "Sousa", "strength": 73, "status": "Titular" },
+            { "pos": "VOL", "name": "Lorran", "strength": 71, "status": "Titular" },
             { "pos": "MEI", "name": "Marco Antônio", "strength": 78, "status": "Titular" },
-            { "pos": "ATA", "name": "Paulo Sérgio", "strength": 79, "status": "Titular" }
+            { "pos": "MEI", "name": "Patrick Allan", "strength": 74, "status": "Titular" },
+            { "pos": "ATA", "name": "Paulo Sérgio", "strength": 79, "status": "Titular" },
+            { "pos": "CA", "name": "Evandro", "strength": 73, "status": "Titular" }
         ]
     },
     {
@@ -1342,10 +1349,19 @@ const teams = [
         "short": "ABC",
         "color": "#000000",
         "strength": 74,
-        "serie": "B",
+        "serie": "C",
         "roster": [
             { "pos": "GOL", "name": "Pedro Paulo", "strength": 75, "status": "Titular" },
-            { "pos": "MEI", "name": "Wallyson", "strength": 77, "status": "Titular" }
+            { "pos": "LD", "name": "Yuri Ferraz", "strength": 71, "status": "Titular" },
+            { "pos": "ZAG", "name": "Richardson", "strength": 73, "status": "Titular" },
+            { "pos": "ZAG", "name": "Eduardo Thuram", "strength": 71, "status": "Titular" },
+            { "pos": "LE", "name": "Romário", "strength": 72, "status": "Titular" },
+            { "pos": "VOL", "name": "Daniel", "strength": 71, "status": "Titular" },
+            { "pos": "VOL", "name": "Erick Varão", "strength": 72, "status": "Titular" },
+            { "pos": "MEI", "name": "Wallyson", "strength": 77, "status": "Titular" },
+            { "pos": "MEI", "name": "Adeílson", "strength": 71, "status": "Titular" },
+            { "pos": "ATA", "name": "Ruan", "strength": 73, "status": "Titular" },
+            { "pos": "CA", "name": "Jenison", "strength": 74, "status": "Titular" }
         ]
     },
     {
@@ -1429,7 +1445,7 @@ const teams = [
         "short": "AMA",
         "color": "#FFD700",
         "strength": 72,
-        "serie": "C",
+        "serie": "B",
         "roster": [
             { "pos": "GOL", "name": "João Lopes", "strength": 73, "status": "Titular" },
             { "pos": "LD", "name": "Ezequiel", "strength": 72, "status": "Titular" },
@@ -1649,7 +1665,7 @@ const teams = [
         "short": "GUA",
         "color": "#006400",
         "strength": 72,
-        "serie": "C",
+        "serie": "B",
         "roster": [
             { "pos": "GOL", "name": "Pegorari", "strength": 75, "status": "Titular" },
             { "pos": "LD", "name": "Diogo", "strength": 72, "status": "Titular" },

@@ -620,6 +620,7 @@ class BrasileiraoSimulator {
             }
         } else {
             // No User Visual Sim triggered (Fallback)
+            mainLg.currentRound++;
             this.career.currentDay += 7;
             this.updateTable();
             this.displayRound();

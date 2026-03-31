@@ -450,7 +450,7 @@ class BrasileiraoSimulator {
 
     simulateRound() {
         if (this.isSimulating) {
-            console.log("Already simulating! Ignoring call.");
+            console.log("Already simulating...");
             return;
         }
         
@@ -458,12 +458,6 @@ class BrasileiraoSimulator {
         if (card) {
             card.style.pointerEvents = 'none';
             card.style.opacity = '0.5';
-        }
-
-    simulateRound() {
-        if (this.isSimulating) {
-            console.log("Already simulating...");
-            return;
         }
         
         console.log("Simulating Round for ALL leagues...");

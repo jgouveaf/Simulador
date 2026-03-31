@@ -450,50 +450,114 @@ class BrasileiraoSimulator {
             card.style.opacity = '0.5';
         }
 
-        console.log("Simulating Round...");
-        const lg = this.leagues[this.currentSerie];
-        if (!lg || lg.currentRound >= lg.rounds.length) {
-            console.log("Round finished or league error.");
+    simulateRound() {
+        if (this.isSimulating) {
+            console.log("Already simulating...");
             return;
         }
         
+        console.log("Simulating Round for ALL leagues...");
         this.isSimulating = true;
-        const roundMatches = lg.rounds[lg.currentRound].matches;
-        
-        // Find user match
-        let userMatch = null;
-        if (this.career.active && this.career.team) {
-            userMatch = roundMatches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
-            console.log("Found user match for visual sim:", userMatch);
+
+        const mainLg = this.leagues[this.currentSerie];
+        if (!mainLg || mainLg.currentRound >= 38) {
+            this.isSimulating = false;
+            return;
         }
 
-        if (userMatch && !userMatch.simulated) {
-            // Visually simulate user match
-            const home = lg.teams.find(t => t.id === userMatch.home);
-            const away = lg.teams.find(t => t.id === userMatch.away);
+        // --- SCHEDULING & BACKGROUND LEAGUES ---
+        ['A', 'B', 'C'].forEach(serie => {
+            const lg = this.leagues[serie];
+            if (!lg || lg.currentRound >= 38) return;
+
+            lg.delayedMatches = lg.delayedMatches || [];
+            const roundMatches = lg.rounds[lg.currentRound].matches;
+            
+            let userMatch = null;
+            if (serie === this.currentSerie && this.career.active && this.career.team) {
+                userMatch = roundMatches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+            }
+
+            const matchesToSimulateNow = [];
+
+            // 1. Process standard matches for this week (with chance to delay)
+            roundMatches.forEach(m => {
+                if (m === userMatch) {
+                    matchesToSimulateNow.push(m); // Never delay the user's match
+                } else if (!m.simulated) {
+                    // 15% chance to randomly delay a match if we're not at the very end
+                    if (lg.currentRound < 35 && Math.random() < 0.15) {
+                        lg.delayedMatches.push(m);
+                    } else {
+                        matchesToSimulateNow.push(m);
+                    }
+                }
+            });
+
+            // 2. Play some previously delayed midweek matches
+            const remainingDelayed = [];
+            lg.delayedMatches.forEach(m => {
+                // By round 36, force all delayed matches to play so that R37/R38 are synced
+                if (lg.currentRound >= 35 || Math.random() < 0.40) {
+                    matchesToSimulateNow.push(m);
+                } else {
+                    remainingDelayed.push(m);
+                }
+            });
+            lg.delayedMatches = remainingDelayed;
+
+            // 3. Play advanced matches (adiantar jogos do futuro)
+            if (lg.currentRound < 34 && Math.random() < 0.15 && lg.rounds[lg.currentRound + 1]) {
+                const nextMatches = lg.rounds[lg.currentRound + 1].matches;
+                // Avoid pulling the user's upcoming match or an empty round
+                const advIdx = nextMatches.findIndex(m => (!userMatch || (m.home !== userMatch.home && m.away !== userMatch.away)));
+                if (advIdx > -1) {
+                    const advM = nextMatches.splice(advIdx, 1)[0];
+                    matchesToSimulateNow.push(advM);
+                    roundMatches.push(advM); // ADD TO CURRENT ROUND SO IT DISPLAYS IN UI
+                }
+            }
+
+            // --- EXECUTION ---
+            if (serie === this.currentSerie && userMatch && !userMatch.simulated) {
+                // Hold background matches in queue while Visual Sim plays out
+                this.pendingMatchesToSimulate = matchesToSimulateNow.filter(m => m !== userMatch);
+            } else {
+                matchesToSimulateNow.forEach(m => {
+                    if (!m.simulated) this.simulateMatch(m, lg.teams);
+                });
+                lg.currentRound++;
+                lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
+            }
+        });
+
+        // --- USER VISUAL SIMULATION ---
+        const roundMatchesUser = mainLg.rounds[mainLg.currentRound]?.matches;
+        let userMatchRun = null;
+        if (roundMatchesUser && this.career.active && this.career.team) {
+            userMatchRun = roundMatchesUser.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+        }
+
+        if (userMatchRun && !userMatchRun.simulated) {
+            const home = mainLg.teams.find(t => t.id === userMatchRun.home);
+            const away = mainLg.teams.find(t => t.id === userMatchRun.away);
             
             if (home && away) {
-                console.log("Starting visual sim:", home.name, "vs", away.name);
                 let completed = false;
-                this.startVisualSimulation(userMatch, home, away, () => {
+                this.startVisualSimulation(userMatchRun, home, away, () => {
                     if (completed) return;
                     completed = true;
-                    
-                    if (card) {
-                        card.style.pointerEvents = 'auto';
-                        card.style.opacity = '1';
+
+                    console.log("Visual sim completed. Resolving pending background matches.");
+                    if (this.pendingMatchesToSimulate) {
+                        this.pendingMatchesToSimulate.forEach(m => {
+                            if (!m.simulated) this.simulateMatch(m, mainLg.teams);
+                        });
+                        this.pendingMatchesToSimulate = null;
                     }
-                    
-                    this.isSimulating = false;
-                    console.log("Visual sim completed. Simulating others.");
-                    roundMatches.forEach(m => {
-                        if (m !== userMatch) this.simulateMatch(m, lg.teams);
-                    });
-                    
-                    lg.currentRound++;
-                    lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
-                    
-                    // Avança 7 dias (uma semana) a cada rodada
+
+                    mainLg.currentRound++;
+                    mainLg.viewedRound = mainLg.currentRound < 38 ? mainLg.currentRound : 37;
                     this.career.currentDay += 7;
                     
                     this.updateTable();
@@ -501,50 +565,25 @@ class BrasileiraoSimulator {
                     this.updateStats();
                     this.displayCalendar();
                     if (this.career.active) this.updateCareerDashboard();
-                    
-                    // Return to career hub after simulation
+                    this.isSimulating = false;
                     this.openScreen('career-hub');
                     
-                    if (lg.currentRound === 38) {
+                    if (mainLg.currentRound === 38) {
                         setTimeout(() => this.finishSeason(), 1000);
                     }
                 });
-            } else {
-                console.error("Teams not found for visual sim!");
-                // Fallback
-                roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
-                lg.currentRound++;
-                lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
-                this.career.currentDay += 7;
-                
-                this.updateTable();
-                this.displayRound();
-                this.updateStats();
-                this.displayCalendar();
-                if (this.career.active) this.updateCareerDashboard();
-                
-                if (lg.currentRound === 38) {
-                    setTimeout(() => this.finishSeason(), 1000);
-                }
             }
         } else {
-            console.log("Background simulation only.");
-            roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
-            lg.currentRound++;
-            lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
-            
-            // Avança 7 dias (uma semana) a cada rodada
+            // No User Visual Sim triggered (Fallback)
             this.career.currentDay += 7;
-            
             this.updateTable();
             this.displayRound();
             this.updateStats();
             this.displayCalendar();
-            this.updateCareerDashboard();
+            if (this.career.active) this.updateCareerDashboard();
             this.isSimulating = false;
-
-            // Check if season is finished
-            if (lg.currentRound === 38) {
+            
+            if (mainLg.currentRound === 38) {
                 setTimeout(() => this.finishSeason(), 1000);
             }
         }

@@ -857,7 +857,7 @@ class BrasileiraoSimulator {
                 match.homeScore = homeScore;
                 match.awayScore = awayScore;
                 
-                if (!match.isFriendly) {
+                if (!match.isFriendly && !match.isCopa) {
                     const lg = this.leagues[this.currentSerie];
                     if (lg) {
                         this.updateLeagueStandings(match, lg.teams);
@@ -903,7 +903,7 @@ class BrasileiraoSimulator {
         this.currentSimMatch.homeScore = this.currentSimMatch.tempRes?.homeScore || 0;
         this.currentSimMatch.awayScore = this.currentSimMatch.tempRes?.awayScore || 0;
 
-        if (!this.currentSimMatch.isFriendly) {
+        if (!this.currentSimMatch.isFriendly && !this.currentSimMatch.isCopa) {
             const lg = this.leagues[this.currentSerie];
             if (lg) this.updateLeagueStandings(this.currentSimMatch, lg.teams);
         }

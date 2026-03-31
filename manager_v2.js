@@ -694,6 +694,7 @@ class BrasileiraoSimulator {
             clearInterval(this.simInterval);
             this.simInterval = null;
         }
+        this.isPaused = false;
         this.currentSimHome = home;
         this.currentSimAway = away;
         this.openScreen('match-simulation');

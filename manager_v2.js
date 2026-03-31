@@ -513,8 +513,10 @@ class BrasileiraoSimulator {
             // 3. Play advanced matches (adiantar jogos do futuro)
             if (lg.currentRound < 34 && Math.random() < 0.15 && lg.rounds[lg.currentRound + 1]) {
                 const nextMatches = lg.rounds[lg.currentRound + 1].matches;
-                // Avoid pulling the user's upcoming match or an empty round
-                const advIdx = nextMatches.findIndex(m => (!userMatch || (m.home !== userMatch.home && m.away !== userMatch.away)));
+                // Safely avoid pulling the user's upcoming match
+                const pId = (this.career.active && this.career.team) ? this.career.team.id : null;
+                const advIdx = nextMatches.findIndex(m => !pId || (m.home !== pId && m.away !== pId));
+                
                 if (advIdx > -1) {
                     const advM = nextMatches.splice(advIdx, 1)[0];
                     matchesToSimulateNow.push(advM);
@@ -1441,12 +1443,23 @@ class BrasileiraoSimulator {
         const lg = this.leagues[this.currentSerie];
         const nextRound = lg.rounds[lg.currentRound];
         
+        // Ensure "Simular Rodada" button is clickable again
+        const simBtn = document.getElementById('btn-career-simulate');
+        if (simBtn) {
+            simBtn.style.pointerEvents = 'auto';
+            simBtn.style.opacity = '1';
+        }
+
         if (nextRound) {
             const userMatch = nextRound.matches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
-            const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
-            const opponent = lg.teams.find(t => t.id === opponentId);
-            
-            document.getElementById('next-opponent-name').textContent = `vs ${opponent.name}`;
+            if (userMatch) {
+                const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
+                const opponent = lg.teams.find(t => t.id === opponentId);
+                
+                document.getElementById('next-opponent-name').textContent = `vs ${opponent.name}`;
+            } else {
+                document.getElementById('next-opponent-name').textContent = `Sem Jogo (Adiado/Adiantado)`;
+            }
             document.getElementById('match-details').textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
         } else {
             document.getElementById('next-opponent-name').textContent = `Fim da Temporada`;

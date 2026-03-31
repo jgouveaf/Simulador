@@ -299,28 +299,38 @@ class BrasileiraoSimulator {
         const homeStats = this.getTeamStats(homeTeam);
         const awayStats = this.getTeamStats(awayTeam);
 
-        // MODELO ELO/PROBABILIDADE (Recomendado pelo Usuário/Gemini)
+        // MODELO DE PROBABILIDADE (Sigmoide / Anti-Zebra)
         const hs = homeTeam.strength;
         const as = awayTeam.strength;
 
-        // Fatores de Ajuste para OVR (0-100)
-        // O Fator Casa e de Escala precisaram ser escalonados do padrão 40/400.
-        const C = 4; // Fator casa em OVR Equivalente (+4 pontos pro mandante)
-        const S = 30; // Fator de Escala (S=30 suaviza as extremidades mantendo favoritismo justo)
+        const O_c = hs;
+        const O_v = as;
+        const B = 4; // Bônus Casa
+        const k = 0.22; // Fator de Rigidez (0.15 a 0.25) para diminuir zebras
+        
+        // 1. Diferença de Pontos Ajustada
+        const D = (O_c + B) - O_v;
 
-        // 1. Diferença Ajustada
-        const D = hs + C - as;
+        // 2. A Fórmula de Probabilidade (Sigmoide)
+        const V_base = 1 / (1 + Math.exp(-k * D));
+        
+        // Probabilidade de Empate decai conforme a diferença de força (D) aumenta
+        let P_E = 0.30 * Math.exp(-Math.pow(D / 15, 2));
+        
+        // Probabilidades base de Vitória (P_V) e Derrota (P_D do mandante)
+        let P_V = V_base * (1 - P_E);
+        let P_D = 1 - P_V - P_E;
 
-        // 2. Expectativa do Mandante (E_A)
-        const E_A = 1 / (1 + Math.pow(10, -(D / S)));
+        // Trava de "Script de Elite" para evitar derrotas irreais
+        if (D > 20) {
+            P_D = Math.min(P_D, 0.02);
+            P_V = 1 - P_E - P_D;
+        } else if (D < -20) {
+            P_V = Math.min(P_V, 0.02);
+            P_D = 1 - P_E - P_V;
+        }
 
-        // 3. Probabilidade de Empate (P_E) com teto referencial moderado
-        const P_E = 0.28 * Math.exp(-Math.pow(D / (2 * S), 2));
-
-        // 4. Probabilidades Finais (Vitória Home/Away)
-        const P_V = E_A * (1 - P_E);
-
-        // 5. Determinar Resultado (Win/Draw/Loss)
+        // 3. Determinar Resultado
         const r = Math.random();
         let desiredOutcome = '';
         if (r < P_V) desiredOutcome = 'HOME_WIN';

@@ -1211,22 +1211,25 @@ class BrasileiraoSimulator {
         const team = teams[this.selectionIndex];
         const stats = this.calculateDetailedStats(team);
         const starHTML = this.getStarRatingHTML(team);
+        const fallbackLogo = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(team.name)}&backgroundType=gradientLinear&fontSize=40&fontWeight=900`;
 
         grid.innerHTML = `
             <div class="team-picker-container">
+                <div style="display: flex; justify-content: space-between; width: 100%; max-width: 1200px; margin-bottom: 2rem; align-items: center;">
+                    <h2 style="font-size: 1.5rem; text-transform: uppercase; font-weight: 900; letter-spacing: 2px;">Escolha seu Clube</h2>
+                    <button class="secondary btn-back-main" style="width: auto; margin: 0; padding: 5px 20px; border-radius: 30px;">❮ VOLTAR</button>
+                </div>
+
                 <div class="serie-selector">
-                    <button class="${this.selectionSerie === 'A' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('A')">SÉRIE A</button>
-                    <button class="${this.selectionSerie === 'B' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('B')">SÉRIE B</button>
-                    <button class="${this.selectionSerie === 'C' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('C')">SÉRIE C</button>
-                    <button class="${this.selectionSerie === 'D' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('D')">SÉRIE D</button>
+                    ${['A', 'B', 'C', 'D'].map(s => `<button class="${this.selectionSerie === s ? 'active' : ''}" onclick="simulator.changeSelectionSerie('${s}')">SÉRIE ${s}</button>`).join('')}
                 </div>
                 
                 <div class="picker-main">
                     <button class="nav-arrow" onclick="simulator.navigateTeamSelection(-1)">❮</button>
                     
                     <div class="team-showcase">
-                        <div class="team-logo-big" style="background: linear-gradient(135deg, ${team.color}44 0%, transparent 100%);">
-                            <img src="${team.logo || 'logo.png'}" alt="${team.name}" onerror="this.src='logo.png'">
+                        <div class="team-logo-big">
+                            <img src="${team.logo || fallbackLogo}" alt="${team.name}" onerror="this.onerror=null; this.src='${fallbackLogo}';">
                         </div>
                         <h2 class="team-name-selection">
                             ${team.name.toUpperCase()} 
@@ -1299,9 +1302,9 @@ class BrasileiraoSimulator {
 
         let html = '';
         for (let i = 1; i <= 5; i++) {
-            if (i <= Math.floor(stars)) html += '<i class="fas fa-star" style="color:var(--gold);"></i>';
-            else if (i === Math.ceil(stars) && stars % 1 !== 0) html += '<i class="fas fa-star-half-alt" style="color:var(--gold);"></i>';
-            else html += '<i class="far fa-star" style="color:gray;"></i>';
+            if (i <= Math.floor(stars)) html += '<i class="fas fa-star" style="color:#ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5);"></i>';
+            else if (i === Math.ceil(stars) && stars % 1 !== 0) html += '<i class="fas fa-star-half-alt" style="color:#ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5);"></i>';
+            else html += '<i class="far fa-star" style="color:rgba(255,255,255,0.2);"></i>';
         }
         return html;
     }
@@ -1343,6 +1346,7 @@ class BrasileiraoSimulator {
         this.career.budget = this.getInitialBudget(team);
         document.getElementById('user-team-name').textContent = team.name;
         const logoEl = document.getElementById('user-team-logo');
+        const fallbackLogo = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(team.name)}&backgroundType=gradientLinear&fontSize=40&fontWeight=900`;
         if (team.logo) {
             logoEl.style.backgroundImage = `url(${team.logo})`;
             logoEl.style.backgroundSize = 'contain';
@@ -1350,8 +1354,9 @@ class BrasileiraoSimulator {
             logoEl.style.backgroundPosition = 'center';
             logoEl.style.backgroundColor = 'transparent';
         } else {
-            logoEl.style.backgroundColor = team.color;
-            logoEl.style.backgroundImage = 'none';
+            logoEl.style.backgroundImage = `url(${fallbackLogo})`;
+            logoEl.style.backgroundSize = 'contain';
+            logoEl.style.backgroundColor = team.color || 'transparent';
         }
         
         this.openScreen('career-hub');
@@ -1383,6 +1388,7 @@ class BrasileiraoSimulator {
             const userMatch = nextRound.matches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
             const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
             const opponent = lg.teams.find(t => t.id === opponentId);
+            const fallbackLogo = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(opponent.name)}&backgroundType=gradientLinear&fontSize=40&fontWeight=900`;
             
             const card = document.getElementById('btn-career-simulate');
             if (card) {
@@ -1394,7 +1400,7 @@ class BrasileiraoSimulator {
                             <p style="color: var(--text-secondary); font-size: 0.8rem;">Rodada ${lg.currentRound + 1} • ${nextRound.date.toLocaleDateString('pt-BR')}</p>
                         </div>
                         <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 10px;">
-                            <img src="${opponent.logo || 'logo.png'}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='logo.png'">
+                            <img src="${opponent.logo || fallbackLogo}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='${fallbackLogo}'">
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 15px;">
@@ -2127,6 +2133,21 @@ class BrasileiraoSimulator {
         };
 
         panel.innerHTML = `
+            <style>
+                /* FIFA PREMIUM THEME */
+                .fifa-header {
+                    background: linear-gradient(90deg, #0a192f 0%, #172a45 100%);
+                    border-bottom: 2px solid rgba(0, 242, 255, 0.3);
+                    padding: 1.5rem 3rem;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                }
+            </style>
             <h2 style="text-align: center; margin-bottom: 2rem; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 10px;">AVALIAÇÕES DA PARTIDA</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
                 <div>

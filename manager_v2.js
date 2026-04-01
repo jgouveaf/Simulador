@@ -30,7 +30,8 @@ class BrasileiraoSimulator {
         this.leagues = {
             'A': this.initLeague('A'),
             'B': this.initLeague('B'),
-            'C': this.initLeague('C')
+            'C': this.initLeague('C'),
+            'D': this.initLeague('D')
         };
         
         this.career = {
@@ -88,13 +89,17 @@ class BrasileiraoSimulator {
             teams,
             rounds,
             currentRound: 0,
-            currentRound: 0,
             status: 'Iniciada'
         };
     }
 
     getAllTeams() {
-        return [...this.leagues.A.teams, ...this.leagues.B.teams, ...this.leagues.C.teams];
+        return [
+            ...this.leagues['A'].teams,
+            ...this.leagues['B'].teams,
+            ...this.leagues['C'].teams,
+            ...this.leagues['D'].teams
+        ];
     }
 
     initCopaDoBrasil() {
@@ -509,7 +514,7 @@ class BrasileiraoSimulator {
         }
 
         // --- SCHEDULING & BACKGROUND LEAGUES ---
-        ['A', 'B', 'C'].forEach(serie => {
+        ['A', 'B', 'C', 'D'].forEach(serie => {
             const lg = this.leagues[serie];
             if (!lg || lg.currentRound >= 38) return;
 
@@ -1403,17 +1408,18 @@ class BrasileiraoSimulator {
                     <button class="${this.selectionSerie === 'A' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('A')">SÉRIE A</button>
                     <button class="${this.selectionSerie === 'B' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('B')">SÉRIE B</button>
                     <button class="${this.selectionSerie === 'C' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('C')">SÉRIE C</button>
+                    <button class="${this.selectionSerie === 'D' ? 'active' : ''}" onclick="simulator.changeSelectionSerie('D')">SÉRIE D</button>
                 </div>
                 
                 <div class="picker-main">
                     <button class="nav-arrow" onclick="simulator.navigateTeamSelection(-1)">❮</button>
                     
                     <div class="team-showcase">
-                        <div class="team-logo-big" style="display:flex; align-items:center; justify-content:center;">
-                            ${team.logo ? `<img src="${team.logo}" alt="${team.name}" style="width:140px; height:140px; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));">` : `<span style="font-size: 4rem; font-weight: 900; color: #fff;">${team.name.substring(0,2)}</span>`}
+                        <div class="team-logo-big" style="background: linear-gradient(135deg, ${team.color}44 0%, transparent 100%);">
+                            <img src="${team.logo}" alt="${team.name}">
                         </div>
                         <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
-                        <div class="stars-container">${starHTML}</div>
+                        <div class="stars-container" style="margin-top: -10px; margin-bottom: 2rem;">${starHTML}</div>
                         
                         <div class="team-stats-selection">
                             <div class="stat-box">
@@ -1441,6 +1447,7 @@ class BrasileiraoSimulator {
 
     changeSelectionSerie(s) {
         this.selectionSerie = s;
+        // Reset selection index to first team in new league
         this.selectionIndex = 0;
         this.renderTeamSelection();
     }
@@ -1505,8 +1512,10 @@ class BrasileiraoSimulator {
             else this.career.budget = 50000000;
         } else if (team.serie === 'B') {
             this.career.budget = 15000000; // Serie B: 15M
-        } else {
+        } else if (team.serie === 'C') {
             this.career.budget = 5000000; // Serie C: 5M
+        } else {
+            this.career.budget = 2000000; // Serie D: 2M
         }
 
         document.getElementById('user-team-name').textContent = team.name;
@@ -2443,7 +2452,8 @@ class BrasileiraoSimulator {
     }
 
     findPlayerById(id) {
-        for (const s of ['A', 'B', 'C']) {
+        for (const s of ['A', 'B', 'C', 'D']) {
+            if (!this.leagues[s]) continue;
             for (const t of this.leagues[s].teams) {
                 const p = t.roster.find(px => px.id == id);
                 if (p) return p;
@@ -2453,7 +2463,8 @@ class BrasileiraoSimulator {
     }
 
     findTeamByPlayerId(id) {
-        for (const s of ['A', 'B', 'C']) {
+        for (const s of ['A', 'B', 'C', 'D']) {
+            if (!this.leagues[s]) continue;
             for (const t of this.leagues[s].teams) {
                 if (t.roster.some(px => px.id == id)) return t;
             }
@@ -2463,7 +2474,7 @@ class BrasileiraoSimulator {
 
     finishSeason() {
         const standings = {};
-        for(const s of ['A', 'B', 'C']) {
+        for(const s of ['A', 'B', 'C', 'D']) {
             standings[s] = [...this.leagues[s].teams].sort((a, b) => {
                 if (b.points !== a.points) return b.points - a.points;
                 if (b.won !== a.won) return b.won - a.won;
@@ -2491,11 +2502,17 @@ class BrasileiraoSimulator {
         const relegatedFromB = standings['B'].slice(-4);
         const promotedToB = standings['C'].slice(0, 4);
 
+        const relegatedFromC = standings['C'].slice(-4);
+        const promotedToC = standings['D'].slice(0, 4);
+
         relegatedFromA.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'B'; });
         promotedToA.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'A'; });
         
         relegatedFromB.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'C'; });
         promotedToB.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'B'; });
+
+        relegatedFromC.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'D'; });
+        promotedToC.forEach(t => { this.allTeamsRaw.find(tx => tx.id === t.id).serie = 'C'; });
 
         this.allTeamsRaw.forEach(t => {
             t.roster.forEach(p => {
@@ -2512,7 +2529,8 @@ class BrasileiraoSimulator {
         this.leagues = {
             'A': this.initLeague('A'),
             'B': this.initLeague('B'),
-            'C': this.initLeague('C')
+            'C': this.initLeague('C'),
+            'D': this.initLeague('D')
         };
         
         this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === this.career.team.id);
@@ -2533,7 +2551,8 @@ class BrasileiraoSimulator {
         const posF = document.getElementById('market-filter-pos')?.value || 'ALL';
 
         let all = [];
-        for (const s of ['A', 'B', 'C']) {
+        for (const s of ['A', 'B', 'C', 'D']) {
+            if (!this.leagues[s]) continue;
             this.leagues[s].teams.forEach(t => {
                 if (t.id !== this.career.team?.id) {
                     t.roster.forEach(p => all.push({ ...p, teamName: t.name, teamId: t.id }));

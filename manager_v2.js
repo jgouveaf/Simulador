@@ -1226,9 +1226,12 @@ class BrasileiraoSimulator {
                     
                     <div class="team-showcase">
                         <div class="team-logo-big" style="background: linear-gradient(135deg, ${team.color}44 0%, transparent 100%);">
-                            <img src="${team.logo || ''}" alt="${team.name}" onerror="this.src='amistoso.png'">
+                            <img src="${team.logo || 'logo.png'}" alt="${team.name}" onerror="this.src='logo.png'">
                         </div>
-                        <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
+                        <h2 class="team-name-selection">
+                            ${team.name.toUpperCase()} 
+                            <span class="ovr-chip high" style="vertical-align: middle; margin-left: 10px;">${team.strength}</span>
+                        </h2>
                         <div class="stars-container" style="margin-bottom: 2rem;">${starHTML}</div>
                         
                         <div class="team-stats-selection">
@@ -1358,16 +1361,50 @@ class BrasileiraoSimulator {
     updateCareerDashboard() {
         const lg = this.leagues[this.currentSerie];
         const nextRound = lg.rounds[lg.currentRound];
+        const team = this.career.team;
         
+        // Update Header with more info
+        const starsEl = document.getElementById('user-team-stars');
+        if (starsEl) {
+            starsEl.innerHTML = this.getStarRatingHTML(team);
+        }
+        
+        const nameEl = document.getElementById('user-team-name');
+        if (nameEl) {
+            nameEl.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    ${team.name}
+                    <div class="ovr-chip high" style="font-size: 0.8rem; padding: 2px 6px;">${team.strength}</div>
+                </div>
+            `;
+        }
+
         if (nextRound) {
             const userMatch = nextRound.matches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
             const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
             const opponent = lg.teams.find(t => t.id === opponentId);
             
-            document.getElementById('next-opponent-name').textContent = `vs ${opponent.name}`;
-            document.getElementById('match-details').textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
+            const card = document.getElementById('btn-career-simulate');
+            if (card) {
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                        <div>
+                            <p style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.7rem; margin-bottom: 5px;">PRÓXIMO JOGO</p>
+                            <h3 style="font-size: 2rem; font-weight: 900; margin: 0;">vs ${opponent.name}</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem;">Rodada ${lg.currentRound + 1} • ${nextRound.date.toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 10px;">
+                            <img src="${opponent.logo || 'logo.png'}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.src='logo.png'">
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="btn-fifa-select" style="margin: 0; padding: 12px 30px; font-size: 1rem;">Jogar Partida</button>
+                    </div>
+                `;
+            }
         } else {
-            document.getElementById('next-opponent-name').textContent = `Fim da Temporada`;
+            const card = document.getElementById('btn-career-simulate');
+            if (card) card.innerHTML = `<h3>Fim da Temporada</h3><p>Não há mais jogos agendados.</p>`;
         }
 
         document.getElementById('money-display').textContent = `R$ ${this.career.budget.toLocaleString('pt-BR')}`;
@@ -2045,6 +2082,11 @@ class BrasileiraoSimulator {
 
     calculateTeamOverall(team) {
         if (!team.roster || team.roster.length === 0) return 70;
+        const titulares = team.roster.filter(p => p.status === 'Titular');
+        if (titulares.length === 11) {
+            const sum = titulares.reduce((acc, p) => acc + p.strength, 0);
+            return Math.round(sum / 11);
+        }
         const sum = team.roster.reduce((acc, p) => acc + p.strength, 0);
         return Math.round(sum / team.roster.length);
     }

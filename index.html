@@ -7,6 +7,8 @@
     <!-- Google Fonts for premium look -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style_v2.css">
+    <!-- Font Awesome for stars and UI icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>    <div id="app" class="container">
         <!-- TELA 1: MENU PRINCIPAL (FIFA STYLE) -->
@@ -60,8 +62,9 @@
                     </div>
                 </div>
                 <div class="user-info">
+                    <div id="user-team-stars" style="color: var(--fifa-gold); margin-right: 15px;"></div>
                     <div class="money-badge" id="money-display">R$ 50.000.000</div>
-                    <button class="secondary btn-back-main" style="width: auto; margin: 0; padding: 5px 15px;">Sair da Carreira</button>
+                    <button class="secondary btn-back-main" style="width: auto; margin: 0; padding: 5px 15px;">Sair</button>
                 </div>
             </header>
 
@@ -77,11 +80,13 @@
             <!-- TABS CONTEÚDO -->
             <div id="tab-central" class="tab-content">
                 <div class="career-layout">
-                    <div class="career-card interactive" id="btn-career-simulate" style="grid-column: span 2;">
+                    <div class="career-card interactive" id="btn-career-simulate" style="grid-column: span 2; min-height: 200px;">
                         <p style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.7rem;">PRÓXIMO JOGO</p>
-                        <h3 id="next-opponent-name" style="font-size: 1.5rem; margin: 10px 0;">Time X</h3>
-                        <p id="match-details">Rodada 1 - 18/04/2026</p>
-                        <button style="margin-top: 2rem;">Simular Rodada</button>
+                        <div id="next-match-content">
+                            <h3 id="next-opponent-name" style="font-size: 1.5rem; margin: 10px 0;">Carregando...</h3>
+                            <p id="match-details">Rodada 1</p>
+                        </div>
+                        <button style="margin-top: 1.5rem; width: auto;">Simular Rodada</button>
                     </div>
                     <div class="career-card">
                         <h3>Financeiro</h3>

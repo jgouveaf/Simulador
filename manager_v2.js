@@ -451,65 +451,89 @@ class BrasileiraoSimulator {
             return;
         }
 
-        if (this.isSimulating) return;
-        this.isSimulating = true;
-
-        if (lg.currentRound >= lg.rounds.length) {
-            this.checkPhaseAdvance(lg);
-            this.isSimulating = false;
-            return;
-        }
-
-        const roundMatches = lg.rounds[lg.currentRound].matches;
-        
-        // Find user match
-        let userMatch = null;
-        if (this.career.active && this.career.team) {
-            userMatch = roundMatches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
-        }
-
-        // --- SCHEDULING & BACKGROUND LEAGUES ---
+        // Multi-League Unified Simulation
         ['A', 'B', 'C', 'D'].forEach(serie => {
-            const lg = this.leagues[serie];
-            if (!lg || lg.currentRound >= 38) return;
+            const currentLg = this.leagues[serie];
+            if (!currentLg || currentLg.currentRound >= (currentLg.rounds?.length || 38)) return;
 
-            lg.delayedMatches = lg.delayedMatches || [];
+            // Handle standard leagues (A, B, C)
+            if (serie !== 'D' || currentLg.phase !== 1) {
+                const matches = currentLg.rounds[currentLg.currentRound].matches;
+                matches.forEach(m => {
+                    const isUserMatch = this.career.active && this.career.team && (m.home === this.career.team.id || m.away === this.career.team.id);
+                    if (isUserMatch) {
+                        userMatch = m;
+                        userMatchLeague = currentLg;
+                    } else if (!m.simulated) {
+                        this.simulateMatch(m, currentLg.teams);
+                    }
+                });
+            } else {
+                // Serie D Phase 1 (Groups)
+                for (const gId in currentLg.groups) {
+                    const matches = currentLg.groupRounds[gId][currentLg.currentRound].matches;
+                    matches.forEach(m => {
+                        const isUserMatch = this.career.active && this.career.team && (m.home === this.career.team.id || m.away === this.career.team.id);
+                        if (isUserMatch) {
+                            userMatch = m;
+                            userMatchLeague = currentLg;
+                        } else if (!m.simulated) {
+                            this.simulateMatch(m, currentLg.groups[gId]);
+                        }
+                    });
+                }
+            }
         });
 
         if (userMatch && !userMatch.simulated) {
             const card = document.getElementById('btn-career-simulate');
             if (card) { card.style.pointerEvents = 'none'; card.style.opacity = '0.5'; }
             
-            const home = lg.teams.find(t => t.id === userMatch.home);
-            const away = lg.teams.find(t => t.id === userMatch.away);
+            const home = this.allTeamsRaw.find(t => t.id === userMatch.home);
+            const away = this.allTeamsRaw.find(t => t.id === userMatch.away);
             
             this.startVisualSimulation(userMatch, home, away, () => {
                 if (card) { card.style.pointerEvents = 'auto'; card.style.opacity = '1'; }
-                roundMatches.forEach(m => {
-                    if (m !== userMatch) this.simulateMatch(m, lg.teams);
+                
+                // Finalize turn for all leagues
+                ['A', 'B', 'C', 'D'].forEach(s => {
+                    const l = this.leagues[s];
+                    if (l && l.currentRound < (l.rounds?.length || 38)) {
+                        l.currentRound++;
+                        this.afterRoundSimulated(l, false);
+                    }
                 });
                 
-                lg.currentRound++;
-                this.afterRoundSimulated(lg);
+                this.handleMarketIA(); // Dynamic transfers after each round
+                this.openScreen('career-hub');
             });
         } else {
-            roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
-            lg.currentRound++;
-            this.afterRoundSimulated(lg);
+            // Background turn for all leagues
+            ['A', 'B', 'C', 'D'].forEach(s => {
+                const l = this.leagues[s];
+                if (l && l.currentRound < (l.rounds?.length || 38)) {
+                    l.currentRound++;
+                    this.afterRoundSimulated(l, false);
+                }
+            });
+            this.handleMarketIA();
+            this.openScreen('career-hub');
         }
     }
 
-    afterRoundSimulated(lg) {
-        lg.viewedRound = lg.currentRound < lg.rounds.length ? lg.currentRound : lg.rounds.length - 1;
+    afterRoundSimulated(lg, shouldNavigate = true) {
+        lg.viewedRound = lg.currentRound < (lg.rounds?.length || 38) ? lg.currentRound : (lg.rounds?.length || 38) - 1;
         this.updateTable();
         this.displayRound();
         this.updateStats();
         this.displayCalendar();
-        if (this.career.active) this.updateCareerDashboard();
+        if (this.career.active) {
+            this.updateCareerDashboard();
+            if (shouldNavigate) this.openScreen('career-hub');
+        }
         this.isSimulating = false;
-        this.openScreen('career-hub');
         
-        if (lg.currentRound >= lg.rounds.length) {
+        if (lg.currentRound >= (lg.rounds?.length || 38)) {
             this.checkPhaseAdvance(lg);
         }
     }
@@ -1205,7 +1229,7 @@ class BrasileiraoSimulator {
                             <img src="${team.logo || ''}" alt="${team.name}" onerror="this.src='amistoso.png'">
                         </div>
                         <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
-                        <div class="stars-container" style="margin-top: -10px; margin-bottom: 2rem;">${starHTML}</div>
+                        <div class="stars-container" style="margin-bottom: 2rem;">${starHTML}</div>
                         
                         <div class="team-stats-selection">
                             <div class="stat-box">

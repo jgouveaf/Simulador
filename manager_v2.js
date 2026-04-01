@@ -7,21 +7,8 @@ class BrasileiraoSimulator {
         // Ensure every player has a unique ID for the transfer market
         let playerCounter = 1;
         this.allTeamsRaw.forEach(team => {
-            // Normalize starters to exactly 11
-            const titulares = team.roster.filter(p => p.status === 'Titular');
-            if (titulares.length > 11) {
-                titulares.sort((a, b) => b.strength - a.strength);
-                titulares.slice(11).forEach(p => p.status = 'Reserva');
-            } else if (titulares.length < 11) {
-                const reserves = team.roster.filter(p => p.status === 'Reserva');
-                reserves.sort((a, b) => b.strength - a.strength);
-                reserves.slice(0, 11 - titulares.length).forEach(p => p.status = 'Titular');
-            }
-
             team.roster.forEach(p => {
                 if (!p.id) p.id = playerCounter++;
-                p.importance = this.assignRandomImportance();
-                p.marketValue = this.calculatePlayerValue(p);
             });
             team.strength = this.calculateTeamOverall(team);
         });
@@ -31,65 +18,58 @@ class BrasileiraoSimulator {
             'A': this.initLeague('A'),
             'B': this.initLeague('B'),
             'C': this.initLeague('C'),
-            'D': this.initLeague('D')
+            'D': this.initLeague('D'),
+            'Copa': this.initCopa()
         };
         
         this.career = {
             active: false,
             team: null,
             budget: 50000000,
-            manager: 'João Gouvêa',
-            year: 2026,
-            currentDay: 1,
-            isWindowOpen: true,
-            negotiations: {},
-            calendar: this.generateSeasonCalendar()
+            manager: 'João Gouvêa'
         };
 
-        // UI & Sim State
-        this.isPaused = false;
-        this.simInterval = null;
-        this.queuedSubs = [];
-        this.currentSimMatch = null;
-        this.simCallback = null;
-        this.tempSelected = null;
-        this.selectionIndex = 0;
-        this.selectionSerie = 'A';
-        this.isSimulating = false; // Guard to prevent overlapping simulations
-        this.simGeneration = 0;    // Unique ID for the current active simulation
-        console.log('Brasileirao Manager V2.2 Loaded - FIFA Carousel & Santos Exception Active');
-        this.initCopaDoBrasil();
+        this.activeSimInterval = null;
+        this.activeSimTimeout = null;
+        this.isSimulating = false;
+        this.halftimeReached = false;
+
         this.init();
     }
 
     initLeague(serie) {
-        const teams = this.allTeamsRaw
+        let teams = this.allTeamsRaw
             .filter(t => t.serie === serie)
-            .map(team => {
-                const newTeam = {
-                    ...team,
-                    points: 0,
-                    played: 0,
-                    won: 0,
-                    drawn: 0,
-                    lost: 0,
-                    goalsFor: 0,
-                    goalsAgainst: 0,
-                    goalDiff: 0,
-                    percentage: 0
-                };
-                this.normalizeTeamRoster(newTeam);
-                newTeam.strength = this.calculateTeamOverall(newTeam);
-                return newTeam;
-            });
+            .map(team => ({
+                ...team,
+                points: 0,
+                played: 0,
+                won: 0,
+                drawn: 0,
+                lost: 0,
+                goalsFor: 0,
+                goalsAgainst: 0,
+                goalDiff: 0,
+                percentage: 0,
+                strength: this.calculateTeamOverall(team)
+            }));
 
-        const rounds = this.generateRounds(teams);
+        let rounds = [];
+        if (serie === 'A' || serie === 'B') {
+            rounds = this.generateRounds(teams);
+        } else if (serie === 'C') {
+            rounds = this.generateRounds(teams, true); // Single round
+        } else if (serie === 'D') {
+            return this.initSerieD(teams);
+        }
         
         return {
+            serie,
             teams,
             rounds,
             currentRound: 0,
-            status: 'Iniciada'
+            status: 'Fase Inicial',
+            phase: 1
         };
     }
 
@@ -102,29 +82,96 @@ class BrasileiraoSimulator {
         ];
     }
 
-    initCopaDoBrasil() {
-        const allTeams = this.getAllTeams();
-        allTeams.sort((a,b) => b.strength - a.strength);
-        const top32 = allTeams.slice(0, 32);
-        
-        for(let i = top32.length - 1; i > 0; i--){
-            const j = Math.floor(Math.random() * (i + 1));
-            [top32[i], top32[j]] = [top32[j], top32[i]];
+    initSerieD(allTeams) {
+        const groups = {};
+        allTeams.forEach(t => {
+            if (!groups[t.group]) groups[t.group] = [];
+            groups[t.group].push(t);
+        });
+
+        const groupRounds = {};
+        for (const gId in groups) {
+            groupRounds[gId] = this.generateRounds(groups[gId]); // Double round-robin
         }
 
-        const bracket = [];
-        for(let i = 0; i < 32; i += 2) {
-            bracket.push({ home: top32[i].id, away: top32[i+1].id, isCopa: true, homeScore: null, awayScore: null, simulated: false });
-        }
-
-        this.copaDoBrasil = {
-            active: true,
-            roundIndex: 0,
-            schedule: [8, 14, 20, 26, 32],
-            stages: ['Fase de 16-avos', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'],
-            bracket: bracket,
-            champion: null
+        return {
+            serie: 'D',
+            teams: allTeams,
+            groups,
+            groupRounds,
+            currentRound: 0,
+            status: 'Fase de Grupos',
+            phase: 1,
+            rounds: groupRounds['A1'] // Reference for total rounds
         };
+    }
+
+    initCopa() {
+        // Top 64 teams for Copa
+        const teams = this.allTeamsRaw
+            .sort((a,b) => b.strength - a.strength)
+            .slice(0, 64)
+            .map(t => ({...t, strength: this.calculateTeamOverall(t)}));
+        
+        return {
+            teams,
+            rounds: this.generateKnockoutRounds(teams, "Copa do Brasil"),
+            currentRound: 0,
+            status: 'Iniciada',
+            phase: 'Knockout'
+        };
+    }
+
+    generateKnockoutRounds(teams, name) {
+        // Initial draw
+        let currentTeams = [...teams];
+        this.shuffleArray(currentTeams);
+        
+        let rounds = [];
+        let roundNames = ["Trinta-e-dois avos", "Dezesseis-avos", "Oitavas de Final", "Quartas de Final", "Semifinal", "Final"];
+        
+        let teamsCount = currentTeams.length;
+        let roundIndex = 0;
+        
+        while (teamsCount >= 2) {
+            let roundMatches = [];
+            for (let i = 0; i < teamsCount; i += 2) {
+                roundMatches.push({ 
+                    home: currentTeams[i].id, 
+                    away: currentTeams[i+1].id, 
+                    homeScore: null, 
+                    awayScore: null,
+                    leg: 1
+                });
+            }
+            
+            rounds.push({ name: roundNames[roundIndex] || `Rodada ${roundIndex+1}`, matches: roundMatches, type: 'knockout', leg: 1 });
+            
+            // Second leg
+            let secondLegMatches = roundMatches.map(m => ({
+                home: m.away,
+                away: m.home,
+                homeScore: null,
+                awayScore: null,
+                leg: 2,
+                firstLeg: m
+            }));
+            rounds.push({ name: (roundNames[roundIndex] || `Rodada ${roundIndex+1}`) + " (Volta)", matches: secondLegMatches, type: 'knockout', leg: 2 });
+
+            teamsCount /= 2;
+            roundIndex++;
+            // Mock empty teams for next rounds
+            currentTeams = Array(teamsCount).fill({id: null});
+        }
+        
+        return rounds;
+    }
+
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[array[j]]] = [array[j], array[i]];
+        }
     }
 
     init() {
@@ -132,7 +179,6 @@ class BrasileiraoSimulator {
         this.displayRound();
         this.updateStats();
         this.displayCalendar();
-        this.renderMarket();
         this.setupFriendlySelects();
         
         // Force initial screen to be main menu
@@ -145,17 +191,9 @@ class BrasileiraoSimulator {
         document.getElementById('btn-tab-standings')?.addEventListener('click', () => this.switchTab('standings'));
         document.getElementById('btn-play-friendly')?.addEventListener('click', () => this.playFriendly());
         document.getElementById('btn-close-modal')?.addEventListener('click', () => this.closeModal());
-        document.getElementById('btn-sim-tactic-opener')?.addEventListener('click', () => this.openTacticalModal());
         
         document.querySelectorAll('.btn-back-main').forEach(btn => {
             btn.addEventListener('click', () => this.openScreen('main-menu'));
-        });
-
-        // Ensure Táctica button in simulation screen works
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'btn-sim-tactic-opener' || e.target.closest('#btn-sim-tactic-opener')) {
-                this.openTacticalModal();
-            }
         });
 
         // Keyboard Shortcuts (D-Pad style)
@@ -189,25 +227,6 @@ class BrasileiraoSimulator {
                 this.closeModal();
             }
         };
-
-        // Mentality Logic
-        document.querySelectorAll('.btn-mentality').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.btn-mentality').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                if (this.currentSimMatch) {
-                    this.currentSimMatch.currentMentality = btn.dataset.mentality;
-                }
-            });
-        });
-
-        // Skip button
-        document.getElementById('btn-sim-skip')?.addEventListener('click', () => this.skipSimulation());
-    }
-
-    bindDynamicListeners() {
-        // Tactic modal close
-        document.querySelector('.close-tactical')?.addEventListener('click', () => this.closeTacticalModal());
     }
 
     openScreen(screenId) {
@@ -232,8 +251,9 @@ class BrasileiraoSimulator {
             if (t.dataset.tab === tabId) t.classList.add('active');
         });
 
-        if (tabId === 'standings') this.updateTable();
-        if (tabId === 'fixtures') this.displayCalendar();
+        if (tabId === 'standings') this.renderCareerStandings();
+        if (tabId === 'copa') this.renderCopaBracket();
+        if (tabId === 'fixtures') this.renderCareerFixtures();
         if (tabId === 'transfers') this.renderMarket();
         if (tabId === 'squad') {
             this.switchSubTab('roster');
@@ -257,7 +277,7 @@ class BrasileiraoSimulator {
         if (subTabId === 'roles') this.renderRoles();
     }
 
-    generateRounds(teams) {
+    generateRounds(teams, singleRound = false) {
         const teamIds = teams.map(t => t.id);
         const n = teamIds.length;
         const roundsCount = n - 1;
@@ -280,6 +300,13 @@ class BrasileiraoSimulator {
             schedule.push(matches);
         }
 
+        if (singleRound) {
+            return schedule.map((round, index) => ({
+                matches: round,
+                date: this.generateRoundDate(index)
+            }));
+        }
+
         const secondLeg = schedule.map(round => {
             return round.map(match => ({
                 home: match.away,
@@ -298,8 +325,7 @@ class BrasileiraoSimulator {
     }
 
     generateRoundDate(roundIndex) {
-        const year = this.career?.year || 2026;
-        const start = new Date(year, 3, 18); // April 18
+        const start = new Date(2026, 3, 18); // April 18, 2026
         const date = new Date(start);
         date.setDate(start.getDate() + (roundIndex * 7));
         return date;
@@ -325,7 +351,7 @@ class BrasileiraoSimulator {
         return { atk: avgAtk, def: avgDef };
     }
 
-    simulateMatch(match, leagueTeams, updateStats = true) {
+    simulateMatch(match, leagueTeams) {
         if (match.homeScore !== null) return;
 
         const homeTeam = leagueTeams.find(t => t.id === match.home);
@@ -334,97 +360,45 @@ class BrasileiraoSimulator {
         const homeStats = this.getTeamStats(homeTeam);
         const awayStats = this.getTeamStats(awayTeam);
 
-        // MODELO DE PROBABILIDADE (Sigmoide / Anti-Zebra)
-        const hs = homeTeam.strength;
-        const as = awayTeam.strength;
+        // REALISTIC PARAMETERS
+        const homeAdvantage = 1.15; // Mandatory for realism (15% advantage)
+        const targetMatchMean = 2.37; // User requested balance
 
-        const O_c = hs;
-        const O_v = as;
-        const B = 4; // Bônus Casa
-        const k = 0.22; // Fator de Rigidez (0.15 a 0.25) para diminuir zebras
-        
-        // 1. Diferença de Pontos Ajustada
-        const D = (O_c + B) - O_v;
-
-        // 2. A Fórmula de Probabilidade (Sigmoide)
-        const V_base = 1 / (1 + Math.exp(-k * D));
-        
-        // Probabilidade de Empate decai conforme a diferença de força (D) aumenta
-        let P_E = 0.30 * Math.exp(-Math.pow(D / 15, 2));
-        
-        // Probabilidades base de Vitória (P_V) e Derrota (P_D do mandante)
-        let P_V = V_base * (1 - P_E);
-        let P_D = 1 - P_V - P_E;
-
-        // Trava de "Script de Elite" para evitar derrotas irreais
-        if (D > 20) {
-            P_D = Math.min(P_D, 0.02);
-            P_V = 1 - P_E - P_D;
-        } else if (D < -20) {
-            P_V = Math.min(P_V, 0.02);
-            P_D = 1 - P_E - P_V;
-        }
-
-        // 3. Determinar Resultado
-        const r = Math.random();
-        let desiredOutcome = '';
-        if (r < P_V) desiredOutcome = 'HOME_WIN';
-        else if (r < P_V + P_E) desiredOutcome = 'DRAW';
-        else desiredOutcome = 'AWAY_WIN';
-
-        // 6. Gerar Placar (Poisson) atrelado ao Resultado Sorteado
+        // A small amount of random "game-day" mood variation (+-10%)
         const gameVibe = 0.9 + Math.random() * 0.2;
-        const targetMatchMean = 2.37;
-        
-        let hMean = ((hs * 1.05) / as) * (targetMatchMean / 2) * gameVibe;
-        let aMean = (as / (hs * 1.05)) * (targetMatchMean / 2) * gameVibe;
 
-        let hScore = -1, aScore = -1;
-        let attempts = 0;
+        // Formula: Score is a function of (Attack Ratio / Defense Power)
+        // Using a power of 2.8 makes the strength gaps very impactful, like top teams dominating.
+        // homeMean = (HomeAtk * Factor / AwayDef) * baseline
+        const hRatio = Math.pow((homeStats.atk * homeAdvantage) / awayStats.def, 2.8);
+        const aRatio = Math.pow(awayStats.atk / homeStats.def, 2.8);
+        const totalRatio = hRatio + aRatio;
 
-        while (attempts < 150) {
-            hScore = this.poissonRandom(hMean);
-            aScore = this.poissonRandom(aMean);
+        let hMean = (hRatio / totalRatio) * targetMatchMean * gameVibe;
+        let aMean = (aRatio / totalRatio) * targetMatchMean * gameVibe;
 
-            // Cortar goleadas extremas
-            if (hScore > 8 || aScore > 8) { attempts++; continue; }
+        // DIXON-COLES Style Adjustment for low scores (0-0, 1-1, 1-0, 0-1)
+        // We slightly inflate the probability of these scores by adjusting the mean or nudging outcomes.
+        let hScore = this.poissonRandom(hMean);
+        let aScore = this.poissonRandom(aMean);
 
-            if (desiredOutcome === 'HOME_WIN' && hScore > aScore) break;
-            if (desiredOutcome === 'DRAW' && hScore === aScore) break;
-            if (desiredOutcome === 'AWAY_WIN' && aScore > hScore) break;
-            
-            attempts++;
+        // Nudge to avoid unrealistic draws between teams with huge strength gaps
+        if (hScore === aScore && Math.random() < 0.45) {
+            const gap = homeTeam.strength - awayTeam.strength;
+            if (gap > 6 && Math.random() < 0.7) hScore++; // Favorite (Home) scores one more
+            else if (gap < -6 && Math.random() < 0.7) aScore++; // Favorite (Away) scores one more
         }
 
-        // Caso de failsafe
-        if (attempts >= 150) {
-            if (desiredOutcome === 'HOME_WIN') { hScore = 1; aScore = 0; }
-            else if (desiredOutcome === 'DRAW') { hScore = 1; aScore = 1; }
-            else { hScore = 0; aScore = 1; }
+        // Brazilian League typical "Upset" chance (Z4 winning against G4 at home)
+        if (homeTeam.strength < awayTeam.strength - 10 && Math.random() < 0.15) {
+             // Home underdog "bus parking" logic: low scores preferred.
+             if (hScore < aScore) { hScore = aScore; } // Force at least a draw for the upset
         }
 
-        if (match.isCopa && hScore === aScore) {
-            if (Math.random() > 0.5) hScore++; else aScore++;
-        }
+        match.homeScore = Math.min(hScore, 8); // Rare to see 9+ in real life
+        match.awayScore = Math.min(aScore, 8);
 
-        match.homeScore = hScore;
-        match.awayScore = aScore;
- 
-        match.scorers = [];
-        const assignScorers = (team, score) => {
-            const outfielders = team.roster.filter(p => p.status === 'Titular' && p.pos !== 'GOL' && p.pos !== 'GK');
-            const fallback = outfielders.length > 0 ? outfielders : team.roster;
-            for(let i=0; i<score; i++) {
-                if (fallback.length > 0) {
-                    const p = fallback[Math.floor(Math.random() * fallback.length)];
-                    match.scorers.push({ teamId: team.id, playerId: p.id });
-                }
-            }
-        };
-        assignScorers(homeTeam, match.homeScore);
-        assignScorers(awayTeam, match.awayScore);
-
-        if (updateStats) this.updateLeagueStandings(match, leagueTeams);
+        this.updateLeagueStandings(match, leagueTeams);
     }
 
     poissonRandom(mean) {
@@ -461,56 +435,37 @@ class BrasileiraoSimulator {
         away.goalDiff = away.goalsFor - away.goalsAgainst;
         home.percentage = home.played > 0 ? ((home.points / (home.played * 3)) * 100).toFixed(1) : 0;
         away.percentage = away.played > 0 ? ((away.points / (away.played * 3)) * 100).toFixed(1) : 0;
-
-        if (match.scorers) {
-            match.scorers.forEach(s => {
-                const team = s.teamId === home.id ? home : away;
-                const p = team.roster.find(px => px.id === s.playerId);
-                if (p) p.seasonGoals = (p.seasonGoals || 0) + 1;
-            });
-        }
-
-        // Rewards for player's team
-        if (this.career.active) {
-            if (match.home === this.career.team?.id || match.away === this.career.team?.id) {
-                const isHome = match.home === this.career.team.id;
-                const userScore = isHome ? match.homeScore : match.awayScore;
-                const oppScore = isHome ? match.awayScore : match.homeScore;
-
-                if (userScore > oppScore) {
-                    this.career.budget += 1500000; // Reward R$ 1.5M for win
-                } else if (userScore === oppScore) {
-                    this.career.budget += 500000; // Reward R$ 500k for draw
-                }
-                this.updateCareerDashboard();
-            }
-        }
     }
 
     simulateRound() {
-        if (this.isSimulating) {
-            console.log("Already simulating...");
+        const lg = this.leagues[this.currentSerie];
+        if (!lg) return;
+
+        if (this.currentSerie === 'Copa') {
+            this.simulateCopaRound();
             return;
         }
-        
-        const card = document.getElementById('btn-career-simulate');
-        if (card) {
-            card.style.pointerEvents = 'none';
-            card.style.opacity = '0.5';
+
+        if (this.currentSerie === 'D' && lg.phase === 1) {
+            this.simulateSerieDGroups();
+            return;
         }
-        
-        console.log("Simulating Round for ALL leagues...");
+
+        if (this.isSimulating) return;
         this.isSimulating = true;
 
-        const mainLg = this.leagues[this.currentSerie];
-        if (!mainLg || mainLg.currentRound >= 38) {
+        if (lg.currentRound >= lg.rounds.length) {
+            this.checkPhaseAdvance(lg);
             this.isSimulating = false;
             return;
         }
 
-        if (this.copaDoBrasil && this.copaDoBrasil.active && this.copaDoBrasil.roundIndex < 5 && this.copaDoBrasil.schedule[this.copaDoBrasil.roundIndex] === mainLg.currentRound) {
-            this.simulateCopaDoBrasilRound();
-            return;
+        const roundMatches = lg.rounds[lg.currentRound].matches;
+        
+        // Find user match
+        let userMatch = null;
+        if (this.career.active && this.career.team) {
+            userMatch = roundMatches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
         }
 
         // --- SCHEDULING & BACKGROUND LEAGUES ---
@@ -519,400 +474,428 @@ class BrasileiraoSimulator {
             if (!lg || lg.currentRound >= 38) return;
 
             lg.delayedMatches = lg.delayedMatches || [];
-            const roundMatches = lg.rounds[lg.currentRound].matches;
-            
-            let userMatch = null;
-            if (serie === this.currentSerie && this.career.active && this.career.team) {
-                userMatch = roundMatches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
-            }
-
-            const matchesToSimulateNow = [];
-
-            // 1. Process standard matches for this week (with chance to delay)
-            roundMatches.forEach(m => {
-                if (m === userMatch) {
-                    matchesToSimulateNow.push(m); // Never delay the user's match
-                } else if (!m.simulated) {
-                    // 15% chance to randomly delay a match if we're not at the very end
-                    if (lg.currentRound < 35 && Math.random() < 0.15) {
-                        lg.delayedMatches.push(m);
-                    } else {
-                        matchesToSimulateNow.push(m);
-                    }
-                }
-            });
-
-            // 2. Play some previously delayed midweek matches
-            const remainingDelayed = [];
-            lg.delayedMatches.forEach(m => {
-                // By round 36, force all delayed matches to play so that R37/R38 are synced
-                if (lg.currentRound >= 35 || Math.random() < 0.40) {
-                    matchesToSimulateNow.push(m);
-                } else {
-                    remainingDelayed.push(m);
-                }
-            });
-            lg.delayedMatches = remainingDelayed;
-
-            // 3. Play advanced matches (adiantar jogos do futuro)
-            if (lg.currentRound < 34 && Math.random() < 0.15 && lg.rounds[lg.currentRound + 1]) {
-                const nextMatches = lg.rounds[lg.currentRound + 1].matches;
-                // Safely avoid pulling the user's upcoming match
-                const pId = (this.career.active && this.career.team) ? this.career.team.id : null;
-                const advIdx = nextMatches.findIndex(m => !pId || (m.home !== pId && m.away !== pId));
-                
-                if (advIdx > -1) {
-                    const advM = nextMatches.splice(advIdx, 1)[0];
-                    matchesToSimulateNow.push(advM);
-                    roundMatches.push(advM); // ADD TO CURRENT ROUND SO IT DISPLAYS IN UI
-                }
-            }
-
-            // --- EXECUTION ---
-            if (serie === this.currentSerie && userMatch && !userMatch.simulated) {
-                // Hold background matches in queue while Visual Sim plays out
-                this.pendingMatchesToSimulate = matchesToSimulateNow.filter(m => m !== userMatch);
-            } else {
-                matchesToSimulateNow.forEach(m => {
-                    if (!m.simulated) this.simulateMatch(m, lg.teams);
-                });
-                lg.currentRound++;
-                lg.viewedRound = lg.currentRound < 38 ? lg.currentRound : 37;
-            }
         });
 
-        // --- USER VISUAL SIMULATION ---
-        const roundMatchesUser = mainLg.rounds[mainLg.currentRound]?.matches;
-        let userMatchRun = null;
-        if (roundMatchesUser && this.career.active && this.career.team) {
-            userMatchRun = roundMatchesUser.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+        if (userMatch && !userMatch.simulated) {
+            const card = document.getElementById('btn-career-simulate');
+            if (card) { card.style.pointerEvents = 'none'; card.style.opacity = '0.5'; }
+            
+            const home = lg.teams.find(t => t.id === userMatch.home);
+            const away = lg.teams.find(t => t.id === userMatch.away);
+            
+            this.startVisualSimulation(userMatch, home, away, () => {
+                if (card) { card.style.pointerEvents = 'auto'; card.style.opacity = '1'; }
+                roundMatches.forEach(m => {
+                    if (m !== userMatch) this.simulateMatch(m, lg.teams);
+                });
+                
+                lg.currentRound++;
+                this.afterRoundSimulated(lg);
+            });
+        } else {
+            roundMatches.forEach(m => this.simulateMatch(m, lg.teams));
+            lg.currentRound++;
+            this.afterRoundSimulated(lg);
+        }
+    }
+
+    afterRoundSimulated(lg) {
+        lg.viewedRound = lg.currentRound < lg.rounds.length ? lg.currentRound : lg.rounds.length - 1;
+        this.updateTable();
+        this.displayRound();
+        this.updateStats();
+        this.displayCalendar();
+        if (this.career.active) this.updateCareerDashboard();
+        this.isSimulating = false;
+        this.openScreen('career-hub');
+        
+        if (lg.currentRound >= lg.rounds.length) {
+            this.checkPhaseAdvance(lg);
+        }
+    }
+
+    simulateSerieDGroups() {
+        const lg = this.leagues['D'];
+        for (const gId in lg.groups) {
+            const matches = lg.groupRounds[gId][lg.currentRound].matches;
+            matches.forEach(m => this.simulateMatch(m, lg.groups[gId]));
+        }
+        lg.currentRound++;
+        this.afterRoundSimulated(lg);
+    }
+
+    simulateCopaRound() {
+        const lg = this.leagues['Copa'];
+        const round = lg.rounds[lg.currentRound];
+        round.matches.forEach(m => this.simulateKnockoutMatch(m, lg));
+        lg.currentRound++;
+        
+        if (lg.currentRound < lg.rounds.length && lg.rounds[lg.currentRound].leg === 2) {
+            // Immediately simulate second leg? No, let's keep it round by round.
         }
 
-        if (userMatchRun && !userMatchRun.simulated) {
-            const home = mainLg.teams.find(t => t.id === userMatchRun.home);
-            const away = mainLg.teams.find(t => t.id === userMatchRun.away);
-            
-            if (home && away) {
-                let completed = false;
-                this.startVisualSimulation(userMatchRun, home, away, () => {
-                    if (completed) return;
-                    completed = true;
+        if (lg.currentRound % 2 === 0) {
+            this.advanceKnockoutPhase(lg);
+        }
+        
+        this.afterRoundSimulated(lg);
+    }
 
-                    console.log("Visual sim completed. Resolving pending background matches.");
-                    if (this.pendingMatchesToSimulate) {
-                        this.pendingMatchesToSimulate.forEach(m => {
-                            if (!m.simulated) this.simulateMatch(m, mainLg.teams);
-                        });
-                        this.pendingMatchesToSimulate = null;
-                    }
-
-                    mainLg.currentRound++;
-                    mainLg.viewedRound = mainLg.currentRound < 38 ? mainLg.currentRound : 37;
-                    this.career.currentDay += 7;
-                    
-                    this.updateTable();
-                    this.displayRound();
-                    this.updateStats();
-                    this.displayCalendar();
-                    if (this.career.active) this.updateCareerDashboard();
-                    this.isSimulating = false;
-                    this.openScreen('career-hub');
-                    
-                    if (mainLg.currentRound === 38) {
-                        setTimeout(() => this.finishSeason(), 1000);
-                    }
-                });
-            }
-        } else {
-            // No User Visual Sim triggered (Fallback)
-            this.career.currentDay += 7;
-            this.updateTable();
-            this.displayRound();
-            this.updateStats();
-            this.displayCalendar();
-            if (this.career.active) this.updateCareerDashboard();
-            this.isSimulating = false;
+    simulateKnockoutMatch(match, lg) {
+        if (match.homeScore !== null) return;
+        
+        const homeTeam = this.allTeamsRaw.find(t => t.id === match.home);
+        const awayTeam = this.allTeamsRaw.find(t => t.id === match.away);
+        
+        const stats = this.getTeamStats(homeTeam);
+        const awayStats = this.getTeamStats(awayTeam);
+        
+        // Simple fast sim for knockout
+        const hAdv = match.leg === 1 ? 1.1 : 1.0;
+        const hMean = (stats.atk * hAdv) / awayStats.def * 1.2;
+        const aMean = (awayStats.atk) / stats.def * 1.1;
+        
+        match.homeScore = this.poissonRandom(hMean);
+        match.awayScore = this.poissonRandom(aMean);
+        
+        if (match.leg === 2) {
+            const first = match.firstLeg;
+            const aggHome = match.awayScore + first.homeScore;
+            const aggAway = match.homeScore + first.awayScore;
             
-            if (mainLg.currentRound === 38) {
-                setTimeout(() => this.finishSeason(), 1000);
+            if (aggHome === aggAway) {
+                // Penalties nudge
+                if (Math.random() > 0.5) match.homeScore++; 
+                else match.awayScore++;
             }
         }
     }
 
-    simulateCopaDoBrasilRound() {
-        const cb = this.copaDoBrasil;
-        let userMatch = null;
-        if (this.career.active && this.career.team) {
-            userMatch = cb.bracket.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
+    checkPhaseAdvance(lg) {
+        if (lg.serie === 'C' && lg.phase === 1) {
+            this.advanceSerieCPhase2(lg);
+        } else if (lg.serie === 'D' && lg.phase === 1) {
+            this.advanceSerieDPhase2(lg);
+        }
+    }
+
+    advanceSerieCPhase2(lg) {
+        const sorted = [...lg.teams].sort((a,b) => b.points - a.points);
+        const top8 = sorted.slice(0, 8);
+        
+        lg.phase = 2;
+        lg.status = 'Segunda Fase (Grupos)';
+        
+        const group1 = [top8[0], top8[3], top8[4], top8[7]];
+        const group2 = [top8[1], top8[2], top8[5], top8[6]];
+        
+        lg.groups = { 'G1': group1, 'G2': group2 };
+        lg.groupRounds = {
+            'G1': this.generateRounds(group1),
+            'G2': this.generateRounds(group2)
+        };
+        lg.rounds = lg.groupRounds['G1'];
+        lg.currentRound = 0;
+        alert("Série C: Fase 1 encerrada! Grupos da Fase 2 definidos.");
+    }
+
+    advanceSerieDPhase2(lg) {
+        lg.phase = 2;
+        lg.status = 'Mata-mata';
+        
+        const qualifiers = [];
+        for (const gId in lg.groups) {
+            const sorted = [...lg.groups[gId]].sort((a,b) => b.points - a.points);
+            qualifiers.push(...sorted.slice(0, 4));
+        }
+        
+        lg.rounds = this.generateKnockoutRounds(qualifiers, "Série D Knockout");
+        lg.currentRound = 0;
+        alert("Série D: Fase de Grupos encerrada! Início do Mata-mata.");
+    }
+
+    advanceKnockoutPhase(lg) {
+        const round = lg.rounds[lg.currentRound - 1]; // Round just finished (leg 2)
+        const winners = [];
+        
+        round.matches.forEach(m => {
+            const first = m.firstLeg;
+            const aggHome = m.awayScore + first.homeScore;
+            const aggAway = m.homeScore + first.awayScore;
+            if (aggHome >= aggAway) winners.push(this.allTeamsRaw.find(t => t.id === m.away));
+            else winners.push(this.allTeamsRaw.find(t => t.id === m.home));
+        });
+        
+        if (winners.length < 2) {
+            lg.status = "Encerrada";
+            return;
         }
 
-        const resolveBracket = () => {
-            cb.bracket.forEach(m => {
-                if (!m.simulated) {
-                    this.simulateMatch(m, this.getAllTeams(), false);
-                    m.simulated = true;
-                }
-            });
-
-            if (cb.roundIndex < 4) {
-                const nextBracket = [];
-                for (let i = 0; i < cb.bracket.length; i += 2) {
-                    const m1 = cb.bracket[i];
-                    const m2 = cb.bracket[i+1];
-                    const win1 = m1.homeScore > m1.awayScore ? m1.home : m1.away;
-                    const win2 = m2.homeScore > m2.awayScore ? m2.home : m2.away;
-                    nextBracket.push({ home: win1, away: win2, isCopa: true, homeScore: null, awayScore: null, simulated: false });
-                }
-                cb.bracket = nextBracket;
-            } else if (cb.roundIndex === 4) {
-                const finalM = cb.bracket[0];
-                const champId = finalM.homeScore > finalM.awayScore ? finalM.home : finalM.away;
-                cb.champion = this.getAllTeams().find(t => t.id === champId);
-            }
-            cb.roundIndex++;
-            
-            this.updateCareerDashboard();
-            this.isSimulating = false;
-        };
-
-        if (userMatch && !userMatch.simulated) {
-            const home = this.getAllTeams().find(t => t.id === userMatch.home);
-            const away = this.getAllTeams().find(t => t.id === userMatch.away);
-            if (home && away) {
-                let completed = false;
-                this.startVisualSimulation(userMatch, home, away, () => {
-                    if (completed) return;
-                    completed = true;
-                    resolveBracket();
-                    this.openScreen('career-hub');
-                });
-            } else resolveBracket();
-        } else resolveBracket();
+        // Draw next round
+        const nextRoundMatches = [];
+        for (let i = 0; i < winners.length; i += 2) {
+            nextRoundMatches.push({ home: winners[i].id, away: winners[i+1].id, homeScore: null, awayScore: null, leg: 1 });
+        }
+        
+        const nextRoundIndex = lg.rounds.length;
+        lg.rounds.push({ name: `Fase Seguinte (Ida)`, matches: nextRoundMatches, type: 'knockout', leg: 1 });
+        
+        const secondLegMatches = nextRoundMatches.map(m => ({
+            home: m.away,
+            away: m.home,
+            homeScore: null,
+            awayScore: null,
+            leg: 2,
+            firstLeg: m
+        }));
+        lg.rounds.push({ name: `Fase Seguinte (Volta)`, matches: secondLegMatches, type: 'knockout', leg: 2 });
     }
 
     startVisualSimulation(match, home, away, callback) {
-        // INCREMENT GENERATION TO KILL PREVIOUS ZOMBIE INTERVALS
-        this.simGeneration++;
-        const currentGen = this.simGeneration;
+        console.log("Opening visual simulation screen...");
         
-        if (this.simInterval) {
-            clearInterval(this.simInterval);
-            this.simInterval = null;
-        }
-        this.isPaused = false;
-        this.currentSimHome = home;
-        this.currentSimAway = away;
+        // Safety Clear
+        if (this.activeSimInterval) clearInterval(this.activeSimInterval);
+        if (this.activeSimTimeout) clearTimeout(this.activeSimTimeout);
+        
         this.openScreen('match-simulation');
+        console.log("Screen active. Setting up UI...");
         
-        // Initialize ratings
-        [home, away].forEach(t => t.roster.forEach(p => p.currentRating = 6.0));
-        
+        let simFinished = false;
+        const finishMatch = (isSkipped = false) => {
+            if (simFinished) return;
+            simFinished = true;
+            
+            if (this.activeSimInterval) clearInterval(this.activeSimInterval);
+            if (this.activeSimTimeout) clearTimeout(this.activeSimTimeout);
+            
+            if (isSkipped) {
+                match.homeScore = tempMatch.homeScore;
+                match.awayScore = tempMatch.awayScore;
+            } else {
+                match.homeScore = homeScore;
+                match.awayScore = awayScore;
+            }
+            
+            match.simulated = true;
+            
+            // IMPORTANT: Update league tables if not a friendly
+            if (!match.isFriendly) {
+                const lg = this.leagues[this.currentSerie];
+                if (lg) this.updateLeagueStandings(match, lg.teams);
+            }
+            
+            callback();
+        };
+
         // Setup UI
         document.getElementById('sim-home-name').textContent = home.name.toUpperCase();
         document.getElementById('sim-away-name').textContent = away.name.toUpperCase();
-        const simHomeLogo = document.getElementById('sim-home-logo');
-        const simAwayLogo = document.getElementById('sim-away-logo');
-        simHomeLogo.style.backgroundColor = home.color;
-        simAwayLogo.style.backgroundColor = away.color;
-        simHomeLogo.innerHTML = home.logo ? `<img src="${home.logo}" alt="${home.name}" style="width:100%;height:100%;object-fit:contain;padding:4px;">` : `<span style="font-size:0.9rem;font-weight:900;color:#fff;">${home.short||home.name.substring(0,3)}</span>`;
-        simAwayLogo.innerHTML = away.logo ? `<img src="${away.logo}" alt="${away.name}" style="width:100%;height:100%;object-fit:contain;padding:4px;">` : `<span style="font-size:0.9rem;font-weight:900;color:#fff;">${away.short||away.name.substring(0,3)}</span>`;
+        
+        const homeLogoEl = document.getElementById('sim-home-logo');
+        const awayLogoEl = document.getElementById('sim-away-logo');
+        
+        if (home.logo) {
+            homeLogoEl.style.backgroundImage = `url(${home.logo})`;
+            homeLogoEl.style.backgroundSize = 'contain';
+            homeLogoEl.style.backgroundRepeat = 'no-repeat';
+            homeLogoEl.style.backgroundPosition = 'center';
+            homeLogoEl.style.backgroundColor = 'transparent';
+        } else {
+            homeLogoEl.style.backgroundColor = home.color;
+            homeLogoEl.style.backgroundImage = 'none';
+        }
+
+        if (away.logo) {
+            awayLogoEl.style.backgroundImage = `url(${away.logo})`;
+            awayLogoEl.style.backgroundSize = 'contain';
+            awayLogoEl.style.backgroundRepeat = 'no-repeat';
+            awayLogoEl.style.backgroundPosition = 'center';
+            awayLogoEl.style.backgroundColor = 'transparent';
+        } else {
+            awayLogoEl.style.backgroundColor = away.color;
+            awayLogoEl.style.backgroundImage = 'none';
+        }
         document.getElementById('sim-score-value').textContent = "0 - 0";
         document.getElementById('sim-time-value').textContent = "00:00";
         
-        // Match State for this session
-        match.usedSubs = 0;
-        match.subLimit = 5;
-        this.queuedSubs = [];
-
-        const ticker = document.getElementById('sim-events-ticker');
-        ticker.innerHTML = '<div class="sys-msg">Partida prestes a começar...</div>';
+        // Setup Players
+        const homeList = document.getElementById('sim-home-players');
+        const awayList = document.getElementById('sim-away-players');
+        homeList.innerHTML = '';
+        awayList.innerHTML = '';
         
-        // Match state for display
-        match.events = match.events || []; // {type, min, player, team}
-
-        const addMsg = (min, text, type = '', player = null) => {
-            // ONLY ADD MESSAGE IF WE ARE IN THE CURRENT GENERATION
-            if (this.simGeneration !== currentGen) return;
-            
-            if (player) {
-                match.events.push({ type: type, min: min, player: player, team: player.team || (text.includes(home.name) ? home.name : away.name) });
-            }
-
-            const entry = document.createElement('div');
-            entry.className = `event-entry ${type}`;
-            entry.innerHTML = `
-                <div class="event-time">${min}'</div>
-                <div class="event-text">${text}</div>
-            `;
-            ticker.appendChild(entry);
-            requestAnimationFrame(() => {
-                ticker.scrollTop = ticker.scrollHeight;
+        const renderSimPlayers = (team, container) => {
+            team.roster.filter(p => p.status === 'Titular').forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'sim-player-row';
+                row.innerHTML = `
+                    <div class="sim-player-pos">${p.pos}</div>
+                    <div class="sim-player-name">${p.name}</div>
+                    <div class="sim-player-status"><div class="sim-player-bar"></div></div>
+                `;
+                container.appendChild(row);
             });
         };
-              const attackPhrases = ["{team} ataca com perigo!", "{team} troca passes no campo ofensivo.", "Chance clara para o {team}!", "Pressão total do {team}!", "Cruzamento na área do {team}!", "{team} tenta o chute de longe!"];
-        const genericPhrases = ["Jogo disputado no meio de campo.", "Muita marcação de ambos os lados.", "Posse de bola equilibrada.", "Partida truncada até agora.", "Torcida canta alto no estádio!"];
-        const foulPhrases = ["Falta marcada para o {team}.", "Jogo parado. Falta do {team}.", "Cartão amarelo mostrado para o {team}!", "Infração do {team} no setor defensivo."];
-
-        const tempMatch = { ...match, homeScore: null, awayScore: null };
-        this.simulateMatch(tempMatch, [home, away], false);
-        match.tempRes = { homeScore: tempMatch.homeScore, awayScore: tempMatch.awayScore };
-        match.scorers = tempMatch.scorers || [];
         
+        renderSimPlayers(home, homeList);
+        renderSimPlayers(away, awayList);
+        
+        // Setup Pitch Dots
+        const pitch = document.getElementById('sim-pitch-players');
+        pitch.innerHTML = '';
+        
+        const createDots = (team, isHome) => {
+            team.roster.filter(p => p.status === 'Titular').forEach((p, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'player-dot';
+                dot.style.backgroundColor = team.color;
+                dot.style.left = isHome ? '25%' : '75%';
+                dot.style.top = `${10 + (i * 8)}%`;
+                dot.id = `player-dot-${p.id}`;
+                pitch.appendChild(dot);
+            });
+        };
+        
+        createDots(home, true);
+        createDots(away, false);
+        
+        // Pre-simulate the match result to know when goals happen
+        const tempMatch = { ...match, homeScore: null, awayScore: null };
+        this.simulateMatch(tempMatch, [home, away]);
+        
+        // Distribution of goals over time
         const goalEvents = [];
-        match.scorers.forEach(s => {
-            const isHome = s.teamId === home.id;
-            goalEvents.push({ team: isHome ? home.name : away.name, playerId: s.playerId, min: Math.floor(Math.random() * 88) + 1 });
-        });
+        for(let i=0; i<tempMatch.homeScore; i++) goalEvents.push({ team: 'home', min: Math.floor(Math.random() * 90) + 1 });
+        for(let i=0; i<tempMatch.awayScore; i++) goalEvents.push({ team: 'away', min: Math.floor(Math.random() * 90) + 1 });
         
         let simMinute = 0;
         let homeScore = 0;
         let awayScore = 0;
-        this.isPaused = false;
-        this.currentSimMatch = match;
-        this.simCallback = callback;
-
-        const runSimTick = () => {
-            if (this.simGeneration !== currentGen || match.simulated) {
-                if (localIntervalId) clearInterval(localIntervalId);
-                return;
-            }
-
-            if (this.isPaused) return;
-
-            simMinute++;
-            const timeEl = document.getElementById('sim-time-value');
-            if (timeEl) timeEl.textContent = `${simMinute.toString().padStart(2, '0')}:00`;
-            
-            if (simMinute === 1) addMsg(1, "Apita o árbitro! Começa a partida.", "sys-msg");
-            
-            // Random Cards
-            if (Math.random() < 0.035) {
-                const team = Math.random() < 0.5 ? home : away;
-                const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
-                addMsg(simMinute, `CARTÃO AMARELO para ${p.name} (${team.name})!`, "warning", {name: p.name, id: p.id, type: 'card'});
-            }
-
-            // Subs
-            if (this.queuedSubs.length > 0 && Math.random() < 0.3) {
-                this.processQueuedSubs(home, away, addMsg, simMinute);
-            }
-
-            // Half-time Pause Logic
-            if (simMinute === 45) {
-                this.pauseSim();
-                addMsg(45, "Intervalo de jogo!", "sys-msg");
-                const btn = document.getElementById('btn-next-half');
-                if (btn) {
-                    btn.style.display = 'block';
-                    btn.onclick = () => {
-                        btn.style.display = 'none';
-                        this.unpauseSim();
-                        addMsg(45, "Começa o segundo tempo!", "sys-msg");
-                    };
-                }
-            }
-
-            // Random Performance Updates (Passes/Tackles/Actions)
-            if (this.isPaused) return; // Guard
-            if (Math.random() < 0.2) {
-                const team = Math.random() < 0.5 ? home : away;
-                const p = team.roster.filter(p => p.status === 'Titular')[Math.floor(Math.random() * 11)];
-                const change = Math.random() < 0.65 ? 0.1 : -0.1;
-                p.currentRating = Math.max(3, Math.min(10, p.currentRating + change));
-            }
-
-            const goalsNow = goalEvents.filter(g => g.min === simMinute);
-            goalsNow.forEach(g => {
-                const team = (g.team === home.name) ? home : away;
-                const p = team.roster.find(px => px.id === g.playerId) || team.roster.filter(p => p.status === 'Titular')[0];
-                
-                p.currentRating = Math.min(10, p.currentRating + 1.25); // Goal significant boost
-
-                if (g.team === home.name) homeScore++;
-                else awayScore++;
-                
-                const scoreEl = document.getElementById('sim-score-value');
-                if (scoreEl) scoreEl.textContent = `${homeScore} - ${awayScore}`;
-                
-                addMsg(simMinute, `<strong>GOOOOOL DO ${g.team.toUpperCase()}!!</strong> ${p.name} balança as redes!`, "goal", {name: p.name, id: p.id, type: 'goal'});
-            });
-
-            if (goalsNow.length === 0 && Math.random() < 0.1) {
-                const rand = Math.random();
-                if (rand < 0.4) {
-                    const t = Math.random() < 0.5 ? home : away;
-                    const p = attackPhrases[Math.floor(Math.random() * attackPhrases.length)].replace('{team}', t.name);
-                    addMsg(simMinute, p);
-                } else if (rand < 0.6) {
-                    const t = Math.random() < 0.5 ? home : away;
-                    const p = foulPhrases[Math.floor(Math.random() * foulPhrases.length)].replace('{team}', t.name);
-                    addMsg(simMinute, p, "warning");
-                } else {
-                    addMsg(simMinute, genericPhrases[Math.floor(Math.random() * genericPhrases.length)]);
-                }
-            }
-
-            if (simMinute >= 90 && !match.simulated) {
-                match.simulated = true; 
-                if (localIntervalId) clearInterval(localIntervalId);
-                this.simInterval = null;
-                
-                addMsg(90, "Fim de jogo!", "sys-msg");
-                match.homeScore = homeScore;
-                match.awayScore = awayScore;
-                
-                if (!match.isFriendly) {
-                    const lg = this.leagues[this.currentSerie];
-                    if (lg) {
-                        this.updateLeagueStandings(match, lg.teams);
-                        // Trigger next season if last round
-                        if (lg.currentRound === 38) {
-                            setTimeout(() => this.finishSeason(), 3000);
-                        }
-                    }
-                }
-                setTimeout(() => callback(), 2000);
-            }
-        };
-
-        const localIntervalId = setInterval(runSimTick, 450);
-        this.simInterval = localIntervalId; 
-
-        // Sidebar lists
-        const renderSimPlayers = (team, container) => {
-            if (!container) return;
-            container.innerHTML = '';
-            team.roster.filter(p => p.status === 'Titular').forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'sim-player-row';
-                row.innerHTML = `<div class="sim-player-pos">${p.pos}</div><div class="sim-player-name">${p.name}</div>`;
-                container.appendChild(row);
-            });
-        };
-        renderSimPlayers(home, document.getElementById('sim-home-players'));
-        renderSimPlayers(away, document.getElementById('sim-away-players'));
-    }
-
-    skipSimulation() {
-        if (!this.career.active || !this.currentSimMatch || this.currentSimMatch.simulated) return;
         
-        // Finalize match immediately
-        this.currentSimMatch.simulated = true;
-        if (this.simInterval) {
-            clearInterval(this.simInterval);
-            this.simInterval = null;
-        }
+        const ball = document.getElementById('sim-pitch-ball');
+        
+        // --- COMMENTARY LOGIC ---
+        const logEvent = (text) => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '10px';
+            row.style.padding = '8px';
+            row.style.borderLeft = '4px solid var(--fifa-cyan)';
+            row.style.background = 'rgba(0,0,0,0.2)';
+            row.style.marginBottom = '5px';
+            row.style.fontSize = '0.8rem';
+            row.style.animation = 'fadeIn 0.3s ease';
+            
+            row.innerHTML = `
+                <div style="font-weight: 800; color: var(--fifa-cyan); min-width: 25px;">${simMinute}'</div>
+                <div style="flex: 1;">${text}</div>
+            `;
+            awayList.prepend(row);
+        };
 
-        // Just use the pre-calculated results from startVisualSimulation
-        this.currentSimMatch.homeScore = this.currentSimMatch.tempRes?.homeScore || 0;
-        this.currentSimMatch.awayScore = this.currentSimMatch.tempRes?.awayScore || 0;
+        logEvent(`APITA O ÁRBITRO! COMEÇA A PARTIDA ENTRE ${home.name.toUpperCase()} E ${away.name.toUpperCase()}!`);
 
-        if (!this.currentSimMatch.isFriendly) {
-            const lg = this.leagues[this.currentSerie];
-            if (lg) this.updateLeagueStandings(this.currentSimMatch, lg.teams);
-        }
+        const runSimLoop = () => {
+            this.activeSimInterval = setInterval(() => {
+                if (simMinute === 45 && !this.halftimeReached) {
+                    this.halftimeReached = true;
+                    clearInterval(this.activeSimInterval);
+                    logEvent("INTERVALO! OS TIMES VÃO PARA O VESTIÁRIO.");
+                    this.activeSimTimeout = setTimeout(() => {
+                        logEvent("RECOMEÇA O JOGO! BOLA ROLANDO PARA A ETAPA FINAL.");
+                        runSimLoop();
+                    }, 2000);
+                    return;
+                }
 
-        if (this.simCallback) this.simCallback();
+                simMinute++;
+                document.getElementById('sim-time-value').textContent = `${simMinute.toString().padStart(2, '0')}:00`;
+                
+                // Commentary chances
+                if (Math.random() < 0.05) {
+                    const comments = [
+                        `${home.name} tenta avançar pela lateral.`,
+                        `${away.name} troca passes no meio campo.`,
+                        `Jogo fica truncado no círculo central.`,
+                        `Torcida do ${home.name} canta alto no estádio!`,
+                        `A posse de bola está equilibrada.`,
+                        `${away.name} se fecha bem na defesa.`,
+                        `Pressão total do ${home.name} agora!`
+                    ];
+                    logEvent(comments[Math.floor(Math.random() * comments.length)]);
+                }
+
+                // Random dot movement
+                document.querySelectorAll('.player-dot').forEach(dot => {
+                    let newLeft = parseFloat(dot.style.left) + (Math.random() - 0.5) * 5;
+                    let newTop = parseFloat(dot.style.top) + (Math.random() - 0.5) * 5;
+                    
+                    if (newLeft < 5) newLeft = 5; if (newLeft > 95) newLeft = 95;
+                    if (newTop < 5) newTop = 5; if (newTop > 95) newTop = 95;
+                    
+                    dot.style.left = `${newLeft}%`;
+                    dot.style.top = `${newTop}%`;
+                });
+                
+                // Ball movement
+                const dots = document.querySelectorAll('.player-dot');
+                const targetDot = dots[Math.floor(Math.random() * dots.length)];
+                ball.style.left = targetDot.style.left;
+                ball.style.top = targetDot.style.top;
+                
+                // Check for goals
+                const goalsNow = goalEvents.filter(g => g.min === simMinute);
+                goalsNow.forEach(g => {
+                    const scoringTeam = g.team === 'home' ? home : away;
+                    if (g.team === 'home') homeScore++;
+                    else awayScore++;
+                    
+                    logEvent(`GOOOOOOOOOOL DO ${scoringTeam.name.toUpperCase()}!!! GOL DE PLACA!`);
+                    
+                    document.getElementById('sim-score-value').textContent = `${homeScore} - ${awayScore}`;
+                    const pitchEl = document.querySelector('.soccer-pitch');
+                    if (pitchEl) {
+                        pitchEl.classList.add('goal-flash');
+                        setTimeout(() => pitchEl.classList.remove('goal-flash'), 1000);
+                    }
+                    ball.style.left = '50%';
+                    ball.style.top = '50%';
+                });
+                
+                if (simMinute >= 90) {
+                    clearInterval(this.activeSimInterval);
+                    logEvent("FIM DE JOGO! APITA O ÁRBITRO O TÉRMINO DA PARTIDA.");
+                    this.activeSimTimeout = setTimeout(() => {
+                        finishMatch();
+                    }, 2500);
+                }
+            }, 100); // 100ms for faster, more dynamic feel
+        };
+
+        runSimLoop();
+
+        // Skip button
+        document.getElementById('btn-sim-skip').onclick = () => {
+            finishMatch(true);
+        };
+
+        // Mentality Logic
+        document.querySelectorAll('.btn-mentality').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.btn-mentality').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                match.currentMentality = btn.dataset.mentality;
+            };
+        });
+
+        // Quick Tactics
+        document.querySelectorAll('.btn-quick-t').forEach(btn => {
+            btn.onclick = () => {
+                btn.classList.toggle('active-t');
+                btn.style.borderColor = btn.classList.contains('active-t') ? 'var(--fifa-pink)' : 'var(--border)';
+            };
+        });
     }
 
     handleMatchShortcuts(e) {
@@ -925,6 +908,13 @@ class BrasileiraoSimulator {
             document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex - 1]}"]`).click();
         } else if (e.key === 'ArrowRight' && currentIndex < mentalities.length - 1) {
             document.querySelector(`.btn-mentality[data-mentality="${mentalities[currentIndex + 1]}"]`).click();
+        }
+
+        // Quick Tactics (Up / Down)
+        if (e.key === 'ArrowUp') {
+            document.querySelector('.btn-quick-t[title="Pressão Total"]').click();
+        } else if (e.key === 'ArrowDown') {
+            document.querySelector('.btn-quick-t[title="Subir Laterais"]').click();
         }
     }
 
@@ -942,190 +932,6 @@ class BrasileiraoSimulator {
         this.displayCalendar();
     }
 
-    pauseSim() {
-        this.isPaused = true;
-    }
-
-    unpauseSim() {
-        this.isPaused = false;
-    }
-
-    openTacticalModal() {
-        if (!this.currentSimHome) return;
-        this.pauseSim();
-        
-        // Add Blur Effect to simulation container
-        document.querySelector('.simulation-container')?.classList.add('sim-blur-active');
-        
-        this.renderSimTactics();
-        const modal = document.getElementById('match-tactical-modal');
-        if (modal) modal.style.display = 'block';
-    }
-
-    closeTacticalModal() {
-        const modal = document.getElementById('match-tactical-modal');
-        if (modal) modal.style.display = 'none';
-        
-        // Remove Blur Effect
-        document.querySelector('.simulation-container')?.classList.remove('sim-blur-active');
-        
-        this.selectedInSimMatch = null;
-        if (this.currentSimHome) this.unpauseSim();
-    }
-
-    renderSimTactics() {
-        const match = this.currentSimMatch;
-        // Find user team
-        let team = null;
-        if (!this.currentSimHome) return; 
-
-        if (this.career.active && this.career.team) {
-            if (this.currentSimHome.id === this.career.team.id) team = this.currentSimHome;
-            else if (this.currentSimAway && this.currentSimAway.id === this.career.team.id) team = this.currentSimAway;
-        }
-        if (!team) team = this.currentSimHome;
-
-        const pitch = document.getElementById('sim-tactical-board');
-        const list = document.getElementById('sim-reserva-list');
-        if (!pitch || !list) return;
-
-        pitch.innerHTML = '';
-        list.innerHTML = '';
-
-        const formation = team.formation || '4-3-3';
-        const coords = this.getFormationCoordinates(formation);
-        const starters = team.roster.filter(p => p.status === 'Titular');
-        const bench = team.roster.filter(p => p.status === 'Reserva');
-
-        starters.forEach((p, i) => {
-            const pos = coords[i] || { x: 50, y: 50 };
-            const marker = document.createElement('div');
-            marker.className = 'tactical-player';
-            if (this.selectedInSimMatch && this.selectedInSimMatch.id === p.id) marker.classList.add('selected');
-            
-            marker.style.left = `${pos.x}%`;
-            marker.style.top = `${pos.y}%`;
-            marker.style.transform = 'translate(-50%, -50%) scale(0.85)';
-
-            // DEFINE EVENTS SAFETY
-            const evts = (match && match.events) ? match.events : [];
-            const pGoals = evts.filter(e => e.type === 'goal' && e.player && e.player.id === p.id).length;
-            const hasCard = evts.some(e => e.type === 'warning' && e.player && e.player.id === p.id);
-
-            const rating = p.currentRating || 6.0;
-            let ratingClass = "rating-yellow";
-            if (rating >= 7.5) ratingClass = "rating-green";
-            else if (rating <= 6.0) ratingClass = "rating-red";
-
-            marker.innerHTML = `
-                <div class="player-circle">${p.strength}</div>
-                <div class="player-name-tag">
-                    <span class="rating-badge ${ratingClass}">${rating.toFixed(1)}</span>
-                    ${p.name.split(' ').pop()} ${this.isQueued(p.id) ? '⏳' : ''}
-                    ${pGoals > 0 ? `<span class="event-mini-icon icon-goal">⚽${pGoals > 1 ? pGoals : ''}</span>` : ''}
-                    ${hasCard ? `<span class="event-mini-icon icon-card">🟨</span>` : ''}
-                </div>
-                <div style="font-size: 0.5rem; font-weight: 800; color: var(--fifa-cyan);">${pos.pos || p.pos}</div>
-            `;
-
-            marker.onclick = (e) => {
-                e.stopPropagation();
-                this.handleSimTacticalClick(p, team);
-            };
-            pitch.appendChild(marker);
-        });
-
-        bench.forEach(p => {
-            const div = document.createElement('div');
-            div.className = `squad-slot interactive ${this.selectedInSimMatch && this.selectedInSimMatch.id === p.id ? 'selected-to-swap' : ''}`;
-            div.style.padding = '8px';
-            div.style.marginBottom = '5px';
-            div.style.borderLeft = this.isQueued(p.id) ? '4px solid var(--gold)' : '4px solid gray';
-            
-            div.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.8rem;"><strong>${p.pos}</strong> ${p.name}</span>
-                    <span class="rating" style="font-size: 0.7rem;">${p.strength}</span>
-                </div>
-            `;
-            div.onclick = () => this.handleSimTacticalClick(p, team);
-            list.appendChild(div);
-        });
-    }
-
-    handleSimTacticalClick(player, team) {
-        if (!this.selectedInSimMatch) {
-            this.selectedInSimMatch = player;
-        } else {
-            if (this.selectedInSimMatch.id === player.id) {
-                this.selectedInSimMatch = null;
-            } else {
-                if (this.selectedInSimMatch.status !== player.status) {
-                    const sub = {
-                        team: team,
-                        out: this.selectedInSimMatch.status === 'Titular' ? this.selectedInSimMatch : player,
-                        in: this.selectedInSimMatch.status === 'Titular' ? player : this.selectedInSimMatch
-                    };
-                    
-                    if (sub.out.status === 'Titular' && sub.in.status === 'Reserva') {
-                        // CHECK SUB LIMIT
-                        const match = this.currentSimMatch;
-                        if (match.usedSubs + this.queuedSubs.length < match.subLimit) {
-                            this.queuedSubs.push(sub);
-                        } else {
-                            alert(`Limite de ${match.subLimit} substituições atingido!`);
-                        }
-                    } else {
-                        alert("Selecione um TITULAR (no campo) e um RESERVA (na lista) para substituir.");
-                    }
-                } else if (this.selectedInSimMatch.status === 'Titular' && player.status === 'Titular') {
-                    // Position swap
-                    const idx1 = team.roster.findIndex(p => p.id === this.selectedInSimMatch.id);
-                    const idx2 = team.roster.findIndex(p => p.id === player.id);
-                    const temp = team.roster[idx1];
-                    team.roster[idx1] = team.roster[idx2];
-                    team.roster[idx2] = temp;
-                }
-                this.selectedInSimMatch = null;
-            }
-        }
-        this.renderSimTactics();
-    }
-
-    processQueuedSubs(home, away, addMsg, min) {
-        this.queuedSubs.forEach(sub => {
-            const team = sub.team;
-            const pOut = team.roster.find(p => p.id === sub.out.id);
-            const pIn = team.roster.find(p => p.id === sub.in.id);
-            
-            if (pOut && pIn) {
-                pOut.status = 'Reserva';
-                pIn.status = 'Titular';
-                this.currentSimMatch.usedSubs++;
-                addMsg(min, `SUBSTITUIÇÃO no ${team.name.toUpperCase()}: Sai ${pOut.name}, entra ${pIn.name}.`);
-            }
-        });
-        
-        this.queuedSubs = [];
-        this.renderSimPlayerLists(home, away);
-    }
-
-    renderSimPlayerLists(home, away) {
-        const renderList = (team, containerId) => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-            team.roster.filter(p => p.status === 'Titular').forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'sim-player-row';
-                row.innerHTML = `<div class="sim-player-pos">${p.pos}</div><div class="sim-player-name">${p.name}</div>`;
-                container.appendChild(row);
-            });
-        };
-        renderList(home, 'sim-home-players');
-        renderList(away, 'sim-away-players');
-    }
-
     resetSeason() {
         this.leagues[this.currentSerie] = this.initLeague(this.currentSerie);
         const lg = this.leagues[this.currentSerie];
@@ -1137,9 +943,7 @@ class BrasileiraoSimulator {
     }
 
     updateTable() {
-        const drop = document.getElementById('standings-serie-filter');
-        const targetSerie = drop ? drop.value : this.currentSerie;
-        const lg = this.leagues[targetSerie];
+        const lg = this.leagues[this.currentSerie];
         const sortedTeams = [...lg.teams].sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
             if (b.won !== a.won) return b.won - a.won;
@@ -1148,41 +952,32 @@ class BrasileiraoSimulator {
         });
 
         const tbody = document.getElementById('standings-body');
-        if (!tbody) return; 
+        if (!tbody) return; // Silent return if we are in a screen without the table
         
         tbody.innerHTML = '';
 
         sortedTeams.forEach((team, index) => {
             const tr = document.createElement('tr');
-            
-            // Limit zones per division
-            let zone = "";
-            if (targetSerie === 'A') {
-                if (index < 4) zone = "libertadores";
-                else if (index < 6) zone = "pre-libertadores";
-                else if (index < 12) zone = "sul-americana";
-                else if (index >= 16) zone = "rebaixados";
-            } else if (targetSerie === 'B') {
-                if (index < 4) zone = "libertadores"; // Verde para acesso
-                else if (index >= 16) zone = "rebaixados";
-            } else { // Serie C
-                if (index < 4) zone = "libertadores"; // Verde para acesso
-            }
-            
-            tr.setAttribute('data-zone', zone);
+            if (index < 4) tr.style.borderLeft = '4px solid var(--gold)';
+            else if (index >= 16) tr.style.borderLeft = '4px solid var(--red)';
             
             tr.innerHTML = `
                 <td class="pos">${index + 1}</td>
                 <td>
-                    <div class="team-cell team-clickable" onclick="simulator.showTeamDetails(${team.id})">
-                        ${team.logo ? `<img src="${team.logo}" class="team-logo-small">` : `<div style="width:24px;height:24px;background:${team.color};border-radius:50%"></div>`}
+                    <div class="team-name team-clickable" onclick="simulator.showTeamDetails(${team.id})">
+                        <div class="team-color" style="background-color: ${team.color};"></div>
                         ${team.name}
                     </div>
                 </td>
-                <td class="pts-cell">${team.points}</td>
-                <td class="stats-cell">${team.played}</td>
-                <td class="stats-cell">${team.won}</td>
-                <td class="stats-cell">${team.goalDiff}</td>
+                <td class="stats pts">${team.points}</td>
+                <td class="stats">${team.played}</td>
+                <td class="stats">${team.won}</td>
+                <td class="stats">${team.drawn}</td>
+                <td class="stats">${team.lost}</td>
+                <td class="stats">${team.goalsFor}</td>
+                <td class="stats">${team.goalsAgainst}</td>
+                <td class="stats">${team.goalDiff}</td>
+                <td class="stats">${team.percentage}%</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1281,9 +1076,7 @@ class BrasileiraoSimulator {
     }
 
     displayCalendar() {
-        const drop = document.getElementById('calendar-serie-filter');
-        const targetSerie = drop ? drop.value : this.currentSerie;
-        const lg = this.leagues[targetSerie];
+        const lg = this.leagues[this.currentSerie];
         const container = document.getElementById('calendar-container');
         if (!container) return; // Silent return
         container.innerHTML = '';
@@ -1388,13 +1181,6 @@ class BrasileiraoSimulator {
 
     // --- CAREER MODE LOGIC ---
 
-    startTeamSelection(serie = 'A') {
-        this.selectionSerie = serie;
-        this.selectionIndex = 0;
-        this.openScreen('team-selection');
-        this.renderTeamSelection();
-    }
-
     renderTeamSelection() {
         const grid = document.getElementById('selection-grid');
         const teams = this.allTeamsRaw.filter(t => t.serie === this.selectionSerie);
@@ -1416,18 +1202,18 @@ class BrasileiraoSimulator {
                     
                     <div class="team-showcase">
                         <div class="team-logo-big" style="background: linear-gradient(135deg, ${team.color}44 0%, transparent 100%);">
-                            <img src="${team.logo}" alt="${team.name}">
+                            <img src="${team.logo || ''}" alt="${team.name}" onerror="this.src='amistoso.png'">
                         </div>
                         <h2 class="team-name-selection">${team.name.toUpperCase()}</h2>
                         <div class="stars-container" style="margin-top: -10px; margin-bottom: 2rem;">${starHTML}</div>
                         
                         <div class="team-stats-selection">
                             <div class="stat-box">
-                                <small>ATT</small>
+                                <small>ATA</small>
                                 <strong>${stats.att}</strong>
                             </div>
                             <div class="stat-box">
-                                <small>MID</small>
+                                <small>MEI</small>
                                 <strong>${stats.mid}</strong>
                             </div>
                             <div class="stat-box">
@@ -1435,6 +1221,7 @@ class BrasileiraoSimulator {
                                 <strong>${stats.def}</strong>
                             </div>
                         </div>
+                        <p style="font-size: 0.9rem; color: var(--gold); margin-top: 1rem;">Orçamento: R$ ${(this.getInitialBudget(team)/1000000).toFixed(0)}M</p>
                     </div>
                     
                     <button class="nav-arrow" onclick="simulator.navigateTeamSelection(1)">❯</button>
@@ -1443,6 +1230,13 @@ class BrasileiraoSimulator {
                 <button class="btn-fifa-select" onclick="simulator.selectTeam('${team.id}')">ESCOLHER TIME</button>
             </div>
         `;
+    }
+
+    startTeamSelection() {
+        this.selectionSerie = 'A';
+        this.selectionIndex = 0;
+        this.openScreen('team-selection');
+        this.renderTeamSelection();
     }
 
     changeSelectionSerie(s) {
@@ -1486,55 +1280,53 @@ class BrasileiraoSimulator {
     }
 
     calculateDetailedStats(team) {
-        const query = (positions) => {
-            const list = team.roster.filter(p => p.status === 'Titular' && positions.includes(p.pos));
+        const calculateAvg = (positions) => {
+            const list = team.roster.filter(p => (p.status === 'Titular' || p.status === 'Reserva') && positions.includes(p.pos));
             if (list.length === 0) return team.strength || 70;
             return Math.round(list.reduce((acc, p) => acc + p.strength, 0) / list.length);
         };
-        
+
         return {
-            att: query(['PE', 'PD', 'ATA', 'CA', 'ST']),
-            mid: query(['VOL', 'MC', 'MEI', 'MD', 'ME']),
-            def: query(['GK', 'GOL', 'ZAG', 'LD', 'LE', 'ALA'])
+            att: calculateAvg(['ATA', 'CA', 'PE', 'PD']),
+            mid: calculateAvg(['VOL', 'MEI', 'MC']),
+            def: calculateAvg(['ZAG', 'LE', 'LD', 'GOL'])
         };
     }
 
+    getInitialBudget(team) {
+        if (team.serie === 'A') {
+            if (team.strength >= 84) return 300000000;
+            else if (team.strength >= 78) return 100000000;
+            else return 50000000;
+        } else if (team.serie === 'B') {
+            return 15000000;
+        } else if (team.serie === 'C') {
+            return 5000000;
+        } else {
+            return 2000000;
+        }
+    }
+
     selectTeam(teamId) {
-        const team = this.leagues[this.selectionSerie].teams.find(t => t.id == teamId);
+        const team = this.allTeamsRaw.find(t => t.id === teamId);
         this.currentSerie = team.serie;
         this.career.active = true;
-        this.career.team = team;
+        this.career.team = this.leagues[this.currentSerie].teams.find(t => t.id === teamId);
         
-        // Dynamic starting budget based on Serie
-        if (team.serie === 'A') {
-            if (team.strength >= 84) this.career.budget = 300000000; // Giants: 300M
-            else if (team.strength >= 78) this.career.budget = 100000000; // Medium: 100M
-            else this.career.budget = 50000000;
-        } else if (team.serie === 'B') {
-            this.career.budget = 15000000; // Serie B: 15M
-        } else if (team.serie === 'C') {
-            this.career.budget = 5000000; // Serie C: 5M
-        } else {
-            this.career.budget = 2000000; // Serie D: 2M
-        }
-
+        this.career.budget = this.getInitialBudget(team);
         document.getElementById('user-team-name').textContent = team.name;
         const logoEl = document.getElementById('user-team-logo');
-        logoEl.style.backgroundColor = team.color;
         if (team.logo) {
-            logoEl.innerHTML = `<img src="${team.logo}" alt="${team.name}" style="width:40px; height:40px; object-fit:contain;">`;
+            logoEl.style.backgroundImage = `url(${team.logo})`;
+            logoEl.style.backgroundSize = 'contain';
+            logoEl.style.backgroundRepeat = 'no-repeat';
+            logoEl.style.backgroundPosition = 'center';
+            logoEl.style.backgroundColor = 'transparent';
         } else {
-            logoEl.innerHTML = '';
+            logoEl.style.backgroundColor = team.color;
+            logoEl.style.backgroundImage = 'none';
         }
-        document.getElementById('user-team-overall').innerHTML = this.getStarRatingHTML(team);
         
-        if (document.getElementById('standings-serie-filter')) {
-            document.getElementById('standings-serie-filter').value = this.currentSerie;
-        }
-        if (document.getElementById('calendar-serie-filter')) {
-            document.getElementById('calendar-serie-filter').value = this.currentSerie;
-        }
-
         this.openScreen('career-hub');
         this.switchTab('central');
     }
@@ -1543,84 +1335,21 @@ class BrasileiraoSimulator {
         const lg = this.leagues[this.currentSerie];
         const nextRound = lg.rounds[lg.currentRound];
         
-        // Ensure "Simular Rodada" button is clickable again
-        const simBtn = document.getElementById('btn-career-simulate');
-        if (simBtn) {
-            simBtn.style.pointerEvents = 'auto';
-            simBtn.style.opacity = '1';
-        }
-
-        const nextOpponentNameEl = document.getElementById('next-opponent-name');
-        const matchDetailsEl = document.getElementById('match-details');
-        
-        if (this.copaDoBrasil && this.copaDoBrasil.active && this.copaDoBrasil.roundIndex < 5 && this.copaDoBrasil.schedule[this.copaDoBrasil.roundIndex] === lg.currentRound) {
-            const cbMatch = this.copaDoBrasil.bracket.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
-            if (cbMatch) {
-                const opponentId = cbMatch.home === this.career.team.id ? cbMatch.away : cbMatch.home;
-                const opponent = this.getAllTeams().find(t => t.id === opponentId);
-                nextOpponentNameEl.textContent = `vs ${opponent.name}`;
-                nextOpponentNameEl.style.color = '#F3D250';
-            } else {
-                nextOpponentNameEl.textContent = `Sem Jogo (Eliminado)`;
-                nextOpponentNameEl.style.color = '#888';
-            }
-            matchDetailsEl.textContent = `Copa do Brasil - ${this.copaDoBrasil.stages[this.copaDoBrasil.roundIndex]}`;
-        } else if (nextRound) {
-            nextOpponentNameEl.style.color = '#FFF';
+        if (nextRound) {
             const userMatch = nextRound.matches.find(m => m.home === this.career.team.id || m.away === this.career.team.id);
-            if (userMatch) {
-                const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
-                const opponent = lg.teams.find(t => t.id === opponentId);
-                nextOpponentNameEl.textContent = `vs ${opponent.name}`;
-            } else {
-                nextOpponentNameEl.textContent = `Sem Jogo (Adiado/Adiantado)`;
-            }
-            matchDetailsEl.textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
+            const opponentId = userMatch.home === this.career.team.id ? userMatch.away : userMatch.home;
+            const opponent = lg.teams.find(t => t.id === opponentId);
+            
+            document.getElementById('next-opponent-name').textContent = `vs ${opponent.name}`;
+            document.getElementById('match-details').textContent = `Rodada ${lg.currentRound + 1} - ${nextRound.date.toLocaleDateString('pt-BR')}`;
         } else {
-            nextOpponentNameEl.style.color = '#FFF';
-            nextOpponentNameEl.textContent = `Fim da Temporada`;
+            document.getElementById('next-opponent-name').textContent = `Fim da Temporada`;
         }
 
         document.getElementById('money-display').textContent = `R$ ${this.career.budget.toLocaleString('pt-BR')}`;
         document.getElementById('budget-info').textContent = `R$ ${(this.career.budget / 1000000).toFixed(0)}M`;
-        document.getElementById('user-team-overall').innerHTML = this.getStarRatingHTML(this.career.team);
         
         this.renderMiniStandings();
-        this.renderTopScorers();
-    }
-
-    renderTopScorers() {
-        const container = document.getElementById('top-scorers-list');
-        if (!container) return;
-
-        const lg = this.leagues[this.currentSerie];
-        let allPlayers = [];
-        lg.teams.forEach(t => {
-            t.roster.forEach(p => {
-                if (p.seasonGoals && p.seasonGoals > 0) {
-                    allPlayers.push({ ...p, teamLogo: t.logo, teamColor: t.color, teamName: t.name });
-                }
-            });
-        });
-
-        allPlayers.sort((a, b) => b.seasonGoals - a.seasonGoals);
-        const top5 = allPlayers.slice(0, 5);
-
-        if (top5.length === 0) {
-            container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; margin-top:1rem; font-size: 0.8rem;">Nenhum gol marcado ainda.</p>';
-            return;
-        }
-
-        container.innerHTML = top5.map((p, index) => `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); animationFadeIn">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="font-size: 0.9rem; font-weight: 800; color: ${index === 0 ? 'var(--gold)' : 'var(--text-secondary)'}; width: 20px; text-align: center;">${index + 1}º</div>
-                    ${p.teamLogo ? `<img src="${p.teamLogo}" style="width:20px; height:20px; object-fit:contain;">` : `<div style="width:20px;height:20px;border-radius:50%;background:${p.teamColor}"></div>`}
-                    <span style="font-size: 0.85rem; font-weight: 600;">${p.name}</span>
-                </div>
-                <div style="font-weight: 800; color: var(--fifa-cyan);">${p.seasonGoals} <i class="fas fa-futbol" style="font-size: 0.7rem;"></i></div>
-            </div>
-        `).join('');
     }
 
     renderMiniStandings() {
@@ -1640,7 +1369,6 @@ class BrasileiraoSimulator {
     renderCareerSquad() {
         const t = this.career.team;
         if (!t) return;
-        this.normalizeTeamRoster(t);
 
         const titContainer = document.getElementById('career-titulares');
         const resContainer = document.getElementById('career-reservas');
@@ -1649,8 +1377,6 @@ class BrasileiraoSimulator {
         titContainer.innerHTML = '';
         resContainer.innerHTML = '';
         notContainer.innerHTML = '';
-        
-        document.getElementById('squad-overall-display').textContent = t.strength;
         
         // Atribuir status padrão se não houver
         if (t.roster.filter(p => p.status === 'Titular').length === 0) {
@@ -1719,121 +1445,83 @@ class BrasileiraoSimulator {
         this.selectedPlayerToSwap.status = p2Status;
         player.status = p1Status;
 
-        // Recalculate strength after swap
-        this.career.team.strength = this.calculateTeamOverall(this.career.team);
-
         this.selectedPlayerToSwap = null;
         this.renderCareerSquad();
     }
 
     renderFormation() {
-        const pitch = document.getElementById('pitch-tactical-board');
-        if (!pitch) return;
+        const pitch = document.getElementById('pitch-formation-display');
         pitch.innerHTML = '';
         
         const team = this.career.team;
-        if (!team) return;
-        this.normalizeTeamRoster(team);
-        
         const formation = team.formation || '4-3-3';
         const titulares = team.roster.filter(p => p.status === 'Titular');
         
-        // Ativar botões de formação
+        // Ativar botão da formação atual
         document.querySelectorAll('.btn-formation').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.formation === formation);
             btn.onclick = () => {
                 team.formation = btn.dataset.formation;
                 this.renderFormation();
-                this.renderCareerSquad();
             };
         });
 
-        const coords = this.getFormationCoordinates(formation);
-        
+        const positions = this.getFormationCoordinates(formation);
         titulares.forEach((p, i) => {
-            const pos = coords[i] || { x: 50, y: 50 };
-            const marker = document.createElement('div');
-            marker.className = 'tactical-player';
-            if (this.selectedInTactics && this.selectedInTactics.id === p.id) marker.classList.add('selected');
-            
-            marker.style.left = `${pos.x}%`;
-            marker.style.top = `${pos.y}%`;
-            marker.style.transform = 'translate(-50%, -50%)';
-            
-            marker.innerHTML = `
-                <div class="player-circle">${p.strength}</div>
-                <div class="player-name-tag">${p.name.split(' ').pop()}</div>
-                <div style="font-size: 0.5rem; font-weight: 800; color: var(--fifa-cyan); text-transform: uppercase;">${pos.pos || p.pos}</div>
+            const coord = positions[i] || { x: 50, y: 50 };
+            const div = document.createElement('div');
+            div.className = 'pitch-player';
+            div.style.left = `${coord.x}%`;
+            div.style.top = `${coord.y}%`;
+            div.innerHTML = `
+                <span class="pos-label">${p.pos}</span>
+                <span class="name-label">${p.name.split(' ').pop()}</span>
+                <span style="font-size: 0.65rem; color: var(--gold);">${p.strength}</span>
             `;
-
-            marker.onclick = (e) => {
-                e.stopPropagation();
-                this.handleTacticalSwap(p);
-            };
-
-            pitch.appendChild(marker);
+            pitch.appendChild(div);
         });
-
-        // Add empty "drop spots" logic? No, let's stick to player-to-player swap
     }
 
-    handleTacticalSwap(player) {
-        if (!this.selectedInTactics) {
-            this.selectedInTactics = player;
-        } else {
-            if (this.selectedInTactics.id !== player.id) {
-                const team = this.career.team;
-                const idx1 = team.roster.findIndex(p => p.id === this.selectedInTactics.id);
-                const idx2 = team.roster.findIndex(p => p.id === player.id);
-                
-                // Swap in the actual roster array to change their order in the starter group
-                const temp = team.roster[idx1];
-                team.roster[idx1] = team.roster[idx2];
-                team.roster[idx2] = temp;
-                
-                // Position logic: they essentially swap positions in the formation coordinates
-                this.renderCareerSquad();
-            }
-            this.selectedInTactics = null;
-        }
-        this.renderFormation();
-    }
-
-    getFormationCoordinates(f) {
-        const map = {
-            '4-4-2': [
-                {x:50, y:88, pos:'GK'},
-                {x:80, y:68, pos:'LD'}, {x:60, y:72, pos:'ZAG'}, {x:40, y:72, pos:'ZAG'}, {x:20, y:68, pos:'LE'},
-                {x:80, y:45, pos:'MD'}, {x:60, y:45, pos:'MC'}, {x:40, y:45, pos:'MC'}, {x:20, y:45, pos:'ME'},
-                {x:60, y:18, pos:'ATA'}, {x:40, y:18, pos:'ST'}
-            ],
-            '4-3-3': [
-                {x:50, y:88, pos:'GK'},
-                {x:80, y:68, pos:'LD'}, {x:60, y:72, pos:'ZAG'}, {x:40, y:72, pos:'ZAG'}, {x:20, y:68, pos:'LE'},
-                {x:70, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:30, y:45, pos:'MC'},
-                {x:80, y:18, pos:'PD'}, {x:50, y:12, pos:'ATA'}, {x:20, y:18, pos:'PE'}
-            ],
-            '3-5-2': [
-                {x:50, y:88, pos:'GK'},
-                {x:75, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:25, y:72, pos:'ZAG'},
-                {x:88, y:45, pos:'ALA'}, {x:65, y:48, pos:'VOL'}, {x:50, y:52, pos:'MC'}, {x:35, y:48, pos:'VOL'}, {x:12, y:45, pos:'ALA'},
-                {x:60, y:18, pos:'ST'}, {x:40, y:18, pos:'ATA'}
-            ],
-            '5-3-2': [
-                {x:50, y:88, pos:'GK'},
-                {x:88, y:68, pos:'LD'}, {x:68, y:72, pos:'ZAG'}, {x:50, y:76, pos:'ZAG'}, {x:32, y:72, pos:'ZAG'}, {x:12, y:68, pos:'LE'},
-                {x:70, y:45, pos:'MC'}, {x:50, y:50, pos:'MC'}, {x:30, y:45, pos:'MC'},
-                {x:60, y:18, pos:'ST'}, {x:40, y:18, pos:'ATA'}
-            ],
-            '4-2-3-1': [
-                {x:50, y:88, pos:'GK'},
-                {x:80, y:68, pos:'LD'}, {x:60, y:72, pos:'ZAG'}, {x:40, y:72, pos:'ZAG'}, {x:20, y:68, pos:'LE'},
-                {x:60, y:48, pos:'VOL'}, {x:40, y:48, pos:'VOL'},
-                {x:80, y:28, pos:'PD'}, {x:50, y:32, pos:'MEI'}, {x:20, y:28, pos:'PE'},
-                {x:50, y:12, pos:'ST'}
-            ]
+    getFormationCoordinates(formation) {
+        // Base coordinates [0-100] for a 1.2 aspect pitch
+        const base = {
+            'GOL': { x: 50, y: 90 },
+            'ZAG_L': { x: 35, y: 75 },
+            'ZAG_R': { x: 65, y: 75 },
+            'LD': { x: 85, y: 65 },
+            'LE': { x: 15, y: 65 },
+            'VOL': { x: 50, y: 60 },
+            'MEI_L': { x: 30, y: 45 },
+            'MEI_R': { x: 70, y: 45 },
+            'MC': { x: 50, y: 40 },
+            'ATA_L': { x: 25, y: 25 },
+            'ATA_R': { x: 75, y: 25 },
+            'ATA_C': { x: 50, y: 15 }
         };
-        return map[f] || map['4-3-3'];
+
+        if (formation === '4-3-3') {
+            return [
+                {x: 50, y: 90}, // GOL
+                {x: 15, y: 72}, {x: 35, y: 75}, {x: 65, y: 75}, {x: 85, y: 72}, // Defesa
+                {x: 50, y: 55}, {x: 30, y: 42}, {x: 70, y: 42}, // Meio
+                {x: 20, y: 20}, {x: 80, y: 20}, {x: 50, y: 15}  // Ataque
+            ];
+        } else if (formation === '4-4-2') {
+            return [
+                {x: 50, y: 90},
+                {x: 10, y: 72}, {x: 35, y: 75}, {x: 65, y: 75}, {x: 90, y: 72},
+                {x: 15, y: 45}, {x: 40, y: 48}, {x: 60, y: 48}, {x: 85, y: 45},
+                {x: 40, y: 20}, {x: 60, y: 20}
+            ];
+        } else if (formation === '3-5-2') {
+            return [
+                {x: 50, y: 90},
+                {x: 25, y: 75}, {x: 50, y: 78}, {x: 75, y: 75},
+                {x: 10, y: 45}, {x: 35, y: 48}, {x: 50, y: 55}, {x: 65, y: 48}, {x: 90, y: 45},
+                {x: 40, y: 20}, {x: 60, y: 20}
+            ];
+        }
+        return Array(11).fill({x: 50, y: 50});
     }
 
     renderInstructions() {
@@ -1981,7 +1669,29 @@ class BrasileiraoSimulator {
         team.roles[roleId] = playerId; 
     }
 
-
+    renderMarket() {
+        const grid = document.getElementById('market-display');
+        const serie = document.getElementById('transfer-serie-filter').value;
+        grid.innerHTML = '';
+        
+        const otherTeams = this.leagues[serie].teams.filter(t => t.id !== this.career.team.id);
+        
+        otherTeams.forEach(team => {
+            team.roster.forEach(p => {
+                const price = p.strength * 500000 + (Math.random() * 2000000);
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.innerHTML = `
+                    <div style="font-size: 0.7rem; color: var(--text-secondary);">${team.name}</div>
+                    <div style="font-weight: 700; margin: 5px 0;">${p.name}</div>
+                    <div class="rating">${p.strength}</div>
+                    <div style="color: var(--fifa-cyan); font-weight: 800; font-size: 0.8rem; margin: 10px 0;">R$ ${(price/1000000).toFixed(1)}M</div>
+                    <button onclick="simulator.buyPlayer(${p.id}, ${team.id}, ${price})" style="padding: 5px; font-size: 0.7rem; margin: 0;">Contratar</button>
+                `;
+                grid.appendChild(card);
+            });
+        });
+    }
 
     buyPlayer(playerId, fromTeamId, price) {
         if (this.career.budget < price) {
@@ -1993,12 +1703,11 @@ class BrasileiraoSimulator {
         const playerIndex = fromTeam.roster.findIndex(p => p.id === playerId);
         const player = fromTeam.roster.splice(playerIndex, 1)[0];
         
-        player.status = 'Não Relacionado';
+        player.status = 'Reserva';
         this.career.team.roster.push(player);
         this.career.budget -= price;
         
-        // Normalize and Update
-        this.normalizeTeamRoster(this.career.team);
+        // Dynamic Overall Update
         this.career.team.strength = this.calculateTeamOverall(this.career.team);
         if (fromTeam) fromTeam.strength = this.calculateTeamOverall(fromTeam);
         
@@ -2010,9 +1719,39 @@ class BrasileiraoSimulator {
 
     renderCareerStandings() {
         const table = document.getElementById('career-standings');
+        const groupsContainer = document.getElementById('league-groups-container');
+        const mainTableCard = document.getElementById('main-table-card');
         if (!table) return;
-        
-        const lg = this.leagues[this.currentSerie];
+
+        // Series Filter Logic
+        document.querySelectorAll('.btn-serie-filter').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.btn-serie-filter').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const serie = btn.dataset.serie;
+                this.currentViewingSerie = serie;
+                this.renderCareerStandings();
+            };
+        });
+
+        const serie = this.currentViewingSerie || this.currentSerie;
+        const lg = this.leagues[serie];
+
+        if (serie === 'D' && lg.phase === 1) {
+            mainTableCard.style.display = 'none';
+            groupsContainer.style.display = 'block';
+            this.renderGroups(lg, groupsContainer);
+            return;
+        } else if (serie === 'C' && lg.phase === 2) {
+            mainTableCard.style.display = 'none';
+            groupsContainer.style.display = 'block';
+            this.renderGroups(lg, groupsContainer);
+            return;
+        } else {
+            mainTableCard.style.display = 'block';
+            groupsContainer.style.display = 'none';
+        }
+
         const sortedTeams = [...lg.teams].sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
             if (b.won !== a.won) return b.won - a.won;
@@ -2033,7 +1772,6 @@ class BrasileiraoSimulator {
                     <th class="stats">GP</th>
                     <th class="stats">GC</th>
                     <th class="stats">SG</th>
-                    <th class="stats">%</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -2042,13 +1780,15 @@ class BrasileiraoSimulator {
         const tbody = table.querySelector('tbody');
         sortedTeams.forEach((team, index) => {
             const tr = document.createElement('tr');
-            if (team.id === this.career.team.id) tr.style.background = 'rgba(0, 242, 255, 0.1)';
+            if (this.career.team && team.id === this.career.team.id) tr.style.background = 'rgba(0, 242, 255, 0.1)';
             
+            const logo = team.logo ? `<img src="${team.logo}" class="team-logo-small">` : `<div class="team-color" style="background-color: ${team.color};"></div>`;
+
             tr.innerHTML = `
                 <td class="pos">${index + 1}</td>
                 <td>
                     <div class="team-name team-clickable" data-id="${team.id}">
-                        <div class="team-color" style="background-color: ${team.color};"></div>
+                        ${logo}
                         ${team.name}
                     </div>
                 </td>
@@ -2060,14 +1800,81 @@ class BrasileiraoSimulator {
                 <td class="stats">${team.goalsFor}</td>
                 <td class="stats">${team.goalsAgainst}</td>
                 <td class="stats">${team.goalDiff}</td>
-                <td class="stats">${team.percentage}%</td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Add team details listener to the names
         tbody.querySelectorAll('.team-clickable').forEach(el => {
             el.onclick = () => this.showTeamDetails(parseInt(el.dataset.id));
+        });
+    }
+
+    renderGroups(lg, container) {
+        container.innerHTML = `<div class="group-grid"></div>`;
+        const grid = container.querySelector('.group-grid');
+
+        for (const gId in lg.groups) {
+            const groupTeams = lg.groups[gId];
+            const sorted = [...groupTeams].sort((a,b) => b.points - a.points || b.goalDiff - a.goalDiff);
+            
+            const card = document.createElement('div');
+            card.className = 'group-card';
+            card.innerHTML = `
+                <div class="group-title">GRUPO ${gId}</div>
+                <table class="compact-table" style="width: 100%; font-size: 0.75rem;">
+                    <thead><tr><th>#</th><th>Time</th><th>P</th><th>V</th><th>SG</th></tr></thead>
+                    <tbody>
+                        ${sorted.map((t, idx) => `
+                            <tr style="${this.career.team && t.id === this.career.team.id ? 'color: var(--fifa-cyan)' : ''}">
+                                <td>${idx+1}</td>
+                                <td>${t.name}</td>
+                                <td>${t.points}</td>
+                                <td>${t.won}</td>
+                                <td>${t.goalDiff}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            grid.appendChild(card);
+        }
+    }
+
+    renderCopaBracket() {
+        const lg = this.leagues['Copa'];
+        const container = document.getElementById('copa-bracket-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        // Show only the current knockout stage or all rounds?
+        // Let's show structured by round
+        const rounds = lg.rounds.filter(r => r.leg === 1);
+        
+        rounds.forEach(r => {
+            const col = document.createElement('div');
+            col.className = 'bracket-round';
+            col.innerHTML = `<div style="font-weight: 800; font-size: 0.7rem; color: var(--gold); text-align: center; margin-bottom: 1rem;">${r.name.toUpperCase()}</div>`;
+            
+            r.matches.forEach(m => {
+                const home = this.allTeamsRaw.find(t => t.id === m.home);
+                const away = this.allTeamsRaw.find(t => t.id === m.away);
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'bracket-match';
+                
+                const secondLeg = lg.rounds.find(round => round.leg === 2 && round.matches.find(sm => sm.firstLeg === m));
+                const sMatch = secondLeg ? secondLeg.matches.find(sm => sm.firstLeg === m) : null;
+                
+                const agg1 = (m.homeScore || 0) + (sMatch ? sMatch.awayScore || 0 : 0);
+                const agg2 = (m.awayScore || 0) + (sMatch ? sMatch.homeScore || 0 : 0);
+
+                matchDiv.innerHTML = `
+                    <div class="bracket-team ${agg1 > agg2 ? 'winner' : ''}">${home.name} <span>${agg1}</span></div>
+                    <div class="bracket-team ${agg2 > agg1 ? 'winner' : ''}">${away.name} <span>${agg2}</span></div>
+                `;
+                col.appendChild(matchDiv);
+            });
+            container.appendChild(col);
         });
     }
 
@@ -2150,81 +1957,23 @@ class BrasileiraoSimulator {
         
         if (!homeTeam || !awayTeam) return;
 
-        if (this.isSimulating) {
-            console.log("Friendly simulation already in progress.");
-            return;
-        }
+        if (this.isSimulating) return;
         this.isSimulating = true;
         
         const btn = document.getElementById('btn-play-friendly');
-        if (btn) {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-        }
+        if (btn) btn.disabled = true;
 
         const match = { home: hId, away: aId, homeScore: null, awayScore: null, isFriendly: true };
         
-        let completed = false;
         this.startVisualSimulation(match, homeTeam, awayTeam, () => {
-            if (completed) return;
-            completed = true;
-            
             this.isSimulating = false;
-            if (btn) {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-            }
+            if (btn) btn.disabled = false;
             this.openScreen('friendly-setup');
             document.getElementById('friendly-result').innerHTML = `
                 ${homeTeam.name} <span style="color: var(--fifa-cyan)">${match.homeScore}</span> X 
                 <span style="color: var(--fifa-cyan)">${match.awayScore}</span> ${awayTeam.name}
             `;
         });
-    }
-
-    renderSimNotes() {
-        const center = document.querySelector('.sim-pitch-area');
-        let panel = document.getElementById('sim-notes-panel');
-        if (!panel) {
-            panel = document.createElement('div');
-            panel.id = 'sim-notes-panel';
-            panel.style.padding = '20px';
-            panel.style.overflowY = 'auto';
-            panel.style.height = '100%';
-            panel.style.background = 'rgba(0,0,0,0.4)';
-            center.appendChild(panel);
-        }
-        panel.style.display = 'block';
-        
-        const home = this.currentSimHome;
-        const away = this.currentSimAway;
-        
-        const renderGroup = (team, color) => {
-            return team.roster.filter(p => p.status === 'Titular').map(p => `
-                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <span style="font-size: 0.85rem;"><strong>${p.pos}</strong> ${p.name}</span>
-                    <span class="rating" style="background: ${color}; font-size: 0.8rem;">${p.strength}</span>
-                </div>
-            `).join('');
-        };
-
-        panel.innerHTML = `
-            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 10px;">AVALIAÇÕES DA PARTIDA</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-                <div>
-                   <h3 style="color: var(--fifa-cyan); text-align: center; margin-bottom: 1rem;">${home.name}</h3>
-                   ${renderGroup(home, 'var(--fifa-cyan)')}
-                </div>
-                <div>
-                   <h3 style="color: var(--fifa-pink); text-align: center; margin-bottom: 1rem;">${away.name}</h3>
-                   ${renderGroup(away, 'var(--fifa-pink)')}
-                </div>
-            </div>
-        `;
-    }
-
-    isQueued(playerId) {
-        return this.queuedSubs.some(s => s.in.id === playerId || s.out.id === playerId);
     }
 
     showTeamDetails(teamId) {
@@ -2270,33 +2019,15 @@ class BrasileiraoSimulator {
         modal.style.display = 'block';
     }
 
-    normalizeTeamRoster(team) {
-        if (!team || !team.roster) return;
-        const titulares = team.roster.filter(p => p.status === 'Titular');
-        if (titulares.length > 11) {
-            // Keep top 11, move rest to Reserva
-            titulares.sort((a, b) => b.strength - a.strength);
-            titulares.slice(11).forEach(p => p.status = 'Reserva');
-        } else if (titulares.length < 11 && team.roster.length >= 11) {
-            // Promote top reserves to reach 11
-            const reserves = team.roster.filter(p => p.status === 'Reserva');
-            reserves.sort((a, b) => b.strength - a.strength);
-            reserves.slice(0, 11 - titulares.length).forEach(p => p.status = 'Titular');
-        }
-    }
-
     calculateTeamOverall(team) {
         if (!team.roster || team.roster.length === 0) return 70;
-        this.normalizeTeamRoster(team);
-        const titulares = team.roster.filter(p => p.status === 'Titular');
-        const sum = titulares.reduce((acc, p) => acc + p.strength, 0);
-        return Math.round(sum / 11); // Average of 11 starters
+        const sum = team.roster.reduce((acc, p) => acc + p.strength, 0);
+        return Math.round(sum / team.roster.length);
     }
 
     closeModal() {
         document.getElementById('team-modal').style.display = 'none';
     }
-
     isQueued(playerId) {
         if (!this.queuedSubs) return false;
         return this.queuedSubs.some(s => s.in.id === playerId || s.out.id === playerId);
@@ -2388,8 +2119,8 @@ class BrasileiraoSimulator {
     }
 
     handleMarketIA() {
-        const series = ['A', 'B'];
-        const s = series[Math.floor(Math.random() * 2)];
+        const series = ['A', 'B', 'C', 'D'];
+        const s = series[Math.floor(Math.random() * series.length)];
         const league = this.leagues[s];
         if (league.teams.length < 2) return;
 
